@@ -7961,6 +7961,23 @@ function renderPressureGauge() {
     </div>`;
 
     body.innerHTML = svg + readout;
+
+    // Contextual note when active scenarios ended before the data's final year —
+    // in that case the gauge reads the post-scenario decay window, not the active boost.
+    const activeScenarios = _activeScenarioObjs(ds);
+    if (activeScenarios.length) {
+        const pts = _pressureSeriesFor(entity);
+        const maxYear = pts.length ? Math.max(...pts.map(p => p[0])) : null;
+        const minEndYear = Math.min(...activeScenarios.map(s => s.yearTo ?? Infinity));
+        const GAP = 4; // years: scenario ended this far before maxYear → decay is visible
+        if (maxYear && isFinite(minEndYear) && minEndYear < maxYear - GAP) {
+            const note = document.createElement('p');
+            note.style.cssText = 'margin:10px 0 0;font-size:0.72rem;color:var(--c-text-dim);line-height:1.5;border-top:1px solid var(--c-border);padding-top:8px';
+            note.innerHTML = `<strong style="color:var(--c-text)">Why does this look low?</strong> The active scenario ends in <strong>${minEndYear}</strong>, but the dataset runs to <strong>${maxYear}</strong>. The gauge measures the most recent years — which fall in the post-scenario window where effects are decaying back toward baseline, not the active-boost period.<br>
+<span style="margin-top:4px;display:block">To see the scenario's uplift on the gauge: extend its end year closer to ${maxYear}, or upload a dataset whose projections end at or before the scenario window.</span>`;
+            body.appendChild(note);
+        }
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════

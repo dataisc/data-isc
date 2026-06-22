@@ -1,73 +1,460 @@
 country,year,life_expectancy_years
-China,1990,69.3
-China,1995,70.5
 China,2000,71.7
+China,2001,72.0
+China,2002,72.3
+China,2003,72.6
+China,2004,72.9
 China,2005,73.2
+China,2006,73.6
+China,2007,74.0
+China,2008,74.4
+China,2009,74.8
 China,2010,75.2
+China,2011,75.4
+China,2012,75.6
+China,2013,75.9
+China,2014,76.1
 China,2015,76.3
+China,2016,76.6
+China,2017,76.9
+China,2018,77.2
+China,2019,77.5
 China,2020,77.8
+China,2021,78.0
 China,2022,78.2
-United States,1990,75.3
-United States,1995,75.8
+China,2023,78.4
+China,2024,78.7
+China,2025,78.9
+China,2026,79.1
+China,2027,79.3
+China,2028,79.5
+China,2029,79.8
+China,2030,80.0
+China,2031,80.2
+China,2032,80.4
+China,2033,80.6
+China,2034,80.8
+China,2035,81.0
+China,2036,81.2
+China,2037,81.4
+China,2038,81.6
+China,2039,81.8
+China,2040,82.0
+China,2041,82.1
+China,2042,82.3
+China,2043,82.5
+China,2044,82.7
+China,2045,82.9
+China,2046,83.0
+China,2047,83.2
+China,2048,83.4
+China,2049,83.5
+China,2050,83.7
 United States,2000,76.9
+United States,2001,77.0
+United States,2002,77.1
+United States,2003,77.3
+United States,2004,77.4
 United States,2005,77.5
+United States,2006,77.7
+United States,2007,77.9
+United States,2008,78.2
+United States,2009,78.4
 United States,2010,78.6
+United States,2011,78.6
+United States,2012,78.6
+United States,2013,78.7
+United States,2014,78.7
 United States,2015,78.7
+United States,2016,78.4
+United States,2017,78.0
+United States,2018,77.7
+United States,2019,77.3
 United States,2020,77.0
+United States,2021,77.2
 United States,2022,77.5
-India,1990,58.5
-India,1995,61.1
+United States,2023,77.7
+United States,2024,77.9
+United States,2025,78.1
+United States,2026,78.3
+United States,2027,78.5
+United States,2028,78.7
+United States,2029,78.9
+United States,2030,79.0
+United States,2031,79.2
+United States,2032,79.4
+United States,2033,79.6
+United States,2034,79.8
+United States,2035,79.9
+United States,2036,80.1
+United States,2037,80.3
+United States,2038,80.5
+United States,2039,80.6
+United States,2040,80.8
+United States,2041,81.0
+United States,2042,81.1
+United States,2043,81.3
+United States,2044,81.4
+United States,2045,81.6
+United States,2046,81.7
+United States,2047,81.9
+United States,2048,82.1
+United States,2049,82.2
+United States,2050,82.3
 India,2000,63.1
+India,2001,63.5
+India,2002,64.0
+India,2003,64.4
+India,2004,64.9
 India,2005,65.3
+India,2006,65.6
+India,2007,66.0
+India,2008,66.3
+India,2009,66.7
 India,2010,67.0
+India,2011,67.4
+India,2012,67.7
+India,2013,68.1
+India,2014,68.4
 India,2015,68.8
+India,2016,69.1
+India,2017,69.4
+India,2018,69.8
+India,2019,70.1
 India,2020,70.4
+India,2021,70.6
 India,2022,70.8
-Germany,1990,75.2
-Germany,1995,76.5
+India,2023,71.1
+India,2024,71.4
+India,2025,71.8
+India,2026,72.1
+India,2027,72.4
+India,2028,72.7
+India,2029,73.0
+India,2030,73.3
+India,2031,73.6
+India,2032,73.9
+India,2033,74.2
+India,2034,74.4
+India,2035,74.7
+India,2036,75.0
+India,2037,75.3
+India,2038,75.6
+India,2039,75.8
+India,2040,76.1
+India,2041,76.4
+India,2042,76.6
+India,2043,76.9
+India,2044,77.1
+India,2045,77.4
+India,2046,77.7
+India,2047,77.9
+India,2048,78.1
+India,2049,78.4
+India,2050,78.6
 Germany,2000,78.0
+Germany,2001,78.3
+Germany,2002,78.6
+Germany,2003,78.8
+Germany,2004,79.1
 Germany,2005,79.4
+Germany,2006,79.6
+Germany,2007,79.8
+Germany,2008,79.9
+Germany,2009,80.1
 Germany,2010,80.3
+Germany,2011,80.4
+Germany,2012,80.5
+Germany,2013,80.5
+Germany,2014,80.6
 Germany,2015,80.7
+Germany,2016,80.7
+Germany,2017,80.8
+Germany,2018,80.8
+Germany,2019,80.9
 Germany,2020,80.9
+Germany,2021,80.8
 Germany,2022,80.7
-Brazil,1990,66.7
-Brazil,1995,69.3
+Germany,2023,80.8
+Germany,2024,80.9
+Germany,2025,81.1
+Germany,2026,81.2
+Germany,2027,81.3
+Germany,2028,81.4
+Germany,2029,81.5
+Germany,2030,81.6
+Germany,2031,81.7
+Germany,2032,81.8
+Germany,2033,81.9
+Germany,2034,82.0
+Germany,2035,82.1
+Germany,2036,82.2
+Germany,2037,82.3
+Germany,2038,82.4
+Germany,2039,82.5
+Germany,2040,82.6
+Germany,2041,82.7
+Germany,2042,82.8
+Germany,2043,82.9
+Germany,2044,83.0
+Germany,2045,83.1
+Germany,2046,83.2
+Germany,2047,83.3
+Germany,2048,83.3
+Germany,2049,83.4
+Germany,2050,83.5
 Brazil,2000,71.1
+Brazil,2001,71.4
+Brazil,2002,71.7
+Brazil,2003,71.9
+Brazil,2004,72.2
 Brazil,2005,72.5
+Brazil,2006,72.8
+Brazil,2007,73.1
+Brazil,2008,73.3
+Brazil,2009,73.6
 Brazil,2010,73.9
+Brazil,2011,74.2
+Brazil,2012,74.4
+Brazil,2013,74.7
+Brazil,2014,74.9
 Brazil,2015,75.2
+Brazil,2016,75.3
+Brazil,2017,75.5
+Brazil,2018,75.6
+Brazil,2019,75.8
 Brazil,2020,75.9
+Brazil,2021,75.7
 Brazil,2022,75.5
-Japan,1990,79.0
-Japan,1995,80.0
+Brazil,2023,75.7
+Brazil,2024,76.0
+Brazil,2025,76.2
+Brazil,2026,76.4
+Brazil,2027,76.7
+Brazil,2028,76.9
+Brazil,2029,77.1
+Brazil,2030,77.3
+Brazil,2031,77.6
+Brazil,2032,77.8
+Brazil,2033,78.0
+Brazil,2034,78.2
+Brazil,2035,78.4
+Brazil,2036,78.6
+Brazil,2037,78.8
+Brazil,2038,79.0
+Brazil,2039,79.2
+Brazil,2040,79.4
+Brazil,2041,79.5
+Brazil,2042,79.7
+Brazil,2043,79.9
+Brazil,2044,80.1
+Brazil,2045,80.3
+Brazil,2046,80.4
+Brazil,2047,80.6
+Brazil,2048,80.8
+Brazil,2049,80.9
+Brazil,2050,81.1
 Japan,2000,81.0
+Japan,2001,81.2
+Japan,2002,81.4
+Japan,2003,81.7
+Japan,2004,81.9
 Japan,2005,82.1
+Japan,2006,82.3
+Japan,2007,82.5
+Japan,2008,82.6
+Japan,2009,82.8
 Japan,2010,83.0
+Japan,2011,83.2
+Japan,2012,83.3
+Japan,2013,83.5
+Japan,2014,83.6
 Japan,2015,83.8
+Japan,2016,84.0
+Japan,2017,84.2
+Japan,2018,84.3
+Japan,2019,84.5
 Japan,2020,84.7
+Japan,2021,84.5
 Japan,2022,84.3
-Nigeria,1990,45.0
-Nigeria,1995,45.9
+Japan,2023,84.4
+Japan,2024,84.6
+Japan,2025,84.7
+Japan,2026,84.8
+Japan,2027,84.9
+Japan,2028,85.1
+Japan,2029,85.2
+Japan,2030,85.3
+Japan,2031,85.4
+Japan,2032,85.5
+Japan,2033,85.6
+Japan,2034,85.8
+Japan,2035,85.9
+Japan,2036,86.0
+Japan,2037,86.1
+Japan,2038,86.2
+Japan,2039,86.3
+Japan,2040,86.4
+Japan,2041,86.5
+Japan,2042,86.6
+Japan,2043,86.7
+Japan,2044,86.8
+Japan,2045,86.9
+Japan,2046,87.0
+Japan,2047,87.1
+Japan,2048,87.2
+Japan,2049,87.3
+Japan,2050,87.4
 Nigeria,2000,46.5
+Nigeria,2001,46.8
+Nigeria,2002,47.1
+Nigeria,2003,47.4
+Nigeria,2004,47.7
 Nigeria,2005,48.0
+Nigeria,2006,48.6
+Nigeria,2007,49.3
+Nigeria,2008,49.9
+Nigeria,2009,50.6
 Nigeria,2010,51.2
+Nigeria,2011,51.6
+Nigeria,2012,52.1
+Nigeria,2013,52.5
+Nigeria,2014,53.0
 Nigeria,2015,53.4
+Nigeria,2016,53.8
+Nigeria,2017,54.1
+Nigeria,2018,54.5
+Nigeria,2019,54.8
 Nigeria,2020,55.2
+Nigeria,2021,55.5
 Nigeria,2022,55.7
-France,1990,77.0
-France,1995,78.0
+Nigeria,2023,56.2
+Nigeria,2024,56.6
+Nigeria,2025,57.1
+Nigeria,2026,57.5
+Nigeria,2027,57.9
+Nigeria,2028,58.4
+Nigeria,2029,58.8
+Nigeria,2030,59.2
+Nigeria,2031,59.6
+Nigeria,2032,60.1
+Nigeria,2033,60.5
+Nigeria,2034,60.9
+Nigeria,2035,61.3
+Nigeria,2036,61.6
+Nigeria,2037,62.0
+Nigeria,2038,62.4
+Nigeria,2039,62.8
+Nigeria,2040,63.1
+Nigeria,2041,63.5
+Nigeria,2042,63.9
+Nigeria,2043,64.2
+Nigeria,2044,64.5
+Nigeria,2045,64.9
+Nigeria,2046,65.2
+Nigeria,2047,65.5
+Nigeria,2048,65.9
+Nigeria,2049,66.2
+Nigeria,2050,66.5
 France,2000,79.2
+France,2001,79.5
+France,2002,79.8
+France,2003,80.1
+France,2004,80.4
 France,2005,80.7
+France,2006,80.9
+France,2007,81.1
+France,2008,81.4
+France,2009,81.6
 France,2010,81.8
+France,2011,81.9
+France,2012,82.0
+France,2013,82.2
+France,2014,82.3
 France,2015,82.4
+France,2016,82.4
+France,2017,82.4
+France,2018,82.3
+France,2019,82.3
 France,2020,82.3
+France,2021,82.4
 France,2022,82.5
-South Korea,1990,72.0
-South Korea,1995,73.9
+France,2023,82.6
+France,2024,82.8
+France,2025,82.9
+France,2026,83.0
+France,2027,83.1
+France,2028,83.3
+France,2029,83.4
+France,2030,83.5
+France,2031,83.6
+France,2032,83.7
+France,2033,83.8
+France,2034,84.0
+France,2035,84.1
+France,2036,84.2
+France,2037,84.3
+France,2038,84.4
+France,2039,84.5
+France,2040,84.6
+France,2041,84.7
+France,2042,84.8
+France,2043,84.9
+France,2044,85.0
+France,2045,85.1
+France,2046,85.2
+France,2047,85.3
+France,2048,85.4
+France,2049,85.5
+France,2050,85.6
 South Korea,2000,76.0
+South Korea,2001,76.5
+South Korea,2002,76.9
+South Korea,2003,77.4
+South Korea,2004,77.8
 South Korea,2005,78.3
+South Korea,2006,78.8
+South Korea,2007,79.3
+South Korea,2008,79.7
+South Korea,2009,80.2
 South Korea,2010,80.7
+South Korea,2011,81.0
+South Korea,2012,81.3
+South Korea,2013,81.7
+South Korea,2014,82.0
 South Korea,2015,82.3
+South Korea,2016,82.5
+South Korea,2017,82.8
+South Korea,2018,83.0
+South Korea,2019,83.3
 South Korea,2020,83.5
+South Korea,2021,83.5
 South Korea,2022,83.6
+South Korea,2023,83.8
+South Korea,2024,84.0
+South Korea,2025,84.2
+South Korea,2026,84.3
+South Korea,2027,84.5
+South Korea,2028,84.7
+South Korea,2029,84.9
+South Korea,2030,85.0
+South Korea,2031,85.2
+South Korea,2032,85.4
+South Korea,2033,85.6
+South Korea,2034,85.7
+South Korea,2035,85.9
+South Korea,2036,86.0
+South Korea,2037,86.2
+South Korea,2038,86.3
+South Korea,2039,86.5
+South Korea,2040,86.6
+South Korea,2041,86.8
+South Korea,2042,86.9
+South Korea,2043,87.1
+South Korea,2044,87.2
+South Korea,2045,87.3
+South Korea,2046,87.5
+South Korea,2047,87.6
+South Korea,2048,87.7
+South Korea,2049,87.9
+South Korea,2050,88.0
