@@ -20,11 +20,18 @@
  *   }
  */
 
+const fs = require('fs');
+const path = require('path');
+
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { z } = require('zod');
 
 const { buildTimeline, buildScenario, buildMultiScenario } = require('./models/gdp-trajectories/compute');
+const {
+    parseCSV, detectSchema, BLACK_SWAN_PRESETS,
+    presetEntityOverrides, applyScenarioStack, normalizeScenario,
+} = require('./models/generic/engine');
 
 const countries = require('./models/gdp-trajectories/data/seed_data.json');
 const policies  = require('./models/gdp-trajectories/data/scenarios_policy.json');
@@ -358,6 +365,232 @@ server.tool(
                 text: `Regional GDP summary — ${year} (nominal USD)\n\n${lines.join('\n')}`,
             }],
         };
+    }
+);
+
+// ── Generic dataset helpers ──────────────────────────────────────────────────
+
+function loadCSV(filePath, csvContent) {
+    if (filePath) {
+        const resolved = path.resolve(filePath);
+        if (!fs.existsSync(resolved)) throw new Error(`File not found: ${resolved}`);
+        return fs.readFileSync(resolved, 'utf8');
+    }
+    if (csvContent) return csvContent;
+    throw new Error('Provide either file_path or csv_content.');
+}
+
+function schemaFromArgs(detectedSchema, entityCol, timeCol, valueCol) {
+    const base = detectedSchema.keys;
+    const entityKey = entityCol || base.category || base.geo || null;
+    const isGeo = entityKey ? /country|nation|iso|geo|region|province|state/i.test(entityKey) : false;
+    return {
+        ...detectedSchema,
+        keys: {
+            time:     timeCol    || base.time    || null,
+            value:    valueCol   || base.value   || null,
+            geo:      isGeo ? entityKey : null,
+            category: !isGeo ? entityKey : null,
+        },
+    };
+}
+
+function buildComparisonTable(rows, schema, scenarioObj) {
+    const entityKey = schema.keys.category || schema.keys.geo;
+    const timeKey   = schema.keys.time;
+    const valueKey  = schema.keys.value;
+    if (!timeKey || !valueKey) return 'Missing time or value column in schema.';
+
+    const adjusted = applyScenarioStack(rows, schema, [scenarioObj]);
+
+    // Group by entity → year → {baseline, scenario}
+    const table = {};
+    for (let i = 0; i < rows.length; i++) {
+        const entity = entityKey ? (rows[i][entityKey] || '(all)') : '(all)';
+        const time   = rows[i][timeKey];
+        const base   = parseFloat(String(rows[i][valueKey]).replace(/[,$%]/g, ''));
+        const scen   = parseFloat(String(adjusted[i][valueKey]).replace(/[,$%]/g, ''));
+        if (!table[entity]) table[entity] = {};
+        table[entity][time] = { base, scen };
+    }
+
+    const entities = Object.keys(table);
+    const lines = [];
+    const sc = normalizeScenario(scenarioObj);
+    lines.push(`Scenario: ${sc.name || 'custom'} · ${sc.deltaPct >= 0 ? '+' : ''}${sc.deltaPct}%/yr · ${sc.yearFrom}–${sc.yearTo}`);
+    lines.push(`Columns: entity\ttime\tbaseline\tscenario\tdelta%\n`);
+
+    for (const entity of entities) {
+        const years = Object.keys(table[entity]).sort();
+        for (const yr of years) {
+            const { base, scen } = table[entity][yr];
+            const delta = base !== 0 ? (((scen - base) / Math.abs(base)) * 100).toFixed(2) + '%' : 'N/A';
+            const fmt = v => isNaN(v) ? 'N/A' : +v.toFixed(4);
+            lines.push(`${entity}\t${yr}\t${fmt(base)}\t${fmt(scen)}\t${delta}`);
+        }
+    }
+    return lines.join('\n');
+}
+
+// ── Tool: load_dataset ───────────────────────────────────────────────────────
+server.tool(
+    'load_dataset',
+    'Load a CSV or TSV file and auto-detect its schema (time, entity, and value columns). ' +
+    'Call this first before run_generic_scenario to confirm the column mapping.',
+    {
+        file_path: z.string().optional().describe(
+            'Absolute path to a CSV or TSV file on the local filesystem.'
+        ),
+        csv_content: z.string().optional().describe(
+            'Inline CSV/TSV text. Use file_path instead for files larger than ~50 KB.'
+        ),
+    },
+    async ({ file_path, csv_content }) => {
+        let raw;
+        try { raw = loadCSV(file_path, csv_content); }
+        catch (e) { return { content: [{ type: 'text', text: e.message }] }; }
+
+        const { columns, rows } = parseCSV(raw);
+        if (!rows.length) return { content: [{ type: 'text', text: 'File is empty or could not be parsed.' }] };
+
+        const schema = detectSchema(columns, rows);
+        const entityKey = schema.keys.category || schema.keys.geo;
+        const entities  = entityKey
+            ? [...new Set(rows.map(r => r[entityKey]).filter(Boolean))].sort()
+            : [];
+        const timeKey = schema.keys.time;
+        const times   = timeKey
+            ? [...new Set(rows.map(r => r[timeKey]).filter(Boolean))].sort()
+            : [];
+
+        const lines = [
+            `Rows: ${rows.length}   Columns: ${columns.join(', ')}`,
+            '',
+            'Detected schema:',
+            `  time column   : ${schema.keys.time    || '(none detected)'}  — confidence ${schema.confidence.time    || 'n/a'}`,
+            `  value column  : ${schema.keys.value   || '(none detected)'}  — confidence ${schema.confidence.value   || 'n/a'}`,
+            `  entity column : ${entityKey            || '(none detected)'}  — ${schema.confidence.entity || 'n/a'}`,
+            `  geographic    : ${schema.signals.geographic}`,
+            '',
+            `Entities (${entities.length}): ${entities.slice(0, 30).join(', ')}${entities.length > 30 ? ` … +${entities.length - 30} more` : ''}`,
+            `Time range: ${times[0] ?? '?'} → ${times[times.length - 1] ?? '?'}  (${times.length} distinct values)`,
+            '',
+            'Sample (first 3 rows):',
+            columns.join('\t'),
+            ...rows.slice(0, 3).map(r => columns.map(c => r[c] ?? '').join('\t')),
+            '',
+            'Use run_generic_scenario with these column names, or override them if the detection is wrong.',
+        ];
+
+        return { content: [{ type: 'text', text: lines.join('\n') }] };
+    }
+);
+
+// ── Tool: list_black_swan_presets ────────────────────────────────────────────
+server.tool(
+    'list_black_swan_presets',
+    'List the five built-in Black Swan scenario presets. Each preset computes per-entity impact ' +
+    'rates from the dataset\'s own statistics — no AI key required.',
+    {},
+    async () => {
+        const statDesc = { momentum: 'compound growth rate', size: 'latest value', volatility: 'year-on-year volatility' };
+        const lines = BLACK_SWAN_PRESETS.map(p => {
+            const d = p.disperse;
+            const dispDesc = d
+                ? `Disperses by ${statDesc[d.stat] || d.stat}: ${d.dir > 0 ? 'high-stat' : 'low-stat'} entities get the most ${p.deltaPct >= 0 ? 'positive' : 'negative'} effect. Spread: ±${d.spread}pp.`
+                : 'Uniform — same rate for every entity.';
+            return `[${p.id}] ${p.icon} ${p.name}  (${p.headline})
+  Category : ${p.category}
+  Effect   : ${p.description}
+  Disperse : ${dispDesc}`;
+        });
+        return { content: [{ type: 'text', text: lines.join('\n\n') }] };
+    }
+);
+
+// ── Tool: run_generic_scenario ───────────────────────────────────────────────
+server.tool(
+    'run_generic_scenario',
+    'Apply a what-if scenario to any imported dataset and return a baseline-vs-scenario comparison table. ' +
+    'Use load_dataset first to confirm the column names. Supply either preset_id (uses a Black Swan preset) ' +
+    'or an inline scenario JSON object.',
+    {
+        file_path: z.string().optional().describe('Absolute path to the CSV/TSV file.'),
+        csv_content: z.string().optional().describe('Inline CSV/TSV text (for small datasets).'),
+        entity_col: z.string().optional().describe('Entity column name. Defaults to auto-detected value from load_dataset.'),
+        time_col:   z.string().optional().describe('Time column name. Defaults to auto-detected value.'),
+        value_col:  z.string().optional().describe('Value column name. Defaults to auto-detected value.'),
+        preset_id: z.string().optional().describe(
+            'Black Swan preset ID (e.g. "automation-wave"). Mutually exclusive with scenario_json. ' +
+            'Use list_black_swan_presets to see all IDs.'
+        ),
+        scenario_json: z.string().optional().describe(
+            'Inline scenario as a JSON string. Fields: name, year_from, year_to, default_delta_pct, ' +
+            'entity_overrides (array of {entity, delta_pct}), phases (array of {year_from, year_to, delta_pct}), ' +
+            'growth_ceiling. Mutually exclusive with preset_id.'
+        ),
+        filter_entities: z.string().optional().describe(
+            'Optional comma-separated list of entity names to include in the output. Returns all if omitted.'
+        ),
+    },
+    async ({ file_path, csv_content, entity_col, time_col, value_col, preset_id, scenario_json, filter_entities }) => {
+        // Load CSV
+        let raw;
+        try { raw = loadCSV(file_path, csv_content); }
+        catch (e) { return { content: [{ type: 'text', text: e.message }] }; }
+
+        const { columns, rows } = parseCSV(raw);
+        if (!rows.length) return { content: [{ type: 'text', text: 'File is empty or could not be parsed.' }] };
+
+        // Resolve schema
+        const detected = detectSchema(columns, rows);
+        const schema   = schemaFromArgs(detected, entity_col, time_col, value_col);
+
+        if (!schema.keys.time)  return { content: [{ type: 'text', text: 'Could not detect a time column. Provide time_col explicitly.' }] };
+        if (!schema.keys.value) return { content: [{ type: 'text', text: 'Could not detect a value column. Provide value_col explicitly.' }] };
+
+        // Resolve scenario
+        let scenarioObj;
+        if (preset_id) {
+            const preset = BLACK_SWAN_PRESETS.find(p => p.id === preset_id);
+            if (!preset) {
+                const ids = BLACK_SWAN_PRESETS.map(p => p.id).join(', ');
+                return { content: [{ type: 'text', text: `Unknown preset_id "${preset_id}". Valid IDs: ${ids}` }] };
+            }
+            // Derive year range from the dataset
+            const entityKey = schema.keys.category || schema.keys.geo;
+            const timeKey   = schema.keys.time;
+            const timeVals  = [...new Set(rows.map(r => r[timeKey]).filter(Boolean))].sort();
+            const yearFrom  = parseInt(timeVals[0], 10) || 2020;
+            const yearTo    = parseInt(timeVals[timeVals.length - 1], 10) || 2040;
+            const overrides = entityKey ? presetEntityOverrides(rows, schema, preset, preset.deltaPct) : [];
+            scenarioObj = {
+                name:             preset.name,
+                description:      preset.description,
+                yearFrom, yearTo,
+                deltaPct:         preset.deltaPct,
+                entity_overrides: overrides,
+                growth_ceiling:   preset.ceiling ?? null,
+                entities:         [],
+            };
+        } else if (scenario_json) {
+            try { scenarioObj = normalizeScenario(JSON.parse(scenario_json)); }
+            catch { return { content: [{ type: 'text', text: 'scenario_json is not valid JSON.' }] }; }
+        } else {
+            return { content: [{ type: 'text', text: 'Provide either preset_id or scenario_json.' }] };
+        }
+
+        // Filter entities if requested
+        let workRows = rows;
+        if (filter_entities) {
+            const wanted = new Set(filter_entities.split(',').map(s => s.trim().toLowerCase()));
+            const entityKey = schema.keys.category || schema.keys.geo;
+            if (entityKey) workRows = rows.filter(r => wanted.has(String(r[entityKey] || '').toLowerCase()));
+            if (!workRows.length) return { content: [{ type: 'text', text: `No rows matched filter_entities: ${filter_entities}` }] };
+        }
+
+        const text = buildComparisonTable(workRows, schema, scenarioObj);
+        return { content: [{ type: 'text', text }] };
     }
 );
 
