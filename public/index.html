@@ -9575,11 +9575,17 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
                 .attr('x', W - M.right + 32).attr('y', legY + 13)
                 .attr('fill', 'var(--c-text-dim)').attr('font-size', '10px')
                 .text(`${sign}${scenario.deltaPct.toFixed(1)}%/yr`);
-            // Key: solid baseline vs dashed scenario vs shaded impact
-            [['— baseline', 32], ['- - scenario', 45], ['▨ impact', 58]].forEach(([t, dy]) =>
-                svg.append('text')
-                    .attr('x', W - M.right + 12).attr('y', legY + dy)
-                    .attr('fill', 'var(--c-text-dim)').attr('font-size', '9.5px').text(t));
+            // Key: solid=baseline, dashed=scenario, shaded=impact
+            const keyX = W - M.right + 12;
+            [
+                { dy: 34, draw: g => { g.append('line').attr('x1',0).attr('x2',16).attr('y1',4).attr('y2',4).attr('stroke','var(--c-text-dim)').attr('stroke-width',1.5); }, label: 'baseline' },
+                { dy: 48, draw: g => { g.append('line').attr('x1',0).attr('x2',16).attr('y1',4).attr('y2',4).attr('stroke','#fbbf24').attr('stroke-width',1.5).attr('stroke-dasharray','4,3'); }, label: 'scenario' },
+                { dy: 62, draw: g => { g.append('rect').attr('x',0).attr('y',0).attr('width',14).attr('height',8).attr('fill','#22c55e').attr('opacity',0.25).attr('rx',2); }, label: 'impact' },
+            ].forEach(({ dy, draw, label }) => {
+                const kg = svg.append('g').attr('transform', `translate(${keyX},${legY + dy})`);
+                draw(kg);
+                kg.append('text').attr('x', 20).attr('y', 8).attr('fill', 'var(--c-text-dim)').attr('font-size', '10px').text(label);
+            });
         }
     }
 
