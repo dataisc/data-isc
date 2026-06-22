@@ -844,7 +844,7 @@
             <h2 style="margin:0">💓 Growth Pulse</h2>
             <select id="pressureEntitySelect" onchange="renderPressureGauge()" class="import-ds-select" style="max-width:240px;display:none"></select>
         </div>
-        <p class="scenario-hint" style="margin-top:6px">Reads the series' recent trajectory — growth velocity and whether it's accelerating or stalling — to flag systemic strain. Reflects the active scenario and projection.</p>
+        <p class="scenario-hint" style="margin-top:6px">Reads the series' recent trajectory — growth velocity and acceleration — to score momentum from 0 (declining) to 100 (thriving). Reflects the active scenario and projection.</p>
         <div id="pressureGaugeBody" style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center;padding:6px 0"></div>
     </div>
 
@@ -7885,24 +7885,23 @@ function renderPressureGauge() {
     section.style.display = '';
 
     // ── SVG semicircular gauge — monochrome, professional ──────────────
-    // Hub at bottom-center. Arc sweeps 180° from left (Low/0) to right (High/100).
-    // SVG angles: 180°=left, 90°=top, 0°=right. sin is positive 0→180°, so
-    // cy - R*sin(a) goes UP, which is correct for a gauge opening downward.
+    // Hub at bottom-center. Arc sweeps 180° from left (Declining/0) to right (Thriving/100).
+    // Score is inverted from internal strain so higher = better growth.
     const VW = 220, VH = 140;
     const cx = 110, cy = 118;   // hub well inside the viewBox bottom
     const R = 90, sw = 9;
     const toRad = d => d * Math.PI / 180;
     const angleFor = v => 180 - Math.max(0, Math.min(100, v)) * 1.8; // 0→180°, 100→0°
     const gpt = a => [cx + R * Math.cos(toRad(a)), cy - R * Math.sin(toRad(a))];
+    const growthScore = Math.round(100 - stats.strain); // invert: 100 = thriving, 0 = declining
 
     // Track — full 180° arc
     const [lx, ly] = gpt(180), [rx, ry] = gpt(0);
     const track = `<path d="M ${lx.toFixed(1)} ${ly.toFixed(1)} A ${R} ${R} 0 0 1 ${rx.toFixed(1)} ${ry.toFixed(1)}"
         fill="none" stroke="var(--c-border)" stroke-width="${sw}" stroke-linecap="butt"/>`;
 
-    // Filled arc up to strain value
-    // Filled arc — large-arc is ALWAYS 0: the fill is always ≤ 180° so the short arc is correct
-    const sv = Math.min(stats.strain, 99.6);
+    // Filled arc up to growth score (right = thriving)
+    const sv = Math.min(100 - stats.strain, 99.6);
     const [fx, fy] = gpt(angleFor(sv));
     const filled = sv > 0.5
         ? `<path d="M ${lx.toFixed(1)} ${ly.toFixed(1)} A ${R} ${R} 0 0 1 ${fx.toFixed(1)} ${fy.toFixed(1)}"
@@ -7918,19 +7917,18 @@ function renderPressureGauge() {
                       stroke="var(--c-border)" stroke-width="1.5"/>`;
     }).join('');
 
-    // Labels: Low (left end), Mid (top), High (right end)
+    // Labels: Declining (left), 50 (top), Thriving (right)
     const labels = [
-        [0,   'Low',  lx - 4, ly + 14, 'end'],
-        [50,  '50',   cx,     cy - R - 12, 'middle'],
-        [100, 'High', rx + 4, ry + 14, 'start'],
-    ].map(([,,x,y,anchor,label], i, arr) => {
-        const text = ['Low','50','High'][i];
-        return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="9.5"
-            fill="var(--c-text-dim)" text-anchor="${anchor}" font-family="system-ui,sans-serif">${text}</text>`;
-    }).join('');
+        [lx - 4,  ly + 14, 'end',    'Declining'],
+        [cx,      cy - R - 12, 'middle', '50'],
+        [rx + 4,  ry + 14, 'start',  'Thriving'],
+    ].map(([x, y, anchor, text]) =>
+        `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="9.5"
+            fill="var(--c-text-dim)" text-anchor="${anchor}" font-family="system-ui,sans-serif">${text}</text>`
+    ).join('');
 
-    // Needle — from hub center straight to just inside track
-    const na = toRad(angleFor(stats.strain));
+    // Needle — points toward growth score (right = thriving)
+    const na = toRad(angleFor(100 - stats.strain));
     const nLen = R - sw / 2 - 4;
     const [ntx, nty] = [cx + nLen * Math.cos(na), cy - nLen * Math.sin(na)];
     const needle = `
@@ -7948,7 +7946,7 @@ function renderPressureGauge() {
     const rSign = stats.recentGrowth >= 0 ? '+' : '−';
     const mDir  = stats.momentum >= 0 ? 'Accelerating' : 'Decelerating';
     const readout = `<div style="min-width:160px;padding-left:8px;border-left:1px solid var(--c-border)">
-        <div style="font-size:2.4rem;font-weight:800;line-height:1;color:var(--c-heading);letter-spacing:-0.02em">${Math.round(stats.strain)}<span style="font-size:0.9rem;color:var(--c-text-dim);font-weight:400;margin-left:4px">/ 100</span></div>
+        <div style="font-size:2.4rem;font-weight:800;line-height:1;color:var(--c-heading);letter-spacing:-0.02em">${growthScore}<span style="font-size:0.9rem;color:var(--c-text-dim);font-weight:400;margin-left:4px">/ 100</span></div>
         <div style="font-size:0.75rem;font-weight:600;color:var(--c-text);margin-top:6px;text-transform:uppercase;letter-spacing:0.07em">${stats.caption}</div>
         <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:20px">
