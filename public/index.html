@@ -4739,6 +4739,12 @@ function showImportPreview(filename, data, columns) {
     preview.innerHTML = _renderImportPreviewHTML(filename, data, columns);
     _updateMappingSummary();
 
+    // Hide the standalone GDP what-if section while the import flow is active
+    const standaloneSection = document.getElementById('standaloneWhatifSection');
+    const standaloneSep     = document.getElementById('standaloneWhatifSep');
+    if (standaloneSection) standaloneSection.style.display = 'none';
+    if (standaloneSep)     standaloneSep.style.display     = 'none';
+
     // Show scenario step immediately below mapping — final "Confirm import →" is at the bottom
     _importScenarioCards = [];
     document.getElementById('importScenariosList').innerHTML = '';
@@ -5025,6 +5031,8 @@ function cancelImport() {
     preview.style.display = 'none';
     preview.innerHTML = '';
     const stepEl = document.getElementById('importScenarioStep');
+    const standaloneSection = document.getElementById('standaloneWhatifSection');
+    const standaloneSep     = document.getElementById('standaloneWhatifSep');
     if (_activeImportDS) {
         // Editing mode — restore "Done ✓" label and keep scenario step visible
         const doneBtn = document.getElementById('importDoneBtn');
@@ -5036,6 +5044,9 @@ function cancelImport() {
         stepEl.style.display = 'none';
         _importScenarioCards = [];
         document.getElementById('importScenariosList').innerHTML = '';
+        // Restore standalone section (it was hidden during import flow)
+        if (standaloneSection) standaloneSection.style.display = '';
+        if (standaloneSep)     standaloneSep.style.display     = '';
     }
 }
 
