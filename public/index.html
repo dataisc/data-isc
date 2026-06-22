@@ -1118,8 +1118,8 @@
                     <button id="addScenarioBtn" onclick="addImportScenario()" class="btn-blue-pill" style="border-radius:6px;padding:3px 10px;font-size:0.82rem;cursor:pointer;font-weight:600">+ Add scenario</button>
                 </div>
                 <p id="scenarioStepHint" style="color:#6b7f99;font-size:0.8rem;margin:0 0 10px">Build scenarios with per-entity rates, phases, and growth ceilings — or describe one in plain language below.</p>
-                <!-- AI scenario generator (import mode) -->
-                <div id="importAIGenPanel" style="margin-bottom:12px;border:1px solid var(--c-border);border-radius:8px;overflow:hidden">
+                <!-- AI scenario generator (import mode) — shown only when _aiConnected() is true -->
+                <div id="importAIGenPanel" style="display:none;margin-bottom:12px;border:1px solid var(--c-border);border-radius:8px;overflow:hidden">
                     <button onclick="toggleImportAIGen()" id="importAIGenToggle"
                         style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c-surface);border:none;cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--c-text)">
                         <span id="importAIStatusDot" class="ai-dot ai-dot-off" style="flex-shrink:0"></span>
