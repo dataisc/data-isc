@@ -44,6 +44,46 @@ The same static build also powers the [GitHub Pages demo](https://dataisc.github
 
 ---
 
+## How it works — in six steps
+
+### 1 · Import any dataset
+
+![Step 1 — import: preview table and automatic column detection](docs/step-1-import.svg)
+
+Drop a **CSV, XLSX, JSON** file or paste a public URL. The engine auto-detects the time axis, entities, and value column — no fixed schema, no template. Confirm the mapping and you're in.
+
+### 2 · Visualize every view
+
+![Step 2 — switching between map, chart and race views](docs/step-2-visualize.svg)
+
+Switch freely between a **choropleth map, trajectory chart, bar-chart race, and data table**. Scrub through time on any of them, and share any view by URL.
+
+### 3 · Run what-if scenarios
+
+![Step 3 — applying a what-if scenario and seeing divergence from baseline](docs/step-3-scenario.svg)
+
+Apply a one-click **🦢 Black Swan** shock (automation wave, fertility crisis, decoupling, pandemic, energy) or build a custom scenario with per-entity rates and time-phased impacts. See the divergence from baseline instantly — no AI key required.
+
+### 4 · Branch & compare futures
+
+![Step 4 — branching into two futures and comparing the gap](docs/step-4-compare.svg)
+
+Branch the baseline into **two rival futures**, each its own stack of scenarios, and watch the timelines diverge on one graph — with a shaded divergence band and live "gap by year" readouts.
+
+### 5 · Race the rankings
+
+![Step 5 — animated bar chart race of the rankings 1990 to 2100](docs/step-5-race.svg)
+
+Play an animated **bar-chart race** across the full timeline. Scenario effects reshape it live, and smart callouts surface leader changes and milestones as they happen.
+
+### 6 · Export to social video
+
+![Step 6 — exporting the race as a social video in multiple formats](docs/step-6-export.svg)
+
+Export the race as a **WebM video** in 16:9 (LinkedIn/Facebook), 1:1 (Instagram), or 9:16 (Reels/TikTok/Shorts) — ready to post, no editing required.
+
+---
+
 ## Quick start
 
 ```bash
