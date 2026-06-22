@@ -66,6 +66,55 @@ app.get('/api/simulate', (req, res) => {
     );
 });
 
+// Simulate a custom AI-generated scenario (no preset ID required)
+app.post('/api/simulate-custom', (req, res) => {
+    const { scenario: sc, startYear, scope } = req.body || {};
+
+    // Validate startYear
+    const year = parseInt(startYear, 10);
+    if (isNaN(year) || year < 2026 || year > 2080)
+        return res.status(400).json({ error: 'startYear must be 2026–2080' });
+
+    // Validate scenario fields
+    if (!sc || typeof sc !== 'object')
+        return res.status(400).json({ error: 'scenario object required' });
+
+    const impact = parseFloat(sc.annual_growth_impact);
+    if (!isFinite(impact) || impact < -0.5 || impact > 0.5)
+        return res.status(400).json({ error: 'annual_growth_impact must be a number in [-0.5, 0.5]' });
+
+    const dur   = sc.duration_years === null ? null : parseInt(sc.duration_years, 10);
+    const recov = parseInt(sc.recovery_years ?? 0, 10);
+    const boost = parseFloat(sc.recovery_boost ?? 0);
+
+    if (dur !== null && (isNaN(dur) || dur < 1 || dur > 100))
+        return res.status(400).json({ error: 'duration_years must be 1–100 or null' });
+    if (isNaN(recov) || recov < 0 || recov > 50)
+        return res.status(400).json({ error: 'recovery_years must be 0–50' });
+    if (!isFinite(boost) || boost < -0.1 || boost > 0.1)
+        return res.status(400).json({ error: 'recovery_boost must be in [-0.1, 0.1]' });
+
+    const validCodes = new Set(countries.map(c => c.code));
+    const affected = Array.isArray(sc.affected_countries)
+        ? sc.affected_countries.filter(c => typeof c === 'string' && validCodes.has(c.toUpperCase())).map(c => c.toUpperCase())
+        : [];
+
+    const customScenario = {
+        id:                   'custom_ai',
+        name:                 String(sc.name || 'AI Scenario').slice(0, 60),
+        annual_growth_impact: impact,
+        duration_years:       dur,
+        recovery_years:       recov,
+        recovery_boost:       boost,
+        affected_countries:   affected,
+    };
+
+    const validScopes = ['global', 'default', 'country'];
+    const resolvedScope = validScopes.includes(scope) ? scope : (affected.length ? 'default' : 'global');
+
+    res.json(buildScenario(countries, customScenario, year, resolvedScope, null));
+});
+
 // ── Dev-only: save a recorded sample clip to /samples ───────────────
 // Used to generate README/GitHub demo clips from the in-browser recorder.
 // Disabled outside development; safe to remove once samples are captured.

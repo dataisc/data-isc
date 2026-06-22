@@ -743,6 +743,41 @@
 
         <p class="scenario-hint" id="scenarioHint">Select any combination from either tab — effects stack. Click an active card to deselect it.</p>
 
+        <!-- ── AI Scenario Generator ─────────────────────────────────── -->
+        <div id="aiScenarioGenPanel" style="margin-bottom:14px;border:1px solid var(--c-border);border-radius:10px;overflow:hidden">
+            <button onclick="toggleAIScenarioGen()" id="aiGenToggleBtn"
+                style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--c-surface);border:none;cursor:pointer;font-size:0.82rem;font-weight:600;color:var(--c-text)">
+                <span id="aiStatusDotGen" class="ai-dot ai-dot-off" style="flex-shrink:0"></span>
+                <span>Describe your own GDP scenario</span>
+                <span id="aiGenChevron" style="margin-left:auto;color:var(--c-text-dim);font-size:0.75rem">▼</span>
+            </button>
+            <div id="aiGenBody" style="display:none;padding:12px 14px;border-top:1px solid var(--c-border);background:var(--c-bg)">
+                <p style="margin:0 0 8px;font-size:0.78rem;color:var(--c-text-dim)">Describe a shock or policy in plain language — AI will estimate the GDP impact parameters.</p>
+                <textarea id="aiGenInput" rows="2" placeholder="e.g. A global trade war starting in 2028 cuts growth by 2% annually for 5 years, followed by a partial recovery…"
+                    style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-surface);color:var(--c-text);font-size:0.82rem;resize:vertical;font-family:inherit"></textarea>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                    <button onclick="runGDPScenarioAI()" id="aiGenRunBtn" class="btn-blue-pill"
+                        style="border-radius:6px;padding:5px 14px;font-size:0.82rem;cursor:pointer;font-weight:600">Generate</button>
+                    <span id="aiGenStatus" style="font-size:0.78rem;color:var(--c-text-dim)"></span>
+                </div>
+                <div id="aiGenResult" style="display:none;margin-top:12px;padding:10px 12px;border:1px solid var(--c-border);border-radius:8px;background:var(--c-surface)">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+                        <div>
+                            <div id="aiGenResultName" style="font-size:0.88rem;font-weight:700;color:var(--c-text-bright)"></div>
+                            <div id="aiGenResultParams" style="font-size:0.78rem;color:var(--c-text-dim);margin-top:2px"></div>
+                            <div id="aiGenResultRationale" style="font-size:0.78rem;color:#7dd3fc;margin-top:4px;font-style:italic"></div>
+                        </div>
+                        <div style="display:flex;gap:6px;flex-shrink:0">
+                            <button onclick="applyGDPScenarioAI()" class="btn-blue-pill"
+                                style="border-radius:6px;padding:4px 12px;font-size:0.78rem;cursor:pointer;font-weight:600">Apply</button>
+                            <button onclick="discardGDPScenarioAI()" class="btn-clear"
+                                style="font-size:0.78rem;padding:4px 8px">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="scenarioGrid" class="scenario-grid">
             <div class="loading">Loading scenarios…</div>
         </div>
@@ -5321,6 +5356,185 @@ async function callAI(prompt, { maxTokens = 1024 } = {}) {
 
 // ── AI-powered scenario analysis ────────────────────────────────────────────
 
+// ── Import data: validate AI response against dataset schema ─────────────────
+function _validateAndFixAIImpacts(impacts, ds) {
+    const tr = _dataTimeRange();
+    const entities = _dataEntities();
+    const entitySet = new Map(entities.map(e => [String(e).toLowerCase().trim(), String(e)]));
+    const warnings = [];
+    const valid = [];
+
+    for (const imp of impacts) {
+        if (!imp || typeof imp !== 'object') continue;
+
+        // Entity name: case-insensitive match; drop if no match found
+        const rawEntity = String(imp.entity ?? '').trim();
+        const matched = entitySet.get(rawEntity.toLowerCase());
+        if (!matched) {
+            // Try partial match as fallback
+            let bestMatch = null;
+            for (const [k, v] of entitySet) {
+                if (k.includes(rawEntity.toLowerCase()) || rawEntity.toLowerCase().includes(k)) {
+                    bestMatch = v; break;
+                }
+            }
+            if (!bestMatch) { warnings.push(`Unknown entity "${rawEntity}" — skipped`); continue; }
+            warnings.push(`Entity "${rawEntity}" matched to "${bestMatch}"`);
+            imp.entity = bestMatch;
+        } else {
+            imp.entity = matched; // normalise casing
+        }
+
+        // Year bounds: clamp to dataset range
+        const rawFrom = parseInt(imp.yearFrom, 10);
+        const rawTo   = parseInt(imp.yearTo,   10);
+        imp.yearFrom = isNaN(rawFrom) ? tr.min : Math.max(tr.min, Math.min(tr.max, rawFrom));
+        imp.yearTo   = isNaN(rawTo)   ? tr.max : Math.max(tr.min, Math.min(tr.max, rawTo));
+        if (imp.yearFrom > imp.yearTo) imp.yearTo = imp.yearTo + 1 <= tr.max ? imp.yearTo + 1 : imp.yearFrom;
+
+        // deltaPct: must be finite number, clamp to ±50
+        const rawDelta = parseFloat(imp.deltaPct);
+        if (!isFinite(rawDelta)) { warnings.push(`Invalid deltaPct for "${imp.entity}" — skipped`); continue; }
+        imp.deltaPct = Math.max(-50, Math.min(50, rawDelta));
+
+        valid.push(imp);
+    }
+    return { valid, warnings };
+}
+
+// ── GDP AI scenario: prompt builder ─────────────────────────────────────────
+function _buildGDPScenarioPrompt(description) {
+    const validCodes = TIMELINE?.countryMap ? Object.keys(TIMELINE.countryMap).filter(k => k.length <= 4 && k === k.toUpperCase()).slice(0, 80).join(', ') : 'USA, CHN, DEU, JPN, IND, GBR, FRA, BRA, CAN, AUS (ISO-3 codes)';
+
+    return `You are an expert macroeconomist specialising in long-run GDP scenario modelling.
+
+A user has described an economic shock or policy. Convert it into a structured scenario for a GDP simulation engine.
+
+═══ USER DESCRIPTION ═══
+"${description}"
+
+═══ ENGINE SCHEMA ═══
+Return ONLY a single valid JSON object — no explanation, no markdown, no code fences:
+{
+  "name": "<string, max 40 chars — concise scenario label>",
+  "annual_growth_impact": <number — annual GDP growth delta as a decimal, e.g. -0.02 for −2%/yr. Range: −0.15 to +0.15. Negative = GDP drag, positive = GDP boost>,
+  "duration_years": <integer 1–30, or null for permanent/indefinite>,
+  "recovery_years": <integer 0–20 — years of gradual recovery after the shock ends. 0 = no rebound>,
+  "recovery_boost": <number 0–0.05 — annual growth boost during recovery phase, e.g. 0.01 for +1%/yr. Use 0 if no recovery>,
+  "affected_countries": [<ISO-3 country codes from this list: ${validCodes}> — empty array [] means global effect],
+  "rationale": "<string, max 100 chars — one sentence explaining the economic mechanism>"
+}
+
+═══ CALIBRATION GUIDELINES ═══
+- Most real-world policy shocks: annual_growth_impact of ±0.5%–2% (−0.005 to −0.02)
+- Severe crises (financial crash, war): −3%–8% (−0.03 to −0.08)
+- Major stimulus or boom: +1%–3% (+0.01 to +0.03)
+- Duration: trade disputes 2–5 yrs, recessions 1–3 yrs, structural reforms 10–30 yrs, pandemics 2–4 yrs
+- Recovery boost should be slightly positive (0.005–0.015) only if cyclical rebound is plausible
+- affected_countries: list only the most meaningfully impacted countries; use [] for genuine global shocks
+- Be conservative: underestimating is safer than inventing large numbers`;
+}
+
+// Pending AI-generated GDP scenario waiting to be applied
+let _pendingGDPScenario = null;
+
+function toggleAIScenarioGen() {
+    const body    = document.getElementById('aiGenBody');
+    const chevron = document.getElementById('aiGenChevron');
+    const open    = body.style.display !== 'none';
+    body.style.display    = open ? 'none' : 'block';
+    chevron.textContent   = open ? '▼' : '▲';
+    // Mirror AI connection state dot
+    const dot = document.getElementById('aiStatusDotGen');
+    if (dot) dot.className = 'ai-dot ' + (_aiConnected() ? 'ai-dot-on' : 'ai-dot-off');
+}
+
+async function runGDPScenarioAI() {
+    if (!_aiConnected()) { openAISettings(); return; }
+    const input  = document.getElementById('aiGenInput');
+    const status = document.getElementById('aiGenStatus');
+    const result = document.getElementById('aiGenResult');
+    const desc   = input?.value?.trim();
+    if (!desc) { status.textContent = 'Please enter a scenario description.'; return; }
+
+    status.textContent = '🤖 Generating…';
+    result.style.display = 'none';
+    _pendingGDPScenario = null;
+
+    try {
+        const raw = await callAI(_buildGDPScenarioPrompt(desc), { maxTokens: 400 });
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('No JSON in response');
+        const sc = JSON.parse(match[0]);
+
+        // Validate and clamp
+        const impact = parseFloat(sc.annual_growth_impact);
+        if (!isFinite(impact)) throw new Error('annual_growth_impact must be a number');
+        sc.annual_growth_impact = Math.max(-0.5, Math.min(0.5, impact));
+        sc.duration_years       = sc.duration_years === null ? null : Math.max(1, Math.min(100, parseInt(sc.duration_years, 10) || 5));
+        sc.recovery_years       = Math.max(0, Math.min(50, parseInt(sc.recovery_years  ?? 0, 10) || 0));
+        sc.recovery_boost       = Math.max(-0.1, Math.min(0.1, parseFloat(sc.recovery_boost ?? 0) || 0));
+        sc.affected_countries   = Array.isArray(sc.affected_countries) ? sc.affected_countries.map(c => String(c).toUpperCase().trim()).filter(c => c.length >= 2 && c.length <= 4) : [];
+        sc.name                 = String(sc.name || 'AI Scenario').slice(0, 60);
+        _pendingGDPScenario     = sc;
+
+        // Show preview
+        const impactPct = (sc.annual_growth_impact * 100).toFixed(2);
+        const sign      = sc.annual_growth_impact >= 0 ? '+' : '';
+        const durLabel  = sc.duration_years === null ? 'permanent' : `${sc.duration_years} yr${sc.duration_years > 1 ? 's' : ''}`;
+        const recovLabel= sc.recovery_years > 0 ? ` → ${sc.recovery_years}-yr recovery` : '';
+        const scopeLabel= sc.affected_countries.length ? sc.affected_countries.slice(0, 5).join(', ') + (sc.affected_countries.length > 5 ? '…' : '') : 'Global';
+
+        document.getElementById('aiGenResultName').textContent   = sc.name;
+        document.getElementById('aiGenResultParams').textContent = `${sign}${impactPct}%/yr · ${durLabel}${recovLabel} · ${scopeLabel}`;
+        document.getElementById('aiGenResultRationale').textContent = sc.rationale || '';
+        result.style.display  = 'block';
+        status.textContent    = '';
+    } catch (e) {
+        status.textContent = `⚠ ${e.message}`;
+    }
+}
+
+async function applyGDPScenarioAI() {
+    if (!_pendingGDPScenario) return;
+    const sc = _pendingGDPScenario;
+    const status = document.getElementById('aiGenStatus');
+    status.textContent = 'Applying…';
+
+    try {
+        const body = { scenario: sc, startYear: scenarioStartYear, scope: sc.affected_countries.length ? 'default' : 'global' };
+        const resp = await fetch('/api/simulate-custom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!resp.ok) { const e = await resp.json(); throw new Error(e.error || resp.status); }
+        const result = await resp.json();
+        const countryMap = {};
+        result.countries.forEach(c => { countryMap[c.code] = c; });
+        SCENARIO_RESULT  = { ...result, countryMap };
+        activeScenarios  = [{ id: 'custom_ai', name: sc.name, icon: '🤖', description: sc.rationale || '', scope_default: sc.affected_countries.length ? 'default' : 'global' }];
+        activeScenario   = activeScenarios[0];
+        renderAll();
+        updateChartTabStates();
+        updateBanner();
+        updateActiveRow();
+        document.getElementById('impactSection').classList.remove('hidden');
+        document.getElementById('impactLoading').classList.add('hidden');
+        document.getElementById('impactViz').classList.remove('hidden');
+        renderScenarioImpact();
+        if (activeChartTab === 'trajectories') renderTrajectoryChart();
+        if (activeChartTab === 'impact')       renderScenarioImpactChart();
+        discardGDPScenarioAI();
+        status.textContent = '';
+        showToast(`Scenario applied: ${sc.name}`);
+    } catch (e) {
+        status.textContent = `⚠ Server error: ${e.message}`;
+    }
+}
+
+function discardGDPScenarioAI() {
+    _pendingGDPScenario = null;
+    const r = document.getElementById('aiGenResult');
+    if (r) r.style.display = 'none';
+}
+
 /**
  * Build a rich, domain-aware prompt for scenario analysis.
  * Works for any dataset — not just GDP / country data.
@@ -5411,12 +5625,20 @@ Analyse this scenario thoroughly. For each entity that would be meaningfully aff
 5. Assign DIRECTION — positive = above-baseline growth, negative = below-baseline or decline
 6. Consider CONFIDENCE — only include entities where you have reasonable analytical basis; omit entities with negligible or speculative impact
 
-Entity names must match EXACTLY as they appear in the entity list above.
+═══ OUTPUT SCHEMA ═══
+Return ONLY a valid JSON array — no explanation, no markdown, no code fences:
+[
+  {
+    "entity":   "<string — copy EXACTLY from the entity list above, character for character>",
+    "yearFrom": <integer — start year, must be within ${tr.min}–${tr.max}>,
+    "yearTo":   <integer — end year, must be within ${tr.min}–${tr.max} and >= yearFrom>,
+    "deltaPct": <number — annual % change from baseline, e.g. -2.5 or +1.8. Range: -50 to +50>,
+    "rationale":"<string, max 15 words — why this entity is affected>"
+  },
+  ...
+]
 
-Return ONLY a valid JSON array, no explanation, no markdown, no code fences:
-[{"entity":"<exact name>","yearFrom":<number>,"yearTo":<number>,"deltaPct":<number>,"rationale":"<one sentence>"},...]
-
-The "rationale" field (max 15 words) explains why this entity is affected. Include it for every entry.`;
+CRITICAL: entity values must be copied verbatim from the entity list — do NOT invent, abbreviate, or rephrase them.`;
 }
 
 async function analyzeScenarioWithAI(description, idx) {
@@ -5439,9 +5661,14 @@ async function analyzeScenarioWithAI(description, idx) {
 
         if (!Array.isArray(impacts) || impacts.length === 0) throw new Error('Empty result');
 
+        // Validate AI response against dataset schema
+        const { valid, warnings } = _validateAndFixAIImpacts(impacts, ds);
+        if (valid.length === 0) throw new Error('No impacts matched dataset entities');
+        if (warnings.length) console.warn('[AI scenario] validation warnings:', warnings);
+
         // Store on the card data
         _importScenarioCards[idx] = _importScenarioCards[idx] || {};
-        _importScenarioCards[idx].aiImpacts = impacts;
+        _importScenarioCards[idx].aiImpacts = valid;
         _importScenarioCards[idx].description = description;
 
         // Summarise for badge
