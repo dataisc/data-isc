@@ -4409,6 +4409,8 @@ function openSandbox() {
         const stepEl = document.getElementById('importScenarioStep');
         stepEl.style.display = 'block';
         stepEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const aiPanel = document.getElementById('importAIGenPanel');
+        if (aiPanel) aiPanel.style.display = _aiConnected() ? '' : 'none';
     }
 }
 function closeSandbox() {
@@ -4895,6 +4897,9 @@ function confirmColumnMapping() {
     stepEl.style.display = 'block';
     stepEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     _updateAddScenarioBtn();
+    // Show AI panel only when a provider is connected
+    const aiPanel = document.getElementById('importAIGenPanel');
+    if (aiPanel) aiPanel.style.display = _aiConnected() ? '' : 'none';
 }
 
 function confirmImport() {
@@ -5566,7 +5571,7 @@ function toggleImportAIGen() {
 
 async function runImportScenarioAI() {
     if (!_aiConnected()) { openAISettings(); return; }
-    const ds = _activeImportDS;
+    const ds = _activeImportDS || customDatasets[customDatasets.length - 1];
     if (!ds) return;
     const input  = document.getElementById('importAIGenInput');
     const status = document.getElementById('importAIGenStatus');
