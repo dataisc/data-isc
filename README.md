@@ -185,6 +185,8 @@ Data ISC ships an MCP server that exposes the GDP simulation engine as native to
 
 ### Available tools
 
+**Built-in GDP model**
+
 | Tool | What it does |
 |------|-------------|
 | `list_countries` | All 100 countries + regional aggregates with codes |
@@ -194,6 +196,14 @@ Data ISC ships an MCP server that exposes the GDP simulation engine as native to
 | `run_scenario` | Simulate one or more scenarios — returns baseline vs scenario delta |
 | `compare_countries` | Head-to-head trajectory comparison with overtake detection |
 | `get_regional_summary` | GDP by world region with share percentages |
+
+**Any imported dataset** (CSV / TSV on the local filesystem)
+
+| Tool | What it does |
+|------|-------------|
+| `load_dataset` | Read a local CSV/TSV file; auto-detect time, entity, and value columns; return schema + entity list + year range |
+| `list_black_swan_presets` | Describe the 5 built-in shock presets and their per-entity dispersion logic |
+| `run_generic_scenario` | Apply a preset (by ID) or a custom scenario JSON to any dataset — returns a baseline-vs-scenario comparison table with delta% per entity per year |
 
 ### Running the MCP server directly
 
@@ -414,7 +424,7 @@ Commercial licensing: [license@dataisc.dev](mailto:license@dataisc.dev)
 - **Static deploys (Netlify / Vercel / Cloudflare) pre-render scenario outputs at fixed start years** (2026, 2030, 2035, 2040, 2050). The full 2026–2080 range requires a live server (Render).
 - **Video recording browser support:** MP4 works on Chrome, Edge, and Safari. Firefox has no native MP4 recorder and falls back to WebM automatically (a toast confirms this). Recording is not supported on iOS browsers due to limited MediaRecorder API.
 - **Choropleth map requires ISO 3166-1 country codes.** The map view only renders for country-level datasets. Non-country data falls back to the chart, race, and table views automatically.
-- **MCP server exposes the built-in GDP model only** — it does not proxy imported datasets or custom scenarios.
+- **MCP server generic tool accepts local file paths only** — `run_generic_scenario` reads CSV files from the local filesystem where the server runs. It does not accept remote URLs or datasets that exist only in the browser session.
 - **Web component has no `country` attribute.** The `<economic-sandbox-widget>` supports `scenario`, `start`, `view`, and `year` but not per-country selection.
 - **Docker image is not yet published.** The `ghcr.io/dataisc/data-isc` reference in the quick-start is a placeholder; no GHCR publish workflow exists yet. Use `npm start` locally or the one-click deploy buttons.
 - **GDP figures are nominal USD only.** No PPP conversion or inflation deflator is applied. Long-run values (especially post-2060) are trend extrapolations — not predictions — and should be read as "consistent with calibrated assumptions", not forecasts.
