@@ -1,0 +1,85 @@
+[
+  {
+    "id": "POLICY_001",
+    "name": "Global Carbon Tax",
+    "icon": "🌍",
+    "description": "Coordinated carbon pricing at $150/tonne CO₂. Short-term growth drag as energy costs rise; long-term benefit from green investment and efficiency.",
+    "scope_default": "global",
+    "affected_countries": [],
+    "duration_years": null,
+    "recovery_years": null,
+    "annual_growth_impact": -0.003,
+    "recovery_boost": 0,
+    "severity": "moderate",
+    "tags": [
+      "climate",
+      "energy",
+      "permanent"
+    ]
+  },
+  {
+    "id": "POLICY_002",
+    "name": "Global Free Trade Expansion",
+    "icon": "🤝",
+    "description": "Tariffs fall to zero across 120+ countries. Net global GDP +3–5% long-run, but ~30 countries lose in absolute terms — labour exporters win most, fossil exporters hit hardest.",
+    "scope_default": "global",
+    "affected_countries": [],
+    "duration_years": null,
+    "recovery_years": null,
+    "annual_growth_impact": 0.006,
+    "recovery_boost": 0,
+    "severity": "positive",
+    "tags": [
+      "trade",
+      "global",
+      "permanent"
+    ]
+  },
+  {
+    "id": "POLICY_007",
+    "name": "EU Federal Integration",
+    "icon": "🇪🇺",
+    "description": "EU member states pool debt, defence, and fiscal policy under a shared bond market. Aggregate EU GDP rises 5–8% long-run — but gains are unequal. Southern and eastern members gain most from spread compression and defence pooling. Northern contributors face fiscal transfer drag; Ireland loses most from corporate tax harmonisation. Outside the EU, Russia, Gulf states, and the UK face collateral damage.",
+    "scope_default": "regional",
+    "affected_countries": [
+      "DEU",
+      "FRA",
+      "ITA",
+      "ESP",
+      "NLD",
+      "POL",
+      "SWE",
+      "BEL",
+      "AUT",
+      "DNK",
+      "FIN",
+      "PRT",
+      "CZE",
+      "ROU",
+      "HUN",
+      "GRC",
+      "SVK",
+      "HRV",
+      "BGR",
+      "IRL",
+      "LUX",
+      "RUS",
+      "GBR",
+      "SAU",
+      "ARE",
+      "QAT",
+      "KWT",
+      "NOR"
+    ],
+    "duration_years": null,
+    "recovery_years": null,
+    "annual_growth_impact": 0.009,
+    "recovery_boost": 0,
+    "severity": "positive",
+    "tags": [
+      "Europe",
+      "integration",
+      "fiscal"
+    ]
+  }
+]

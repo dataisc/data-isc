@@ -1,0 +1,27 @@
+{
+  "id": "rapid_decarbonisation",
+  "name": "Rapid Decarbonisation — Net-Zero Push",
+  "description": "An aggressive global decarbonisation drive. Designed for the renewable-share and CO₂ sample datasets. On renewable_energy_share.csv it pushes the renewables share of electricity upward (capped at 100%); on co2_emissions.csv, flip the signs to model falling per-capita emissions. Front-loaded effort tapers as the cheapest abatement is exhausted. Tested against samples/renewable_energy_share.csv.",
+  "version": "1.0",
+  "author": "data-isc",
+  "default_delta_pct": 4.0,
+  "year_from": 2023,
+  "year_to": 2050,
+  "growth_ceiling": 100,
+  "entity_overrides": [
+    { "entity": "Denmark", "delta_pct": 2.0 },
+    { "entity": "Germany", "delta_pct": 4.5 },
+    { "entity": "United Kingdom", "delta_pct": 4.2 },
+    { "entity": "China", "delta_pct": 6.0 },
+    { "entity": "India", "delta_pct": 7.0 },
+    { "entity": "United States", "delta_pct": 4.8 },
+    { "entity": "Australia", "delta_pct": 5.5 },
+    { "entity": "Brazil", "delta_pct": 2.5 },
+    { "entity": "France", "delta_pct": 3.0 },
+    { "entity": "Japan", "delta_pct": 4.0 }
+  ],
+  "phases": [
+    { "year_from": 2023, "year_to": 2035, "delta_pct": 5.5 },
+    { "year_from": 2036, "year_to": 2050, "delta_pct": 2.5 }
+  ]
+}

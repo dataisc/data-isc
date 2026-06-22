@@ -1,0 +1,22 @@
+{
+  "name": "data-isc",
+  "version": "1.0.0",
+  "description": "World economy simulation model 1990–2100",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "simulate": "node engine.js",
+    "mcp": "node mcp-server.js",
+    "snapshot": "node scripts/snapshot-api.js",
+    "build:static": "node scripts/build-static.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "zod": "^4.4.3"
+  }
+}

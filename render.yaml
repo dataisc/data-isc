@@ -1,0 +1,18 @@
+# Render blueprint — deploys the FULL Node server (live API).
+# One-click: https://render.com/deploy?repo=https://github.com/dataisc/data-isc
+#
+# Unlike the static demo, this runs server.js, so scenarios compute live at
+# any start year (2026–2080) and the /api/fx and /api/fetch-csv proxies work.
+# Model logic stays server-side — the browser only receives computed output.
+services:
+  - type: web
+    name: data-isc
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /api/timeline
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT automatically; server.js reads process.env.PORT.

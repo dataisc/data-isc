@@ -1,0 +1,52 @@
+name: 🌍 Scenario submission
+description: Propose a new community what-if scenario
+labels: ["scenario", "community"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Want to share a what-if scenario? You can either attach the JSON here for review, or open a pull request adding it under `samples/scenarios/` (preferred). See the scenario schema in the [README](https://github.com/dataisc/data-isc#custom-scenario-json-format).
+
+  - type: input
+    id: name
+    attributes:
+      label: Scenario name
+      placeholder: Green Transition
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does this scenario model, and what's the intuition behind the rates?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dataset
+    attributes:
+      label: Tested against which dataset?
+      options:
+        - Built-in GDP demo
+        - samples/co2_emissions.csv
+        - samples/life_expectancy.csv
+        - samples/renewable_energy_share.csv
+        - My own dataset
+    validations:
+      required: true
+
+  - type: textarea
+    id: json
+    attributes:
+      label: Scenario JSON
+      description: Paste the scenario JSON, or note that you'll open a PR instead.
+      render: json
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This scenario is my original work and I agree to the CLA (CLA.md).
+          required: true

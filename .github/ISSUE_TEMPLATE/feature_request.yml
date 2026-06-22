@@ -1,0 +1,56 @@
+name: ✨ Feature request
+description: Suggest an idea or improvement
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! Please check [existing issues and discussions](https://github.com/dataisc/data-isc/issues) first.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or frustration behind the request.
+      placeholder: I work with weekly sales data and there's no way to set a fiscal-year start month.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds or other approaches you've thought about.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      options:
+        - Data import (CSV / XLSX / URL)
+        - Projection engine
+        - What-if scenarios
+        - Bar Chart Race / video export
+        - World map
+        - Share / embed
+        - Built-in GDP demo
+        - AI provider integration
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd be willing to help implement this (see CONTRIBUTING.md).

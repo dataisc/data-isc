@@ -1,0 +1,19 @@
+# Netlify — deploys the static demo (no server).
+# One-click: https://app.netlify.com/start/deploy?repository=https://github.com/dataisc/data-isc
+#
+# Pre-renders the model's API OUTPUT into public/api-static/ (never the model
+# parameters), then publishes public/. The client's static fallback loads the
+# snapshots automatically. Scenarios are shown at preset start years.
+
+[build]
+  command = "node scripts/build-static.js"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA-style fallback: unknown paths serve the app shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

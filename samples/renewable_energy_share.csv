@@ -1,0 +1,61 @@
+country,year,renewables_pct_of_electricity
+Germany,2000,6.2
+Germany,2005,10.4
+Germany,2010,17.0
+Germany,2015,30.6
+Germany,2020,46.3
+Germany,2022,44.3
+United States,2000,8.9
+United States,2005,8.7
+United States,2010,10.0
+United States,2015,13.4
+United States,2020,20.1
+United States,2022,22.0
+China,2000,20.1
+China,2005,17.0
+China,2010,19.7
+China,2015,24.0
+China,2020,28.8
+China,2022,31.6
+Denmark,2000,16.8
+Denmark,2005,25.1
+Denmark,2010,33.5
+Denmark,2015,60.9
+Denmark,2020,79.5
+Denmark,2022,83.1
+India,2000,19.2
+India,2005,17.8
+India,2010,19.1
+India,2015,22.1
+India,2020,28.9
+India,2022,33.0
+United Kingdom,2000,2.8
+United Kingdom,2005,4.3
+United Kingdom,2010,7.1
+United Kingdom,2015,24.5
+United Kingdom,2020,42.9
+United Kingdom,2022,41.5
+Australia,2000,10.1
+Australia,2005,9.9
+Australia,2010,10.6
+Australia,2015,14.8
+Australia,2020,27.7
+Australia,2022,35.9
+Brazil,2000,86.0
+Brazil,2005,83.4
+Brazil,2010,85.7
+Brazil,2015,78.2
+Brazil,2020,83.0
+Brazil,2022,87.1
+France,2000,15.8
+France,2005,13.1
+France,2010,15.0
+France,2015,19.6
+France,2020,24.8
+France,2022,26.0
+Japan,2000,10.1
+Japan,2005,9.7
+Japan,2010,10.7
+Japan,2015,14.6
+Japan,2020,22.4
+Japan,2022,23.9

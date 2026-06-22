@@ -1,0 +1,33 @@
+{
+  "id": "demographic_winter",
+  "name": "Demographic Winter — Global Sub-Replacement Fertility",
+  "description": "Sub-replacement fertility applied as a sustained global drag over an 80-year horizon. As total fertility rates settle below 2.1 worldwide, shrinking and ageing workforces erode growth everywhere — but large, already-mature economies feel it first and hardest as their dependency ratios climb. Younger, higher-fertility economies decline more slowly and gradually inherit a larger share of global output. A slow-motion structural shift rather than a shock. Tested against the built-in GDP demo.",
+  "version": "1.0",
+  "author": "data-isc",
+  "default_delta_pct": -0.9,
+  "year_from": 2026,
+  "year_to": 2100,
+  "growth_ceiling": null,
+  "entity_overrides": [
+    { "entity": "Japan", "delta_pct": -2.1 },
+    { "entity": "South Korea", "delta_pct": -2.3 },
+    { "entity": "Italy", "delta_pct": -2.0 },
+    { "entity": "Germany", "delta_pct": -1.8 },
+    { "entity": "China", "delta_pct": -1.9 },
+    { "entity": "Spain", "delta_pct": -1.7 },
+    { "entity": "Russia", "delta_pct": -1.6 },
+    { "entity": "United States", "delta_pct": -0.8 },
+    { "entity": "France", "delta_pct": -0.9 },
+    { "entity": "India", "delta_pct": -0.4 },
+    { "entity": "Nigeria", "delta_pct": 0.2 },
+    { "entity": "Ethiopia", "delta_pct": 0.1 },
+    { "entity": "Tanzania", "delta_pct": 0.1 },
+    { "entity": "Kenya", "delta_pct": -0.1 },
+    { "entity": "Pakistan", "delta_pct": -0.3 }
+  ],
+  "phases": [
+    { "year_from": 2026, "year_to": 2045, "delta_pct": -0.5 },
+    { "year_from": 2046, "year_to": 2070, "delta_pct": -1.1 },
+    { "year_from": 2071, "year_to": 2100, "delta_pct": -1.6 }
+  ]
+}

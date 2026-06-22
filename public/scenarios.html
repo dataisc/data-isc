@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scenarios — Data ISC</title>
+<link rel="stylesheet" href="/subpage.css">
+<script src="/theme.js" defer></script>
+<style>
+.info-banner { background: color-mix(in srgb, #86efac 12%, var(--c-surface)); border: 1px solid #2d5a2d; border-radius: 8px; padding: 10px 16px; font-size: 0.83rem; color: #2d6a2d; margin-bottom: 28px; }
+body.light-mode .info-banner { background: #dcfce7; border-color: #86efac; color: #14532d; }
+.sc-card .icon { font-size: 1.5rem; margin-bottom: 8px; }
+.tag { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-right: 4px; margin-top: 8px; }
+.tag.policy { background: var(--c-surface); border: 1px solid var(--c-border); color: #38bdf8; }
+.tag.shock  { background: var(--c-surface); border: 1px solid var(--c-border); color: #f87171; }
+.tag.green  { background: var(--c-surface); border: 1px solid var(--c-border); color: #34d399; }
+body.light-mode .tag.policy { color: #0284c7; }
+body.light-mode .tag.shock  { color: #dc2626; }
+body.light-mode .tag.green  { color: #059669; }
+</style>
+</head>
+<body>
+<header class="global-header">
+  <div class="global-header-inner">
+    <p class="site-brand"><a href="/">Data ISC</a></p>
+    <nav class="header-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html" class="active">Scenarios</a>
+    </nav>
+    <div class="header-right">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle light / dark mode">
+        <svg id="themeIconMoon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px"><path d="M13.5 9.5A6 6 0 017.5 2.5a5.5 5.5 0 100 11 6 6 0 006-4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <svg id="themeIconSun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <h1>Scenarios</h1>
+  <p class="sub">Deep dives on selected simulator scenarios — assumptions, mechanics, and interpretation</p>
+
+  <div class="info-banner">The scenario deep-dives below relate exclusively to the built-in <strong>GDP Trajectories</strong> demo dataset. When you import your own data and define what-if scenarios, the engine will apply the same year-by-year projection logic to your dataset — scenario explanations specific to your data will be generated based on your inputs.</div>
+
+  <p>The GDP demo includes scenarios covering structural policy choices, trade dynamics, and environmental transitions — each applying growth rate adjustments to affected countries over a defined window. This section documents selected scenarios in depth.</p>
+
+  <div class="scenario-grid">
+    <a class="sc-card" href="/scenarios/eu-federal-integration.html">
+      <div class="icon">🇪🇺</div>
+      <h3>EU Federal Integration</h3>
+      <p>What happens to European GDP trajectories if the EU deepens into a fiscal union?</p>
+      <span class="tag policy">Policy</span>
+    </a>
+    <a class="sc-card" href="/scenarios/global-free-trade.html">
+      <div class="icon">🌐</div>
+      <h3>Global Free Trade</h3>
+      <p>A world without tariffs — who gains most from full trade liberalisation?</p>
+      <span class="tag policy">Policy</span>
+    </a>
+    <a class="sc-card" href="/scenarios/carbon-tax.html">
+      <div class="icon">🌱</div>
+      <h3>Global Carbon Tax</h3>
+      <p>How a $100/tonne global carbon price reshapes growth trajectories to 2070.</p>
+      <span class="tag green">Green</span><span class="tag policy">Policy</span>
+    </a>
+  </div>
+
+  <h2>How scenarios work</h2>
+  <p>All scenarios apply growth rate deltas to affected countries over a defined window. Some represent sustained structural changes; others phase out gradually as the economy adjusts. See <a href="/model/methodology.html">Methodology</a> for the mechanics.</p>
+
+  <h2>Running multiple scenarios</h2>
+  <p>The simulator supports stacking multiple scenarios simultaneously. Deltas are additive — there is no interaction term. This means stacking a +1pp trade liberalisation with a −0.5pp carbon tax produces a net +0.5pp effect for countries affected by both. Non-linear interactions are not modelled.</p>
+
+  <h2>Comparing two branches (GitDiff)</h2>
+  <p>The <strong>Trajectories</strong> chart includes a <strong>⑂ Branch</strong> mode for comparing two futures head-to-head. Pick a focus country and a branch year, then assign each branch its own stack of scenarios — for example <em>Branch A: high automation</em> versus <em>Branch B: severe demographic strain</em>. Both timelines are computed independently and drawn on the same graph, splitting from the branch year onward. A shaded band fills the gap between them, and delta cards report the divergence by the final year and the year the gap is widest. It is a fast way to see not just what each scenario does, but how two rival assumptions pull apart over time.</p>
+
+  <h2>Proposing new scenarios</h2>
+  <p>Scenario definitions live in <code>scenarios_policy.json</code> in the repository. If you want to propose a new scenario, open a pull request with the scenario definition and a short explanation of the effect parameters. See the <a href="https://github.com/dataisc/data-isc" target="_blank">GitHub repository</a> for the schema.</p>
+</div>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span class="footer-brand">Data ISC <span style="font-size:0.75rem;font-weight:400;opacity:0.6">v1.0-rc</span></span>
+    <nav class="footer-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+      <a href="/licence.html">Licence</a>
+      <a href="/disclaimer.html">Disclaimer</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+    <a href="https://github.com/dataisc/data-isc" target="_blank" class="footer-github">⭐ GitHub</a>
+  </div>
+</footer>
+</body>
+</html>

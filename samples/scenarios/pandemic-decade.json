@@ -1,0 +1,28 @@
+{
+  "id": "pandemic_decade",
+  "name": "Pandemic Decade — Recurring Health Shocks",
+  "description": "A decade punctuated by recurring pandemic waves. Built for the life_expectancy sample dataset: a sharp shock window depresses life expectancy, followed by partial recovery as treatment and immunity catch up. Economies with weaker health systems and older populations are hit hardest. Use the phases to see the dip-and-rebound pattern. Tested against samples/life_expectancy.csv.",
+  "version": "1.0",
+  "author": "data-isc",
+  "default_delta_pct": -0.3,
+  "year_from": 2023,
+  "year_to": 2040,
+  "growth_ceiling": null,
+  "entity_overrides": [
+    { "entity": "Japan", "delta_pct": -0.2 },
+    { "entity": "Germany", "delta_pct": -0.25 },
+    { "entity": "United States", "delta_pct": -0.4 },
+    { "entity": "China", "delta_pct": -0.3 },
+    { "entity": "India", "delta_pct": -0.6 },
+    { "entity": "Nigeria", "delta_pct": -0.9 },
+    { "entity": "Brazil", "delta_pct": -0.5 },
+    { "entity": "France", "delta_pct": -0.2 },
+    { "entity": "South Korea", "delta_pct": -0.2 }
+  ],
+  "phases": [
+    { "year_from": 2023, "year_to": 2026, "delta_pct": -1.2 },
+    { "year_from": 2027, "year_to": 2032, "delta_pct": 0.5 },
+    { "year_from": 2033, "year_to": 2036, "delta_pct": -0.8 },
+    { "year_from": 2037, "year_to": 2040, "delta_pct": 0.4 }
+  ]
+}

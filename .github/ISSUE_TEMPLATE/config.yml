@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & discussion
+    url: https://github.com/dataisc/data-isc/discussions
+    about: Ask how-to questions, share datasets, or propose ideas before opening an issue.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/dataisc/data-isc/security/advisories/new
+    about: Please report vulnerabilities privately — do not open a public issue. See SECURITY.md.
+  - name: 🏢 Commercial licensing
+    url: mailto:license@dataisc.dev
+    about: Using Data ISC in a commercial product or service? Get a commercial licence.

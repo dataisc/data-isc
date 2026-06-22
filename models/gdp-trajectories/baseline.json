@@ -1,0 +1,510 @@
+{
+  "meta": {
+    "start_year": 1990,
+    "end_year": 2100,
+    "time_step": "year",
+    "simulation_active_range": { "start": 2026, "end": 2100 },
+    "historical_range": { "start": 1990, "end": 2025 },
+    "currency": "nominal_USD_trillions",
+    "milestones": [1990, 2026, 2038, 2075, 2080, 2100],
+    "milestone_note": "GDP arrays are indexed to these years. Engine must interpolate linearly between milestone indices for yearly steps.",
+    "version": "1.0.0",
+    "sources": ["seed_data.json", "engine.js", "index.html"],
+    "last_validated": "2026-06-19"
+  },
+
+  "world": {
+
+    "economy": {
+      "gdp_world_trillions": {
+        "milestone_values": [23.0, 115.0, 150.0, 390.0, 410.0, 520.0],
+        "estimated": true,
+        "note": "Sum of 10 modeled countries plus estimated rest-of-world. Nominal USD — not inflation-adjusted."
+      },
+      "global_trade_share_of_gdp_pct": {
+        "milestone_values": [38.0, 58.0, 60.0, 55.0, 54.0, 50.0],
+        "unit": "percent",
+        "estimated": true
+      },
+      "global_debt_to_gdp_pct": {
+        "milestone_values": [60.0, 102.0, 108.0, 95.0, 92.0, 85.0],
+        "unit": "percent",
+        "estimated": true
+      },
+      "global_gini_between_countries": {
+        "milestone_values": [0.68, 0.63, 0.61, 0.55, 0.54, 0.50],
+        "unit": "index_0_to_1",
+        "estimated": true,
+        "note": "Inter-country Gini weighted by population — not within-country inequality"
+      },
+      "countries": [
+        {
+          "name": "United States",
+          "code": "USA",
+          "gdp_trillions": {
+            "milestone_values": [5.9, 28.5, 37.0, 55.0, 57.0, 70.0],
+            "note": "2026 value corrected to $28.5T per seed_data.json. index.html had $32.4T — see flag F001."
+          },
+          "population_millions": {
+            "milestone_values": [253.0, 345.0, 360.0, 385.0, 388.0, 395.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 82609,
+          "birth_rate_tfr": 1.66,
+          "working_age_share_pct": 62.0,
+          "retired_share_pct": 18.0,
+          "youth_share_pct": 20.0,
+          "debt_to_gdp_pct": 123.0,
+          "unemployment_rate_pct": 3.9,
+          "estimated": false
+        },
+        {
+          "name": "China",
+          "code": "CHN",
+          "gdp_trillions": {
+            "milestone_values": [0.4, 19.2, 38.0, 60.0, 62.0, 75.0],
+            "note": "2026 value corrected to $19.2T per seed_data.json. index.html had $20.9T — see flag F002."
+          },
+          "population_millions": {
+            "milestone_values": [1143.0, 1405.0, 1390.0, 1300.0, 1280.0, 1100.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 13675,
+          "birth_rate_tfr": 1.2,
+          "working_age_share_pct": 65.0,
+          "retired_share_pct": 21.5,
+          "youth_share_pct": 13.5,
+          "debt_to_gdp_pct": 85.0,
+          "unemployment_rate_pct": 5.2,
+          "estimated": false
+        },
+        {
+          "name": "India",
+          "code": "IND",
+          "gdp_trillions": {
+            "milestone_values": [0.3, 4.15, 12.0, 58.0, 63.0, 95.0]
+          },
+          "population_millions": {
+            "milestone_values": [870.0, 1440.0, 1510.0, 1650.0, 1640.0, 1500.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 2882,
+          "birth_rate_tfr": 2.11,
+          "working_age_share_pct": 66.0,
+          "retired_share_pct": 11.2,
+          "youth_share_pct": 22.8,
+          "debt_to_gdp_pct": 81.5,
+          "unemployment_rate_pct": 4.1,
+          "estimated": false
+        },
+        {
+          "name": "Indonesia",
+          "code": "IDN",
+          "gdp_trillions": {
+            "milestone_values": [0.1, 1.5, 5.0, 20.0, 22.0, 40.0]
+          },
+          "population_millions": {
+            "milestone_values": [182.0, 277.0, 295.0, 330.0, 332.0, 320.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 5415,
+          "birth_rate_tfr": 2.1,
+          "working_age_share_pct": 67.0,
+          "retired_share_pct": 10.0,
+          "youth_share_pct": 23.0,
+          "debt_to_gdp_pct": 39.0,
+          "unemployment_rate_pct": 5.3,
+          "estimated": true
+        },
+        {
+          "name": "Nigeria",
+          "code": "NGA",
+          "gdp_trillions": {
+            "milestone_values": [0.3, 0.4, 2.5, 15.0, 17.0, 35.0],
+            "note": "2026 value of $0.4T is close to 1990 value of $0.3T — stagnation period 1990-2026 plausible given instability. 2100 target is very aggressive — see flag F007."
+          },
+          "population_millions": {
+            "milestone_values": [95.0, 225.0, 270.0, 450.0, 470.0, 550.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 1778,
+          "birth_rate_tfr": 5.1,
+          "working_age_share_pct": 53.0,
+          "retired_share_pct": 3.5,
+          "youth_share_pct": 43.5,
+          "debt_to_gdp_pct": 45.0,
+          "unemployment_rate_pct": 33.3,
+          "estimated": true
+        },
+        {
+          "name": "Pakistan",
+          "code": "PAK",
+          "gdp_trillions": {
+            "milestone_values": [0.04, 0.3, 1.8, 12.0, 14.0, 30.0]
+          },
+          "population_millions": {
+            "milestone_values": [108.0, 245.0, 280.0, 390.0, 400.0, 430.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 1224,
+          "birth_rate_tfr": 3.4,
+          "working_age_share_pct": 58.0,
+          "retired_share_pct": 4.5,
+          "youth_share_pct": 37.5,
+          "debt_to_gdp_pct": 78.0,
+          "unemployment_rate_pct": 8.5,
+          "estimated": true
+        },
+        {
+          "name": "Bangladesh",
+          "code": "BGD",
+          "gdp_trillions": {
+            "milestone_values": [0.03, 0.5, 2.0, 10.0, 12.0, 25.0]
+          },
+          "population_millions": {
+            "milestone_values": [108.0, 172.0, 185.0, 210.0, 212.0, 200.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 2907,
+          "birth_rate_tfr": 1.98,
+          "working_age_share_pct": 65.0,
+          "retired_share_pct": 6.0,
+          "youth_share_pct": 29.0,
+          "debt_to_gdp_pct": 42.0,
+          "unemployment_rate_pct": 5.1,
+          "estimated": true
+        },
+        {
+          "name": "Brazil",
+          "code": "BRA",
+          "gdp_trillions": {
+            "milestone_values": [0.5, 2.6, 4.0, 8.0, 9.0, 15.0]
+          },
+          "population_millions": {
+            "milestone_values": [149.0, 217.0, 225.0, 230.0, 228.0, 215.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 11982,
+          "birth_rate_tfr": 1.65,
+          "working_age_share_pct": 68.0,
+          "retired_share_pct": 14.0,
+          "youth_share_pct": 18.0,
+          "debt_to_gdp_pct": 88.0,
+          "unemployment_rate_pct": 7.9,
+          "estimated": true
+        },
+        {
+          "name": "Mexico",
+          "code": "MEX",
+          "gdp_trillions": {
+            "milestone_values": [0.3, 2.1, 3.5, 7.0, 7.5, 12.0]
+          },
+          "population_millions": {
+            "milestone_values": [83.0, 130.0, 137.0, 148.0, 148.0, 140.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 16154,
+          "birth_rate_tfr": 1.8,
+          "working_age_share_pct": 67.0,
+          "retired_share_pct": 11.0,
+          "youth_share_pct": 22.0,
+          "debt_to_gdp_pct": 47.0,
+          "unemployment_rate_pct": 3.4,
+          "estimated": true
+        },
+        {
+          "name": "Japan",
+          "code": "JPN",
+          "gdp_trillions": {
+            "milestone_values": [3.1, 4.4, 4.8, 5.5, 5.6, 8.0]
+          },
+          "population_millions": {
+            "milestone_values": [124.0, 124.0, 121.0, 108.0, 106.0, 90.0],
+            "estimated": [false, false, true, true, true, true]
+          },
+          "gdp_per_capita_usd_2026": 35484,
+          "birth_rate_tfr": 1.2,
+          "working_age_share_pct": 58.0,
+          "retired_share_pct": 29.0,
+          "youth_share_pct": 13.0,
+          "debt_to_gdp_pct": 260.0,
+          "unemployment_rate_pct": 2.5,
+          "estimated": true
+        }
+      ]
+    },
+
+    "society": {
+      "world_population_billions": {
+        "milestone_values": [5.3, 8.1, 8.8, 9.5, 9.4, 9.0],
+        "estimated": [false, false, true, true, true, true],
+        "source": "UN World Population Prospects — medium variant"
+      },
+      "global_urbanization_rate_pct": {
+        "milestone_values": [43.0, 57.5, 61.0, 72.0, 73.0, 78.0],
+        "unit": "percent",
+        "estimated": [false, false, true, true, true, true]
+      },
+      "global_life_expectancy_years": {
+        "milestone_values": [65.0, 73.5, 75.0, 80.0, 80.5, 83.0],
+        "estimated": [false, false, true, true, true, true]
+      },
+      "global_median_age_years": {
+        "milestone_values": [25.5, 31.0, 32.5, 38.0, 38.5, 41.0],
+        "estimated": true
+      },
+      "global_education_index": {
+        "milestone_values": [0.52, 0.71, 0.74, 0.84, 0.85, 0.90],
+        "unit": "UNDP_HDI_education_subindex_0_to_1",
+        "estimated": true
+      },
+      "global_hdi": {
+        "milestone_values": [0.60, 0.74, 0.76, 0.85, 0.86, 0.90],
+        "unit": "index_0_to_1",
+        "estimated": true
+      },
+      "global_income_inequality_gini": {
+        "milestone_values": [0.72, 0.63, 0.60, 0.52, 0.51, 0.47],
+        "unit": "population_weighted_between_country",
+        "estimated": true
+      }
+    },
+
+    "resources": {
+      "fossil_fuel_reserves_remaining_pct": {
+        "oil": {
+          "milestone_values": [100.0, 72.0, 62.0, 25.0, 22.0, 10.0],
+          "unit": "percent_of_1990_proven_reserves",
+          "estimated": true,
+          "note": "Does not account for new discoveries or unconventional sources"
+        },
+        "natural_gas": {
+          "milestone_values": [100.0, 78.0, 70.0, 35.0, 30.0, 15.0],
+          "unit": "percent_of_1990_proven_reserves",
+          "estimated": true
+        },
+        "coal": {
+          "milestone_values": [100.0, 85.0, 80.0, 55.0, 52.0, 30.0],
+          "unit": "percent_of_1990_proven_reserves",
+          "estimated": true
+        }
+      },
+      "renewable_energy_share_of_primary_pct": {
+        "milestone_values": [14.0, 32.0, 42.0, 75.0, 78.0, 90.0],
+        "unit": "percent",
+        "estimated": [false, false, true, true, true, true]
+      },
+      "global_co2_concentration_ppm": {
+        "milestone_values": [354.0, 424.0, 440.0, 470.0, 468.0, 450.0],
+        "unit": "ppm",
+        "estimated": [false, false, true, true, true, true],
+        "note": "Post-2075 decline assumes large-scale carbon capture deployment — see flag F012"
+      },
+      "global_temperature_anomaly_celsius": {
+        "milestone_values": [0.5, 1.4, 1.6, 2.1, 2.1, 1.9],
+        "unit": "degrees_C_vs_pre_industrial_average",
+        "estimated": [false, false, true, true, true, true],
+        "scenario": "moderate_mitigation_approx_RCP4.5"
+      },
+      "fresh_water_stress_index": {
+        "milestone_values": [0.30, 0.42, 0.46, 0.55, 0.54, 0.50],
+        "unit": "index_0_to_1_higher_is_more_stressed",
+        "estimated": true
+      },
+      "arable_land_utilization_pct": {
+        "milestone_values": [72.0, 82.0, 85.0, 90.0, 89.0, 88.0],
+        "unit": "percent_of_global_arable_land",
+        "estimated": true
+      },
+      "global_food_security_index": {
+        "milestone_values": [0.55, 0.68, 0.71, 0.80, 0.81, 0.85],
+        "unit": "index_0_to_1",
+        "estimated": true
+      },
+      "resource_drag_threshold": {
+        "fossil_fuel_remaining_pct": 30.0,
+        "note": "When fossil_fuel_remaining falls below this value, a resource_drag penalty should be applied to GDP growth proportional to energy intensity of each country."
+      }
+    },
+
+    "politics": {
+      "global_democracy_index": {
+        "milestone_values": [0.52, 0.45, 0.47, 0.55, 0.56, 0.62],
+        "unit": "index_0_to_1",
+        "estimated": true,
+        "note": "Dip at 2026 reflects documented autocratization trend. Recovery assumes climate cooperation pressure."
+      },
+      "geopolitical_tension_index": {
+        "milestone_values": [0.45, 0.72, 0.65, 0.40, 0.38, 0.30],
+        "unit": "index_0_to_1_higher_is_more_tense",
+        "estimated": true
+      },
+      "multilateral_cooperation_index": {
+        "milestone_values": [0.60, 0.38, 0.42, 0.60, 0.62, 0.70],
+        "unit": "index_0_to_1",
+        "estimated": true,
+        "note": "Low in 2026 reflects fragmentation of international institutions"
+      },
+      "global_military_spending_pct_of_gdp": {
+        "milestone_values": [3.5, 2.4, 2.2, 1.8, 1.7, 1.5],
+        "unit": "percent",
+        "estimated": true
+      },
+      "trade_openness_index": {
+        "milestone_values": [0.55, 0.58, 0.60, 0.65, 0.66, 0.70],
+        "unit": "index_0_to_1",
+        "estimated": true
+      }
+    },
+
+    "technology": {
+      "tfp_multiplier": {
+        "milestone_values": [1.0, 1.45, 1.65, 2.80, 2.95, 4.20],
+        "unit": "relative_to_1990_baseline",
+        "estimated": true,
+        "note": "Total Factor Productivity — primary long-run GDP growth multiplier. Must be wired into engine growth rate calculation."
+      },
+      "ai_capability_index": {
+        "milestone_values": [0.01, 0.55, 0.75, 0.95, 0.96, 0.99],
+        "unit": "index_0_to_1",
+        "estimated": true,
+        "note": "Approaches ceiling after assumed AGI transition circa 2040–2050. Diminishing marginal returns modeled."
+      },
+      "renewable_tech_cost_index": {
+        "milestone_values": [1.0, 0.18, 0.10, 0.04, 0.035, 0.02],
+        "unit": "relative_to_1990_solar_pv_cost",
+        "estimated": true,
+        "note": "Learning curve model. Values below 1.0 mean cheaper than 1990 baseline."
+      },
+      "digitalization_index": {
+        "milestone_values": [0.05, 0.68, 0.78, 0.93, 0.94, 0.98],
+        "unit": "index_0_to_1",
+        "estimated": true
+      },
+      "biotech_health_multiplier": {
+        "milestone_values": [1.0, 1.3, 1.5, 2.2, 2.3, 3.0],
+        "unit": "relative_to_1990_baseline_health_outcomes",
+        "estimated": true,
+        "note": "Captures genomic medicine, mRNA platforms, longevity research"
+      },
+      "automation_labor_displacement_pct": {
+        "milestone_values": [2.0, 18.0, 28.0, 55.0, 58.0, 70.0],
+        "unit": "percent_of_job_tasks_automatable",
+        "estimated": true,
+        "note": "Displacement does not equal unemployment — assumes labor market transformation over 20–30 year lag"
+      }
+    }
+  },
+
+  "assumptions": [
+    "All GDP values are nominal USD trillions. No inflation deflator applied. Inter-period comparisons spanning decades will be distorted by cumulative inflation.",
+    "Milestone interpolation between the six keyframe years (1990, 2026, 2038, 2075, 2080, 2100) should use piecewise-linear or smooth-spline interpolation for yearly steps in the engine.",
+    "Technology TFP multiplier acts as a multiplicative modifier on the base GDP growth rate and must be explicitly wired into engine.js.",
+    "Resource constraints trigger a growth drag coefficient when fossil_fuel_remaining_pct falls below 30% or water_stress_index exceeds 0.6.",
+    "Demographic aging increases healthcare costs and reduces labor force productivity. engine.js Rule B encodes this but must be extended to all countries.",
+    "Political stability (multilateral_cooperation_index) positively modulates technology adoption speed and trade openness.",
+    "India GDP of $95T by 2100 requires ~4.1% average annual real growth sustained over 74 years — plausible with institutional stability and demographic dividend but sensitive to shocks.",
+    "Nigeria GDP growth from $0.4T (2026) to $35T (2100) implies ~14.6% nominal annual growth. This is speculative and requires a modeled governance improvement trajectory.",
+    "China population declines post-2026 due to sub-replacement TFR of 1.2. Labor force shrinkage must drag GDP growth in engine.",
+    "Japan GDP grows modestly from $4.4T to $8.0T despite severe aging and population decline — assumes high productivity gains from automation offsetting demographic drag.",
+    "Climate scenario is moderate mitigation (approx. RCP4.5), not business-as-usual. CO2 decline post-2075 assumes large-scale carbon capture deployment.",
+    "Automation displacement is modeled with a 20–30 year adaptation lag before new job categories absorb displaced workers. No structural mass unemployment assumed in baseline.",
+    "Rest-of-world GDP is included in global totals as an estimated aggregate and is not explicitly broken out by country."
+  ],
+
+  "flags": [
+    {
+      "id": "F001",
+      "severity": "high",
+      "domain": "economy",
+      "affected_file": "index.html",
+      "description": "USA 2026 GDP: index.html has $32.4T but seed_data.json has $28.5T. Real 2024 US GDP is ~$28T nominal, making $28.5T for 2026 the correct figure. $32.4T looks like a ~2030 projection or a PPP-adjusted value.",
+      "recommendation": "Correct index.html BASELINE_DATA[0].g[1] from 32.4 to 28.5. Adopted $28.5T in this baseline."
+    },
+    {
+      "id": "F002",
+      "severity": "medium",
+      "domain": "economy",
+      "affected_file": "index.html",
+      "description": "China 2026 GDP: index.html has $20.9T but seed_data.json has $19.2T. China nominal GDP 2024 is ~$18T, so $19.2T for 2026 is plausible. $20.9T is slightly high.",
+      "recommendation": "Correct index.html BASELINE_DATA[1].g[1] from 20.9 to 19.2. Adopted $19.2T in this baseline."
+    },
+    {
+      "id": "F003",
+      "severity": "high",
+      "domain": "model",
+      "affected_file": "engine.js",
+      "affected_line": 16,
+      "description": "Loop condition `year < 2100` excludes year 2100 from simulation. A 74-year simulation from 2026 should run through and including 2100.",
+      "recommendation": "Change `year < 2100` to `year <= 2100` on line 16 of engine.js."
+    },
+    {
+      "id": "F004",
+      "severity": "high",
+      "domain": "model",
+      "affected_file": "engine.js",
+      "description": "Demographic aging (retiredShare increment of +0.2/year) is hardcoded only for USA and CHN. India is excluded despite having a significant aging trajectory. The 7 countries in index.html not in seed_data.json receive no demographic modeling at all.",
+      "recommendation": "Move aging rate to a per-country parameter in seed_data.json (e.g., `agingRatePerYear`). Apply generically in engine. Add all 10 countries to seed_data.json."
+    },
+    {
+      "id": "F005",
+      "severity": "high",
+      "domain": "model",
+      "affected_file": "engine.js",
+      "description": "engine.js models only two growth modifiers (debt penalty, aging drag). Technology TFP, resource depletion, political stability, and climate impacts have no causal link to GDP in the engine — making the society/resources/politics/technology domains decorative.",
+      "recommendation": "Add to each year's growth calculation: +tfp_boost (from technology.tfp_multiplier derivative), -resource_drag (when fossil reserves < threshold), +/-governance_modifier (from politics.multilateral_cooperation_index)."
+    },
+    {
+      "id": "F006",
+      "severity": "high",
+      "domain": "data",
+      "affected_file": "seed_data.json",
+      "description": "seed_data.json only contains 3 countries (USA, CHN, IND). index.html has 10 countries. The 7 missing countries (IDN, NGA, PAK, BGD, BRA, MEX, JPN) cannot be simulated by engine.js.",
+      "recommendation": "Add all 10 countries to seed_data.json using the baseline parameters in this file's world.economy.countries array."
+    },
+    {
+      "id": "F007",
+      "severity": "medium",
+      "domain": "economy",
+      "affected_country": "NGA",
+      "description": "Nigeria GDP growth from $0.4T (2026) to $35T (2100) implies ~14.6% nominal annual growth — far exceeding any sustained historical precedent. No governance improvement mechanism exists in the model to justify this trajectory.",
+      "recommendation": "Add a governance multiplier gating emerging-market growth. Revise Nigeria 2100 target to $10–15T as a moderate scenario; $35T as an optimistic upper bound only."
+    },
+    {
+      "id": "F008",
+      "severity": "medium",
+      "domain": "economy",
+      "description": "All GDP values are nominal. Over 110 years (1990–2100), cumulative inflation will distort all cross-period comparisons by a large factor. There is no deflator or constant-price series.",
+      "recommendation": "Add a `global_price_level_index` series to world.economy, or explicitly document that all GDP values are in current-year nominal USD and cannot be directly compared across time without deflating."
+    },
+    {
+      "id": "F009",
+      "severity": "medium",
+      "domain": "resources",
+      "description": "Resource constraints (fossil depletion, water stress, land utilization) have no feedback loop into the GDP growth calculation. Without this, GDP projections are unconstrained by physical limits.",
+      "recommendation": "Implement a resource_drag coefficient in engine.js: when fossil_fuel_remaining < 30%, subtract a drag proportional to each country's energy intensity from the growth rate."
+    },
+    {
+      "id": "F010",
+      "severity": "low",
+      "domain": "society",
+      "affected_file": "seed_data.json",
+      "description": "workingAgeShare + retiredShare does not sum to 100% for any country (USA: 80%, CHN: 86.5%, IND: 77.2%). The implied third share — youth/child population — is unnamed and missing from seed_data.json.",
+      "recommendation": "Add `youthShare` field to each country in seed_data.json. Verify all three shares sum to 100. Values estimated in this baseline's youth_share_pct fields."
+    },
+    {
+      "id": "F011",
+      "severity": "low",
+      "domain": "model",
+      "description": "No stochastic shock mechanism exists. A deterministic 74-year projection will underestimate variance and give false precision. Recessions, pandemics, wars, and breakthrough technologies are unmodeled.",
+      "recommendation": "Add an optional `shocks` module with parameterized probability distributions and magnitude ranges for major event types (recession, pandemic, war, tech leap, climate event)."
+    },
+    {
+      "id": "F012",
+      "severity": "low",
+      "domain": "resources",
+      "description": "CO2 concentration declining from 470ppm (2075) to 450ppm (2100) requires carbon capture at a scale not demonstrated at any point in history. This is an optimistic assumption embedded in the baseline.",
+      "recommendation": "Gate CO2 decline on a boolean scenario flag `carbon_capture_deployed`. In the neutral baseline, hold CO2 flat at ~470ppm post-2075 rather than declining."
+    }
+  ]
+}

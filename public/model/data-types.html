@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/subpage.css">
+<script src="/theme.js" defer></script>
+<title>Data Types & Model Rules — Data ISC</title>
+</head>
+<body>
+<header class="global-header">
+  <div class="global-header-inner">
+    <p class="site-brand"><a href="/">Data ISC</a></p>
+    <nav class="header-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+    </nav>
+    <div class="header-right">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle light / dark mode">
+        <svg id="themeIconMoon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px"><path d="M13.5 9.5A6 6 0 017.5 2.5a5.5 5.5 0 100 11 6 6 0 006-4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <svg id="themeIconSun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="breadcrumb" style="font-size:0.78rem;color:var(--c-muted-2);margin-bottom:20px"><a href="/model.html">The Model</a> › Data Types &amp; Model Rules</div>
+  <h1>Data Types &amp; Model Rules</h1>
+  <p class="sub">How the engine interprets imported datasets, which projection rules apply to each data type, and what guardrails keep results meaningful</p>
+
+  <h2>How the engine reads your data</h2>
+  <p>When you import a CSV or XLSX file, the engine runs schema detection before rendering anything. It scans column names and sample values to identify three roles:</p>
+  <ul>
+    <li><strong>Time axis</strong> — a column whose values represent sequential points in time (years, dates, quarters, weeks, etc.)</li>
+    <li><strong>Entity</strong> — a column that groups rows into distinct series (country, company, treatment arm, species, stock ticker, etc.)</li>
+    <li><strong>Value</strong> — the numeric column to project and apply what-if scenarios to</li>
+  </ul>
+  <p>Detection uses both column name heuristics (e.g. a column called <code>year</code>, <code>date</code>, <code>country</code>, <code>region</code>) and value-type inspection. If multiple value columns exist, the one with the highest variance is chosen as primary; the others remain accessible in the table view.</p>
+  <div class="note">The engine never requires a fixed schema. Column names can be in any language and any order. What matters is that one column is recognisably temporal, one is numeric, and optionally one groups the rows into separate series.</div>
+
+  <h2>Supported time formats</h2>
+  <p>The engine recognises all of the following time formats automatically — no pre-formatting required:</p>
+  <table>
+    <tr><th>Format</th><th>Examples</th><th>Detected as</th></tr>
+    <tr><td>Year integer</td><td>2020, 1998</td><td>Annual, step = 1 year</td></tr>
+    <tr><td>ISO date</td><td>2020-03-15, 2020-03</td><td>Daily or monthly</td></tr>
+    <tr><td>Quarter</td><td>2023-Q1, Q1 2023, Q1/2023, 2023Q1</td><td>Quarterly, step = 3 months</td></tr>
+    <tr><td>Half-year / semester</td><td>H1 2023, 2023-H2, S1 2023</td><td>Semi-annual, step = 6 months</td></tr>
+    <tr><td>Fiscal year</td><td>FY2023, FY23</td><td>Annual, starting July 1</td></tr>
+    <tr><td>ISO week</td><td>2020-W04, W4 2020, Week 4 2020</td><td>Weekly, anchored to correct Monday</td></tr>
+    <tr><td>Month name</td><td>Jan 2020, January 2020, Jan-20</td><td>Monthly</td></tr>
+    <tr><td>Compact month</td><td>202301</td><td>Monthly (Jan 2023)</td></tr>
+    <tr><td>US date</td><td>03/15/2020, 3/15/2020</td><td>Daily</td></tr>
+    <tr><td>EU date</td><td>15.03.2020</td><td>Daily</td></tr>
+    <tr><td>Ordinal index</td><td>Week 4, Day 12, Period 5</td><td>Sequential steps, no calendar anchor</td></tr>
+  </table>
+  <p>Projected future labels are generated in the same format as the source — quarterly data produces <code>2024-Q3</code>, weekly data produces <code>2024-W12</code>, and so on.</p>
+
+  <h2>Trend fitting and projection</h2>
+  <p>Projection is available for any dataset where a time axis is detected. The engine fits a trend per entity (country, company, treatment arm, etc.) on the historical data and extends it forward by the number of periods you specify.</p>
+
+  <h3>Linear model</h3>
+  <div class="eq">y = a + b·t</div>
+  <p>Used when values grow or decline by a roughly constant absolute amount each period. Appropriate for slow-moving social indicators (literacy, HDI), stable commodity prices, or any series where growth does not compound.</p>
+
+  <h3>Exponential model</h3>
+  <div class="eq">y = a · e<sup>b·t</sup></div>
+  <p>Used when values grow or decline by a roughly constant percentage each period — compounding. Appropriate for GDP, population, infectious disease spread in its early phase, renewable energy adoption, and business revenue with strong growth momentum.</p>
+
+  <h3>Auto-selection</h3>
+  <p>When set to <em>Auto (best fit)</em>, the engine fits both models and computes R² for each. The exponential model is chosen only if its R² exceeds the linear R² by at least 0.05 <em>and</em> the fitted growth rate is not extreme (|b| &lt; 0.5 per period), to prevent runaway projections on noisy data. Otherwise linear is used.</p>
+
+  <h3>Fit quality indicator</h3>
+  <p>The R² badge shown after projection indicates how well the fitted trend matches historical data:</p>
+  <ul>
+    <li><strong style="color:#34d399">R² ≥ 0.70</strong> — good fit, projection follows a clear underlying trend</li>
+    <li><strong style="color:#facc15">R² 0.50–0.69</strong> — moderate fit, some noise in the data</li>
+    <li><strong style="color:#fb923c">R² &lt; 0.50</strong> — low fit, data is volatile or non-monotone; projection shows average trend direction only and should be interpreted with caution</li>
+  </ul>
+  <div class="warn">A low R² does not mean the tool has failed — it means the data has no strong directional trend to extrapolate. For wave-shaped series (disease outbreaks, financial cycles), the projection reflects where the average trend line points, not where the next peak will be.</div>
+
+  <h2>Guardrails applied to all projections</h2>
+
+  <h3>Index-normalised fitting</h3>
+  <p>Regardless of time format, the engine always fits trends on a sequential index (0, 1, 2 … N) rather than raw timestamp values. This avoids numerical instability from large millisecond epoch numbers and ensures consistent behaviour whether the time column contains year integers, ISO dates, or quarter strings.</p>
+
+  <h3>Non-negative floor</h3>
+  <p>Projected values are clamped at zero. A model that projects −$12B GDP or −4,000 patients is meaningless; the floor prevents this regardless of how far the trend line extends.</p>
+
+  <h3>Percentage ceiling</h3>
+  <p>When all values in the dataset fall within [0, 100], the engine automatically applies a ceiling of 100 to projected values. This prevents literacy rates, market share percentages, or vaccination coverage from being projected above 100%.</p>
+
+  <h3>Per-entity fitting</h3>
+  <p>Each entity (country, company, etc.) gets its own trend fit. A dataset with 50 countries does not fit a single average trend — it fits 50 individual trends. This means a fast-growing economy and a stagnant one project independently, preserving the divergence that makes scenario comparison meaningful.</p>
+
+  <h2>What-if scenario application</h2>
+  <p>Scenarios apply a compounding percentage delta per year to entity values within a defined time window. When AI analysis is connected, each entity gets its own delta and rationale; otherwise a flat delta is applied to all in-scope entities.</p>
+  <div class="eq">adjusted_value(t) = baseline_value(t) · (1 + δ/100)<sup>t − t₀</sup></div>
+  <p>Where δ is the annual percentage change and t₀ is the year the scenario begins. The window end year stops compounding — values after the window revert to baseline trajectory.</p>
+  <p>Year windows work correctly for all time formats: a scenario set to 2024–2030 is matched by extracting the calendar year from any time value, whether it is <code>2025</code>, <code>2025-Q2</code>, <code>2025-03-01</code>, or <code>H1 2025</code>.</p>
+  <div class="note">Scenarios stack on top of projections. If you project 20 years forward and then apply a what-if scenario, the scenario delta is applied to the projected values — not just the historical ones. This is the intended workflow: project the baseline, then stress-test it.</div>
+
+  <h2>Data types and their characteristics</h2>
+  <div class="dt-grid">
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">📈</div><div><div class="dt-title">Economic indicators</div><div class="dt-sub">GDP, inflation, unemployment, trade balance</div></div></div>
+      <div class="dt-body">Year-based integers, multi-country entities. Typically monotone with slow trend changes. Exponential model usually wins on GDP series; linear is more appropriate for rates (inflation, unemployment) which oscillate. What-if framing is natural: growth rate adjustments per year.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-info">Auto: linear or exp</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">👥</div><div><div class="dt-title">Population & demographics</div><div class="dt-sub">Population, birth rates, age cohorts</div></div></div>
+      <div class="dt-body">Year-based, mostly monotone exponential growth (or logistic in constrained environments). Negative floor prevents sub-zero projections. What-if scenarios such as "pandemic reduces growth rate 1%/yr" apply cleanly.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-info">Auto: typically exp</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">🦠</div><div><div class="dt-title">Epidemiology</div><div class="dt-sub">Case counts, hospitalisations, R0 over time</div></div></div>
+      <div class="dt-body">Date-based (daily or weekly), often wave-shaped (non-monotone). The trend fit will be low-R² for wave data and projects the average directional trend — useful for modelling endemic baseline, not peak timing. What-if scenarios apply by year extraction from dates. For early-outbreak exponential phase data, the fit works well.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-warn">Low R² on waves</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">🌍</div><div><div class="dt-title">Climate & environment</div><div class="dt-sub">CO₂ ppm, temperature anomaly, deforestation, sea level</div></div></div>
+      <div class="dt-body">Year-based, mostly monotone increasing. Linear and exponential both give good fits. What-if scenarios ("carbon tax reduces emissions 3%/yr from 2025") map directly onto the delta structure. All good.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-info">Auto: typically linear</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">📊</div><div><div class="dt-title">Financial markets</div><div class="dt-sub">Stock indices, exchange rates, bond yields</div></div></div>
+      <div class="dt-body">Daily date format, highly volatile. The trend line projects long-run direction but R² will be low for short windows. Best used with a long historical series (10+ years) so the secular trend dominates noise. What-if scenarios apply by calendar year extracted from dates.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-warn">Low R² on volatile data</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">🧬</div><div><div class="dt-title">Clinical / biomedical</div><div class="dt-sub">Biomarker progression, drug efficacy over treatment weeks</div></div></div>
+      <div class="dt-body">Time may be ordinal (<code>Week 4</code>, <code>Day 12</code>) or calendar dates. Ordinal formats are detected and projected as sequential steps. What-if scenarios framed as "drug reduces biomarker growth 40%/yr" work, though one-time step changes are better modelled by applying a scenario that starts and ends in the same period. Low R² expected for non-monotone curves.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-warn">Ordinal time, low R² likely</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">🌾</div><div><div class="dt-title">Agricultural & food systems</div><div class="dt-sub">Crop yields, food prices, land use by country</div></div></div>
+      <div class="dt-body">Annual, multi-country or multi-crop entities. Slow trends with inter-annual noise from weather. Linear fit is typical. What-if scenarios ("drought reduces yield 20%") map cleanly. Negative floor prevents yield projections below zero.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-info">Auto: typically linear</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">⚡</div><div><div class="dt-title">Energy</div><div class="dt-sub">Renewable capacity, consumption by source, carbon intensity</div></div></div>
+      <div class="dt-body">Annual, fast exponential growth for renewables. The engine selects exponential when it clearly fits better. What-if scenarios ("policy doubles solar growth rate") are natural. Energy consumption series tend to linear.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-info">Auto: exp for renewables</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">📚</div><div><div class="dt-title">Social indicators</div><div class="dt-sub">Literacy rates, HDI, poverty headcount, vaccination coverage</div></div></div>
+      <div class="dt-body">Annual, multi-country. Values often bounded between 0 and 100%. The engine detects this automatically and applies a 100% ceiling to projections — literacy cannot be projected above 100%. What-if scenarios apply cleanly.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-ok">Auto-clamped at 100%</span>
+    </div>
+
+    <div class="dt-card">
+      <div class="dt-card-head"><div class="dt-icon">💼</div><div><div class="dt-title">Business & sales</div><div class="dt-sub">Revenue by product/region, market share, customer count</div></div></div>
+      <div class="dt-body">Quarterly or monthly date formats. All quarter variants are recognised (<code>2023-Q3</code>, <code>Q3 2023</code>, <code>2023Q3</code>). Exponential fits well for fast-growth companies. What-if scenarios ("price cut boosts sales 15%/yr for 2 years") map directly onto the delta structure.</div>
+      <span class="dt-pill pill-ok">Projection ✓</span><span class="dt-pill pill-ok">What-if ✓</span><span class="dt-pill pill-info">Quarterly formats supported</span>
+    </div>
+
+  </div>
+
+  <h2>Non-temporal data</h2>
+  <p>If no time column is detected (e.g. a cross-sectional survey, a single-point laboratory result, or a comparison of fixed categories), the projection strip does not appear. What-if scenarios still work as flat value adjustments: "what if treatment X reduced all measurements by 15%?" applies a uniform delta to all rows. Trend fitting and forward projection require a time axis and are not available without one.</p>
+
+  <h2>Limitations to be aware of</h2>
+  <ul>
+    <li><strong>Logistic (S-curve) growth</strong> is not yet fitted. For data approaching a natural ceiling (market saturation, herd immunity), the exponential model will overestimate long-run values. Use the linear model or set a shorter projection horizon in these cases.</li>
+    <li><strong>Seasonality</strong> is not modelled. Monthly or quarterly data with strong seasonal patterns will fit a trend through the seasonal oscillation, not around it. A 12-month or 4-quarter de-seasonalisation step is not currently built in.</li>
+    <li><strong>Structural breaks</strong> (e.g. a policy change mid-series that permanently shifts the level) are not detected. The fit treats the entire history as a single regime. If your data has a clear structural break, consider importing only the post-break period as the baseline.</li>
+    <li><strong>Interaction effects between scenarios</strong> are not modelled. Stacking two what-if scenarios applies their deltas additively — non-linear interactions (e.g. a trade war amplifying the effect of a recession) are not captured.</li>
+  </ul>
+</div>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span class="footer-brand">Data ISC <span style="font-size:0.75rem;font-weight:400;opacity:0.6">v1.0-rc</span></span>
+    <nav class="footer-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+      <a href="/licence.html">Licence</a>
+      <a href="/disclaimer.html">Disclaimer</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+    <a href="https://github.com/dataisc/data-isc" target="_blank" class="footer-github">⭐ GitHub</a>
+  </div>
+</footer>
+</body>
+</html>

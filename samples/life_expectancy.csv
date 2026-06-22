@@ -1,0 +1,73 @@
+country,year,life_expectancy_years
+China,1990,69.3
+China,1995,70.5
+China,2000,71.7
+China,2005,73.2
+China,2010,75.2
+China,2015,76.3
+China,2020,77.8
+China,2022,78.2
+United States,1990,75.3
+United States,1995,75.8
+United States,2000,76.9
+United States,2005,77.5
+United States,2010,78.6
+United States,2015,78.7
+United States,2020,77.0
+United States,2022,77.5
+India,1990,58.5
+India,1995,61.1
+India,2000,63.1
+India,2005,65.3
+India,2010,67.0
+India,2015,68.8
+India,2020,70.4
+India,2022,70.8
+Germany,1990,75.2
+Germany,1995,76.5
+Germany,2000,78.0
+Germany,2005,79.4
+Germany,2010,80.3
+Germany,2015,80.7
+Germany,2020,80.9
+Germany,2022,80.7
+Brazil,1990,66.7
+Brazil,1995,69.3
+Brazil,2000,71.1
+Brazil,2005,72.5
+Brazil,2010,73.9
+Brazil,2015,75.2
+Brazil,2020,75.9
+Brazil,2022,75.5
+Japan,1990,79.0
+Japan,1995,80.0
+Japan,2000,81.0
+Japan,2005,82.1
+Japan,2010,83.0
+Japan,2015,83.8
+Japan,2020,84.7
+Japan,2022,84.3
+Nigeria,1990,45.0
+Nigeria,1995,45.9
+Nigeria,2000,46.5
+Nigeria,2005,48.0
+Nigeria,2010,51.2
+Nigeria,2015,53.4
+Nigeria,2020,55.2
+Nigeria,2022,55.7
+France,1990,77.0
+France,1995,78.0
+France,2000,79.2
+France,2005,80.7
+France,2010,81.8
+France,2015,82.4
+France,2020,82.3
+France,2022,82.5
+South Korea,1990,72.0
+South Korea,1995,73.9
+South Korea,2000,76.0
+South Korea,2005,78.3
+South Korea,2010,80.7
+South Korea,2015,82.3
+South Korea,2020,83.5
+South Korea,2022,83.6

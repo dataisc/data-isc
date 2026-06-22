@@ -1,0 +1,35 @@
+{
+  "id": "cyberpunk_2050",
+  "name": "Cyberpunk 2050 — Automation Singularity",
+  "description": "Maxed-out automation. AI and robotics absorb the bulk of routine cognitive and manual labour by mid-century. Capital- and tech-intensive economies compound enormous productivity gains, while economies whose growth still leans on low-skill, labour-cost arbitrage stall or contract as their comparative advantage evaporates. The split widens every year — a tale of two futures on one chart. Tested against the built-in GDP demo (1990–2100).",
+  "version": "1.0",
+  "author": "data-isc",
+  "default_delta_pct": -0.4,
+  "year_from": 2026,
+  "year_to": 2050,
+  "growth_ceiling": null,
+  "entity_overrides": [
+    { "entity": "United States", "delta_pct": 3.4 },
+    { "entity": "China", "delta_pct": 2.9 },
+    { "entity": "Singapore", "delta_pct": 3.6 },
+    { "entity": "South Korea", "delta_pct": 3.1 },
+    { "entity": "Japan", "delta_pct": 2.4 },
+    { "entity": "Germany", "delta_pct": 2.2 },
+    { "entity": "Israel", "delta_pct": 3.0 },
+    { "entity": "Switzerland", "delta_pct": 2.3 },
+    { "entity": "Netherlands", "delta_pct": 2.0 },
+    { "entity": "United Kingdom", "delta_pct": 1.8 },
+    { "entity": "India", "delta_pct": -1.6 },
+    { "entity": "Bangladesh", "delta_pct": -2.4 },
+    { "entity": "Vietnam", "delta_pct": -2.1 },
+    { "entity": "Philippines", "delta_pct": -2.0 },
+    { "entity": "Pakistan", "delta_pct": -2.3 },
+    { "entity": "Ethiopia", "delta_pct": -2.2 },
+    { "entity": "Nigeria", "delta_pct": -1.9 },
+    { "entity": "Cambodia", "delta_pct": -2.5 }
+  ],
+  "phases": [
+    { "year_from": 2026, "year_to": 2035, "delta_pct": 1.2 },
+    { "year_from": 2036, "year_to": 2050, "delta_pct": 2.0 }
+  ]
+}

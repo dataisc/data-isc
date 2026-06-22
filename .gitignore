@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# OS / editor cruft
+.DS_Store
+*.log
+
+# Generated demo snapshots (rebuilt by scripts/snapshot-api.js in CI)
+public/api-static/
+
+# Sample datasets copied into the static build (scripts/build-static.js);
+# the originals live in samples/ and are served live by the Node server.
+public/samples/
+
+# Pages build output
+_site/
+
+# Local backups
+*.bak
+
+# Claude Code local settings (machine paths + permission/command history).
+# The shared launch.json is kept; only the per-machine local file is ignored.
+.claude/settings.local.json
+
+# Placeholder demo videos — first-pass Bar Chart Race exports, not referenced
+# anywhere and excluded from the static build. Replace with polished launch
+# assets before committing demo media (see parking lot).
+samples/*.mp4

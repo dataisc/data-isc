@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Global Economy Consensus Model 1990–2100</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+
+    <h1>Global Economy: 1990 – 2100</h1>
+    <p class="subtitle">Consensus baseline projection &nbsp;·&nbsp; Nominal USD &nbsp;·&nbsp; No PPP / no exchange-rate adjustment &nbsp;·&nbsp; 35 Countries</p>
+
+    <!--
+        DATA NOTES
+        ══════════
+        All GDP figures are in NOMINAL USD (current US dollars at the time of each year).
+        • No purchasing-power-parity (PPP) conversion is applied.
+        • No currency-exchange-rate adjustment is applied for future years.
+        • No inflation deflator is applied (figures are NOT in constant/real USD).
+        • Historical values (1990–2025): World Bank / IMF national accounts.
+        • Projected values (2026–2100): Consensus Baseline growth model.
+        • Values between keyframe years are linearly interpolated.
+
+        KEYFRAME YEARS (historical): 1990, 2000, 2010, 2020
+        KEYFRAME YEARS (projected):  2026, 2038, 2075, 2080, 2100
+
+        CONSENSUS CROSSOVERS (nominal USD, no FX adjustment):
+          China overtakes USA:  ~2037
+          India overtakes USA:  ~2072
+          India becomes #1:     ~2076 (overtakes China)
+          2100 Top 3: India > China > USA
+
+        SCENARIO SIMULATION:
+          Two JSON files drive what-if analysis:
+            scenarios_policy.json  — structural long-term policy changes
+            scenarios_shocks.json  — sudden incidents and crises
+          Effects are additive annual growth-rate deltas applied from the chosen start year.
+          Recovery boosts are applied after the event duration expires.
+    -->
+
+    <div class="disclaimer">
+        <strong>⚠ Nominal USD only — no exchange-rate or inflation adjustment.</strong>
+        All figures are in current (nominal) US dollars for each year. No PPP conversion, no future
+        currency adjustment, and no inflation deflator are applied. Historical data 1990–2025 from
+        World Bank / IMF. Projections 2026–2100 represent a consensus growth baseline.
+        Long-run comparisons across decades naturally reflect cumulative inflation.
+    </div>
+
+    <div class="slider-wrap">
+        <input type="range" id="timeSlider" min="1990" max="2100" value="2026">
+        <div class="slider-labels">
+            <span>1990</span><span>2000</span><span>2010</span><span>2020</span>
+            <span>2038</span><span>2075</span><span>2100</span>
+        </div>
+    </div>
+    <div class="year-display" id="yearDisplay">2026</div>
+    <div class="year-mode" id="yearMode"><span class="badge-proj">Projected</span></div>
+
+    <div id="scenarioBanner" class="scenario-banner hidden">
+        <span>🎭</span>
+        <span id="bannerText"><strong>Scenario active:</strong> …</span>
+        <span style="margin-left:auto; font-size:0.75rem; color:#6d28d9;">↓ See impact table below</span>
+    </div>
+
+    <p class="section-label">🏆 Top 3 Economies</p>
+    <div class="podium" id="podium"></div>
+
+    <p class="section-label">All Countries — GDP Ranking (nominal USD)</p>
+    <div class="leaderboard">
+        <div class="lb-header">
+            <span>Rank</span><span>Country</span>
+            <span style="text-align:right">GDP</span>
+            <span style="text-align:right" id="lbDeltaHeader" class="hidden">vs Baseline</span>
+        </div>
+        <div id="leaderboard"></div>
+    </div>
+
+    <!-- ══ SCENARIO SIMULATOR ══════════════════════════════════════════════ -->
+    <div class="scenario-panel">
+        <div class="scenario-panel-header">
+            <h2>🎭 What-If Scenario Simulator</h2>
+            <div class="tab-group">
+                <button id="tabPolicy" class="tab active" onclick="switchTab('policy')">📋 Policy Changes</button>
+                <button id="tabShocks" class="tab" onclick="switchTab('shocks')">⚡ Shocks &amp; Events</button>
+            </div>
+        </div>
+
+        <div id="scenarioGrid" class="scenario-grid">
+            <div class="loading">Loading scenarios…</div>
+        </div>
+
+        <!-- Controls (shown only when a scenario is selected) -->
+        <div id="scenarioControls" class="scenario-controls hidden">
+            <div class="ctrl-row">
+                <span class="active-name" id="activeScenarioName">—</span>
+                <button class="btn-clear" onclick="clearScenario()">✕ Clear Scenario</button>
+            </div>
+            <div class="ctrl-row">
+                <label>Scope:</label>
+                <select class="scope-select" id="scopeSelect" onchange="onScopeChange()">
+                    <option value="global">🌐 All Countries</option>
+                    <option value="default">📌 Default (scenario preset)</option>
+                    <option value="country">🏳 Single Country</option>
+                </select>
+                <select class="country-select hidden" id="countrySelect" onchange="renderAll()">
+                </select>
+            </div>
+            <div class="ctrl-row">
+                <label>Start Year:</label>
+                <div class="year-ctrl">
+                    <input type="range" id="scenarioYear" min="2026" max="2080" value="2030" oninput="onScenarioYearChange()">
+                    <span id="scenarioYearDisplay">2030</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact table (shown when scenario active) -->
+        <div id="impactSection" class="impact-section hidden">
+            <div class="impact-title">📊 Impact at Year 2100 — Scenario vs Baseline</div>
+            <div class="impact-table">
+                <div class="impact-header">
+                    <span>#</span><span>Country</span>
+                    <span>Baseline 2100</span><span>Scenario 2100</span><span>Change</span>
+                </div>
+                <div id="impactRows"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>Data sources:</strong> Historical GDP (1990–2025): World Bank WDI, IMF WEO (nominal USD, current prices).<br>
+        <strong>Projections (2026–2100):</strong> Consensus Baseline model informed by Goldman Sachs, PwC, HSBC, and UN long-term projections, calibrated to demographic and resource constraints.<br>
+        <strong>Caveats:</strong> All values are <em>nominal USD</em>. No PPP conversion. No future FX adjustment. No inflation deflator. Not comparable in real terms across decades without a price deflator. Country boundaries assumed stable. Rest-of-world not shown.<br>
+        <strong>Crossovers (nominal USD, no FX):</strong> China #1 ≈ 2037 &nbsp;|&nbsp; India #2 ≈ 2072 &nbsp;|&nbsp; India #1 ≈ 2076 &nbsp;|&nbsp; 35 countries modelled
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════════════════════
+const MILESTONES  = [1990, 2000, 2010, 2020, 2026, 2038, 2075, 2080, 2100];
+const MEDALS      = ['🥇','🥈','🥉'];
+const MEDAL_CLASS = ['gold','silver','bronze'];
+
+// ══════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════
+let COUNTRIES        = [];
+let POLICY_SCENARIOS = [];
+let SHOCK_SCENARIOS  = [];
+let activeScenario   = null;
+let scenarioStartYear = 2030;
+let currentTab       = 'policy';
+let scopeMode        = 'global';   // 'global' | 'default' | 'country'
+
+// ══════════════════════════════════════════════════════════════════════
+// INTERPOLATION
+// ══════════════════════════════════════════════════════════════════════
+function interpolate(g, year) {
+    if (year <= MILESTONES[0]) return g[0];
+    if (year >= MILESTONES[MILESTONES.length - 1]) return g[g.length - 1];
+    for (let i = 0; i < MILESTONES.length - 1; i++) {
+        if (year >= MILESTONES[i] && year <= MILESTONES[i + 1]) {
+            const t = (year - MILESTONES[i]) / (MILESTONES[i + 1] - MILESTONES[i]);
+            return g[i] + (g[i + 1] - g[i]) * t;
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// SCENARIO CALCULATION
+// ══════════════════════════════════════════════════════════════════════
+function isAffected(country) {
+    if (!activeScenario) return false;
+    if (scopeMode === 'global') return true;
+    if (scopeMode === 'country') {
+        const sel = document.getElementById('countrySelect').value;
+        return country.code === sel;
+    }
+    // default: use scenario's affected_countries list (empty = all)
+    const list = activeScenario.affected_countries || [];
+    return list.length === 0 || list.includes(country.code);
+}
+
+function scenarioFactor(year) {
+    if (!activeScenario || year <= scenarioStartYear) return 1.0;
+    const dur   = activeScenario.duration_years;
+    const recov = activeScenario.recovery_years  || 0;
+    const imp   = activeScenario.annual_growth_impact || 0;
+    const boost = activeScenario.recovery_boost       || 0;
+    let factor  = 1.0;
+    for (let y = scenarioStartYear; y < year; y++) {
+        const elapsed = y - scenarioStartYear;
+        const inEvent    = dur === null || elapsed < dur;
+        const inRecovery = dur !== null && elapsed >= dur && elapsed < dur + recov;
+        if      (inEvent)    factor *= (1 + imp);
+        else if (inRecovery) factor *= (1 + boost);
+    }
+    return factor;
+}
+
+function getGdp(country, year) {
+    const baseline = interpolate(country.gdpMilestones, year);
+    if (!activeScenario || !isAffected(country)) return baseline;
+    return baseline * scenarioFactor(year);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════════════
+function renderAll() {
+    const year = parseInt(document.getElementById('timeSlider').value);
+    document.getElementById('yearDisplay').textContent = year;
+
+    const isProj = year > 2025;
+    let modeLabel;
+    if (activeScenario && year >= scenarioStartYear) {
+        modeLabel = `<span class="badge-scenario">Scenario: ${activeScenario.name}</span>`;
+    } else if (isProj) {
+        modeLabel = '<span class="badge-proj">Projected</span>';
+    } else {
+        modeLabel = '<span class="badge-hist">Historical</span>';
+    }
+    document.getElementById('yearMode').innerHTML = modeLabel;
+
+    // Rank countries
+    const ranked = COUNTRIES
+        .map(c => ({ ...c, gdp: getGdp(c, year), baseline: interpolate(c.gdpMilestones, year) }))
+        .sort((a, b) => b.gdp - a.gdp);
+
+    // Podium
+    const podium = document.getElementById('podium');
+    podium.innerHTML = '';
+    ranked.slice(0, 3).forEach((c, i) => {
+        const hasDelta = activeScenario && isAffected(c) && year >= scenarioStartYear;
+        const delta    = hasDelta ? ((c.gdp - c.baseline) / c.baseline * 100) : 0;
+        const deltaHtml = hasDelta
+            ? `<div class="card-delta ${delta >= 0 ? 'delta-pos' : 'delta-neg'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta).toFixed(1)}% vs baseline</div>`
+            : '';
+        podium.innerHTML += `
+            <div class="card ${MEDAL_CLASS[i]}">
+                <div class="medal">${MEDALS[i]}</div>
+                <div class="card-name">${c.name}</div>
+                <div class="card-gdp">$${c.gdp.toFixed(1)}T</div>
+                ${deltaHtml}
+                <div class="card-note">${isProj ? 'projected' : 'historical'} · nominal USD</div>
+            </div>`;
+    });
+
+    // Leaderboard
+    const showDelta = !!activeScenario;
+    document.getElementById('lbDeltaHeader').classList.toggle('hidden', !showDelta);
+    const lb = document.getElementById('leaderboard');
+    lb.innerHTML = '';
+    ranked.forEach((c, i) => {
+        const hasDelta = showDelta && isAffected(c) && year >= scenarioStartYear;
+        const delta    = hasDelta ? ((c.gdp - c.baseline) / c.baseline * 100) : null;
+        const deltaHtml = delta !== null
+            ? `<span class="lb-delta ${delta >= 0 ? 'delta-pos' : 'delta-neg'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta).toFixed(1)}%</span>`
+            : (showDelta ? '<span class="lb-delta" style="color:#334155">—</span>' : '');
+        lb.innerHTML += `
+            <div class="lb-row">
+                <span class="lb-rank">#${i + 1}</span>
+                <span>${c.name} <span class="lb-region">${c.region}</span></span>
+                <span class="lb-gdp">$${c.gdp.toFixed(2)}T</span>
+                ${deltaHtml}
+            </div>`;
+    });
+
+    renderImpactTable();
+}
+
+function renderImpactTable() {
+    const section = document.getElementById('impactSection');
+    if (!activeScenario) { section.classList.add('hidden'); return; }
+    section.classList.remove('hidden');
+
+    const baseline2100  = COUNTRIES.map(c => ({ ...c, val: interpolate(c.gdpMilestones, 2100) }));
+    const scenario2100  = COUNTRIES.map(c => ({ ...c, val: getGdp(c, 2100) }));
+
+    // Sort by scenario 2100 GDP
+    const merged = scenario2100
+        .map(c => ({
+            code: c.code, name: c.name,
+            base: interpolate(c.gdpMilestones, 2100),
+            sc:   getGdp(c, 2100)
+        }))
+        .sort((a, b) => b.sc - a.sc);
+
+    const rows = document.getElementById('impactRows');
+    rows.innerHTML = '';
+    merged.forEach((c, i) => {
+        const chg     = (c.sc - c.base) / c.base * 100;
+        const cls     = chg > 0 ? 'delta-pos' : chg < 0 ? 'delta-neg' : '';
+        const arrow   = chg > 0 ? '▲' : chg < 0 ? '▼' : '–';
+        const affected = isAffected(COUNTRIES.find(x => x.code === c.code));
+        rows.innerHTML += `
+            <div class="impact-row">
+                <span class="impact-rank">#${i + 1}</span>
+                <span>${c.name}${!affected ? ' <span style="color:#334155;font-size:0.7rem">(unaffected)</span>' : ''}</span>
+                <span class="impact-gdp">$${c.base.toFixed(1)}T</span>
+                <span class="impact-sc ${affected ? cls : ''}" style="color:${affected ? '' : '#475569'}">$${c.sc.toFixed(1)}T</span>
+                <span class="impact-chg ${affected ? cls : ''}">${affected ? arrow + ' ' + Math.abs(chg).toFixed(1) + '%' : '—'}</span>
+            </div>`;
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// SCENARIO UI
+// ══════════════════════════════════════════════════════════════════════
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabPolicy').classList.toggle('active', tab === 'policy');
+    document.getElementById('tabShocks').classList.toggle('active', tab === 'shocks');
+    renderScenarioGrid();
+}
+
+function renderScenarioGrid() {
+    const list = currentTab === 'policy' ? POLICY_SCENARIOS : SHOCK_SCENARIOS;
+    const grid = document.getElementById('scenarioGrid');
+    grid.innerHTML = '';
+    list.forEach(sc => {
+        const scopeLabel = sc.affected_countries.length === 0
+            ? ['global','<span class="sc-scope scope-global">🌐 Global</span>']
+            : sc.scope_default === 'regional'
+            ? ['regional','<span class="sc-scope scope-regional">🗺 Regional</span>']
+            : ['country','<span class="sc-scope scope-country">🏳 Country</span>'];
+
+        const isActive = activeScenario && activeScenario.id === sc.id;
+        const card = document.createElement('div');
+        card.className = 'sc-card' + (isActive ? ' active' : '');
+        card.innerHTML = `
+            <div class="sc-icon">${sc.icon}</div>
+            <div class="sc-name">${sc.name}</div>
+            <div class="sc-desc">${sc.description}</div>
+            ${scopeLabel[1]}`;
+        card.addEventListener('click', () => selectScenario(sc));
+        grid.appendChild(card);
+    });
+}
+
+function selectScenario(sc) {
+    activeScenario = sc;
+    scopeMode = 'default';
+
+    // Update controls
+    document.getElementById('scenarioControls').classList.remove('hidden');
+    document.getElementById('activeScenarioName').textContent = sc.icon + ' ' + sc.name;
+    document.getElementById('scenarioBanner').classList.remove('hidden');
+    document.getElementById('bannerText').innerHTML =
+        `<strong>Scenario active:</strong> ${sc.icon} ${sc.name} &nbsp;|&nbsp; Start: ${scenarioStartYear} &nbsp;|&nbsp; ${sc.duration_years ? sc.duration_years + '-year event' : 'Permanent policy'}`;
+
+    document.getElementById('scopeSelect').value = 'default';
+    document.getElementById('countrySelect').classList.add('hidden');
+
+    renderScenarioGrid();
+    renderAll();
+}
+
+function clearScenario() {
+    activeScenario = null;
+    scopeMode = 'global';
+    document.getElementById('scenarioControls').classList.add('hidden');
+    document.getElementById('scenarioBanner').classList.add('hidden');
+    document.getElementById('impactSection').classList.add('hidden');
+    renderScenarioGrid();
+    renderAll();
+}
+
+function onScopeChange() {
+    scopeMode = document.getElementById('scopeSelect').value;
+    const csel = document.getElementById('countrySelect');
+    csel.classList.toggle('hidden', scopeMode !== 'country');
+    renderAll();
+}
+
+function onScenarioYearChange() {
+    scenarioStartYear = parseInt(document.getElementById('scenarioYear').value);
+    document.getElementById('scenarioYearDisplay').textContent = scenarioStartYear;
+    if (activeScenario) {
+        document.getElementById('bannerText').innerHTML =
+            `<strong>Scenario active:</strong> ${activeScenario.icon} ${activeScenario.name} &nbsp;|&nbsp; Start: ${scenarioStartYear} &nbsp;|&nbsp; ${activeScenario.duration_years ? activeScenario.duration_years + '-year event' : 'Permanent policy'}`;
+    }
+    renderAll();
+}
+
+function populateCountrySelect() {
+    const sel = document.getElementById('countrySelect');
+    sel.innerHTML = '';
+    COUNTRIES.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.code;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// INIT — fetch all data then render
+// ══════════════════════════════════════════════════════════════════════
+async function init() {
+    try {
+        [COUNTRIES, POLICY_SCENARIOS, SHOCK_SCENARIOS] = await Promise.all([
+            fetch('seed_data.json').then(r => r.json()),
+            fetch('scenarios_policy.json').then(r => r.json()),
+            fetch('scenarios_shocks.json').then(r => r.json()),
+        ]);
+        populateCountrySelect();
+        renderScenarioGrid();
+        renderAll();
+    } catch (e) {
+        document.getElementById('scenarioGrid').innerHTML =
+            '<div class="loading" style="color:#f87171">Failed to load data files. Check the console.</div>';
+        console.error(e);
+    }
+}
+
+document.getElementById('timeSlider').addEventListener('input', renderAll);
+init();
+</script>
+</body>
+</html>

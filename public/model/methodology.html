@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/subpage.css">
+<script src="/theme.js" defer></script>
+<title>Methodology — Data ISC</title>
+</head>
+<body>
+<header class="global-header">
+  <div class="global-header-inner">
+    <p class="site-brand"><a href="/">Data ISC</a></p>
+    <nav class="header-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+    </nav>
+    <div class="header-right">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle light / dark mode">
+        <svg id="themeIconMoon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px"><path d="M13.5 9.5A6 6 0 017.5 2.5a5.5 5.5 0 100 11 6 6 0 006-4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <svg id="themeIconSun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <p class="breadcrumb"><a href="/model.html">The Model</a> › Methodology</p>
+  <h1>Methodology</h1>
+  <p class="sub">How the engine projects GDP from 2025 to 2100</p>
+  <div class="demo-scope-notice">This page describes the built-in demo dataset only — <strong>GDP Trajectories</strong>. It does not apply to datasets you import.</div>
+
+  <h2>Core projection equation</h2>
+  <p>Each country's GDP is projected one year at a time using a compounding nominal growth rate:</p>
+  <div class="eq">GDP(t+1) = GDP(t) × (1 + g_nominal(t))</div>
+  <p>Where <code>g_nominal(t)</code> is the country's nominal growth rate for year <code>t</code>, derived from a calibrated baseline rate adjusted for maturity, convergence, and any active scenario shocks.</p>
+
+  <h2>Nominal vs real</h2>
+  <p>All projections are <strong>nominal USD</strong>. The nominal growth rate implicitly bundles real GDP growth and a USD nominal inflation/exchange rate component. No deflator is applied. This is a design choice: comparing countries across time in nominal USD is the most commonly used frame for global economic scale comparisons, and introducing a deflator would require additional assumptions that themselves carry significant uncertainty at a 75-year horizon.</p>
+
+  <h2>Conditional convergence</h2>
+  <p>The model implements a soft form of conditional convergence: lower-income economies have higher baseline growth rates that decay as per-capita income rises. Advanced economies' rates converge toward a long-run terminal rate. This is consistent with the empirical growth literature (Barro & Sala-i-Martin, 1992; subsequent literature).</p>
+  <div class="eq">g_baseline(t) = g_terminal + (g_initial - g_terminal) × exp(-λ × (t - 2025))</div>
+  <p>Where <code>λ</code> is the convergence speed parameter, calibrated per income group. See <a href="/model/calibration.html">Calibration</a> for parameter values by group.</p>
+
+  <h2>Scenario shock mechanics</h2>
+  <p>When a scenario is applied, the engine adds a delta to the affected countries' growth rates over the scenario window:</p>
+  <div class="eq">g_scenario(t) = g_baseline(t) + δ(t)</div>
+  <p>The shock function <code>δ(t)</code> ramps up, sustains, and then decays back toward zero over the scenario's <code>duration_years</code> and <code>recovery_years</code>. The shape is:</p>
+  <ul>
+    <li>Ramp-in: linear over the first 20% of duration</li>
+    <li>Sustained: constant at peak delta</li>
+    <li>Recovery: exponential decay toward zero over recovery_years</li>
+  </ul>
+  <div class="note">The severity field on each scenario card maps to a peak delta range. Mild = ±0.3–0.8 pp, Moderate = ±0.8–2.0 pp, Severe = ±2.0–5.0 pp. Exact values are server-side only and not exposed to clients.</div>
+
+  <h2>Multi-scenario stacking</h2>
+  <p>When multiple scenarios are active simultaneously, their deltas are summed before application. There is no interaction term — shocks are additive. This is a simplification; in reality, policy interactions can be non-linear.</p>
+
+  <h2>Scope resolution</h2>
+  <p>Each scenario specifies a default scope (global, regional, or country-specific). Users can override this. The scope determines which countries receive the shock delta; all others remain at baseline.</p>
+
+  <h2>What is not modelled</h2>
+  <ul>
+    <li>Inflation and price level dynamics</li>
+    <li>Exchange rate movements (all projections assume a stable USD anchor)</li>
+    <li>Demographic transitions and labour force participation</li>
+    <li>Capital accumulation and investment rates</li>
+    <li>Technological discontinuities (AGI, energy transitions)</li>
+    <li>Financial crises, sovereign defaults, and non-linear tipping points</li>
+    <li>Climate physical risk (separate from carbon tax/green transition scenarios)</li>
+  </ul>
+
+  <hr style="margin:32px 0;border:none;border-top:1px solid var(--c-border)">
+  <h1>What-if scenarios for imported datasets</h1>
+  <p class="sub">How the scenario engine works when you upload your own data</p>
+
+  <h2>Core adjustment formula</h2>
+  <p>For each entity and each year within the scenario window, the engine applies a compound growth adjustment on top of the baseline value:</p>
+  <div class="eq">adjusted_value(t) = baseline_value(t) × (1 + δ/100)<sup>(t − t₀ + 1)</sup></div>
+  <p>Where <code>δ</code> is the annual impact rate (%) and <code>t₀</code> is the scenario start year. The exponent starts at 1 so the effect is visible immediately at <code>t₀</code> — a +2%/yr scenario shows +2% in the first year, +4.04% in the second, and so on. Values are clamped to non-negative.</p>
+
+  <h2>Impact priority chain</h2>
+  <p>When multiple sources specify a rate for the same entity and year, the engine applies the highest-priority source and ignores the rest:</p>
+  <table class="data-table" style="width:100%">
+    <thead><tr><th>Priority</th><th>Source</th><th>When active</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>AI per-entity impacts</strong></td><td>AI provider connected and analysis has run</td></tr>
+      <tr><td>2</td><td><strong>Per-entity overrides</strong></td><td>Entity is checked in the Per-Entity tab with its own δ%/yr</td></tr>
+      <tr><td>3</td><td><strong>Phase rate</strong></td><td>Current year falls inside a defined phase window</td></tr>
+      <tr><td>4</td><td><strong>Global default δ</strong></td><td>Fallback for all in-scope entities</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Scenario builder</h2>
+  <p>Click <strong>+ Add / edit</strong> in the What-If section, then <strong>+ Add scenario</strong>. Each scenario card has four tabs:</p>
+  <ul>
+    <li><strong>Basic</strong> — name, description, year range, global default δ%/yr, optional value ceiling</li>
+    <li><strong>Per-Entity</strong> — entity-specific δ%/yr; unchecked entities are excluded from the scenario</li>
+    <li><strong>Phases</strong> — time-segmented rates (e.g. aggressive growth 2010–2015, then slowdown 2015–2020)</li>
+    <li><strong>↑ JSON</strong> — upload or paste a scenario JSON file; download a pre-filled template with your dataset's entity names</li>
+  </ul>
+
+  <h2>Custom scenario JSON format</h2>
+  <p>Scenarios can be written as standalone JSON files and shared or version-controlled independently of the application. Download a template from the ↑ JSON tab — it will be pre-filled with your dataset's entity names.</p>
+  <pre style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:16px;font-size:0.8rem;overflow-x:auto;line-height:1.6">{
+  "id": "green_transition_2025",
+  "name": "Green Transition",
+  "description": "Accelerated shift to renewables — asymmetric impact by energy mix.",
+  "version": "1.0",
+  "author": "your-github-handle",
+  "default_delta_pct": 1.5,
+  "year_from": 2025,
+  "year_to": 2040,
+  "growth_ceiling": null,
+  "entity_overrides": [
+    { "entity": "Norway",  "delta_pct": 3.2 },
+    { "entity": "Germany", "delta_pct": 2.1 },
+    { "entity": "Poland",  "delta_pct": -0.8 }
+  ],
+  "phases": [
+    { "year_from": 2025, "year_to": 2030, "delta_pct": 2.5 },
+    { "year_from": 2030, "year_to": 2040, "delta_pct": 1.0 }
+  ]
+}</pre>
+
+  <table class="data-table" style="width:100%;margin-top:16px">
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>default_delta_pct</code></td><td>number</td><td>Global annual adjustment (%). Applied to all entities not in <code>entity_overrides</code>.</td></tr>
+      <tr><td><code>year_from</code> / <code>year_to</code></td><td>number</td><td>Scenario window (inclusive on both ends).</td></tr>
+      <tr><td><code>entity_overrides</code></td><td>array</td><td>Per-entity rates. <code>delta_pct: null</code> inherits <code>default_delta_pct</code>. Omitting an entity excludes it from the scenario.</td></tr>
+      <tr><td><code>phases</code></td><td>array</td><td>Time windows with their own rate. Each phase overrides <code>default_delta_pct</code> for its year range.</td></tr>
+      <tr><td><code>growth_ceiling</code></td><td>number | null</td><td>Cap every adjusted value at this maximum — useful for percentage datasets (e.g. <code>100</code>). <code>null</code> = no cap.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Difference from the GDP built-in model</h2>
+  <p>The GDP demo uses a <strong>structural simulation</strong>: year-by-year growth rates are modulated by debt levels, demographic aging tiers, fossil resource depletion, and a multilateral cooperation index. Scenario effects are further differentiated by country attributes (trade openness, tech readiness, fossil dependency) via the <code>countryModifier()</code> function in <code>compute.js</code>.</p>
+  <p>For imported datasets, the engine applies the compound formula above. Without AI or per-entity overrides, all in-scope entities receive the same δ — this is a <em>sensitivity analysis</em>, not a structural simulation. Use per-entity overrides or AI-assisted analysis to encode asymmetric, domain-specific effects comparable to the GDP model's country attributes.</p>
+
+  <h2>Contributing community scenarios</h2>
+  <p>Scenario JSON files are self-contained and designed to be shared. To contribute to the main codebase: author your JSON, test it against one of the <code>samples/</code> datasets, and open a pull request adding the file under <code>samples/scenarios/</code>. See the <a href="https://github.com/dataisc/data-isc" target="_blank">GitHub repository</a> for the contributing guide.</p>
+</div>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span class="footer-brand">Data ISC <span style="font-size:0.75rem;font-weight:400;opacity:0.6">v1.0-rc</span></span>
+    <nav class="footer-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+      <a href="/licence.html">Licence</a>
+      <a href="/disclaimer.html">Disclaimer</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+    <a href="https://github.com/dataisc/data-isc" target="_blank" class="footer-github">⭐ GitHub</a>
+  </div>
+</footer>
+</body>
+</html>

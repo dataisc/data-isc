@@ -1,0 +1,31 @@
+{
+  "id": "great_decoupling",
+  "name": "The Great Decoupling — Deglobalisation",
+  "description": "Trade blocs fracture along geopolitical lines and supply chains re-shore. The most trade-exposed, export-dependent economies lose the most as friction rises and global commerce fragments; large hub economies absorb a heavy hit, while resource-rich and more self-sufficient economies prove relatively resilient. Models the reversal of three decades of integration. Tested against the built-in GDP demo.",
+  "version": "1.0",
+  "author": "data-isc",
+  "default_delta_pct": -0.7,
+  "year_from": 2026,
+  "year_to": 2045,
+  "growth_ceiling": null,
+  "entity_overrides": [
+    { "entity": "China", "delta_pct": -2.4 },
+    { "entity": "Germany", "delta_pct": -2.0 },
+    { "entity": "Singapore", "delta_pct": -2.6 },
+    { "entity": "South Korea", "delta_pct": -2.1 },
+    { "entity": "Netherlands", "delta_pct": -1.9 },
+    { "entity": "Vietnam", "delta_pct": -2.2 },
+    { "entity": "Malaysia", "delta_pct": -2.3 },
+    { "entity": "Hong Kong", "delta_pct": -2.5 },
+    { "entity": "Mexico", "delta_pct": 0.6 },
+    { "entity": "India", "delta_pct": 0.8 },
+    { "entity": "United States", "delta_pct": -0.5 },
+    { "entity": "Brazil", "delta_pct": 0.4 },
+    { "entity": "Saudi Arabia", "delta_pct": 0.3 },
+    { "entity": "Indonesia", "delta_pct": 0.2 }
+  ],
+  "phases": [
+    { "year_from": 2026, "year_to": 2032, "delta_pct": -1.5 },
+    { "year_from": 2033, "year_to": 2045, "delta_pct": -0.6 }
+  ]
+}

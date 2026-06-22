@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>About — Data ISC</title>
+<link rel="stylesheet" href="/subpage.css">
+<script src="/theme.js" defer></script>
+</head>
+<body>
+<header class="global-header">
+  <div class="global-header-inner">
+    <p class="site-brand"><a href="/">Data ISC</a></p>
+    <nav class="header-nav">
+      <a href="/about.html" class="active">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+    </nav>
+    <div class="header-right">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle light / dark mode">
+        <svg id="themeIconMoon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px"><path d="M13.5 9.5A6 6 0 017.5 2.5a5.5 5.5 0 100 11 6 6 0 006-4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <svg id="themeIconSun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <h1>About</h1>
+  <p class="sub">Data ISC · Open source under AGPLv3 · June 2026</p>
+
+  <h2>What this is</h2>
+  <p>Data ISC is an open-source, browser-based simulation engine. Import any time-series dataset — upload a CSV or XLSX file and the tool automatically detects its structure, visualises the data, and lets you define what-if scenarios to see how outcomes diverge under different assumptions.</p>
+  <p>Connect an AI provider of your choice to power intelligent scenario analysis: the model reads your data and your plain-language description of a scenario, then computes per-entity impact estimates with causal reasoning — which entities are affected, by how much, and over what time horizon.</p>
+
+  <h2>Built-in demo: GDP Trajectories</h2>
+  <p>The tool ships with a built-in data model covering GDP trajectories for 100+ countries from 1990 to 2100. <em>The following applies specifically to this demo dataset — not to imported datasets, which follow their own structure.</em></p>
+  <p>The GDP model runs a deterministic projection engine calibrated to historical data from the IMF World Economic Outlook, World Bank national accounts, and UN Statistics Division. Growth rates are derived from long-run convergence theory, demographic projections, and productivity trends. All values are nominal USD — no PPP adjustments, no inflation deflators. The 2100 figures should be read as consistent extrapolations of calibrated trends, not predictions; structural breaks and technological discontinuities are not modelled.</p>
+
+  <h2>Design principles</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="icon">🖥</div>
+      <h3>Model stays server-side</h3>
+      <p>The engine logic and calibration data are never sent to the browser. The client receives only computed outputs.</p>
+    </div>
+    <div class="card">
+      <div class="icon">💵</div>
+      <h3>Nominal USD only</h3>
+      <p>All GDP figures are current nominal US dollars. PPP conversions and inflation adjustments are explicitly out of scope.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📡</div>
+      <h3>No tracking</h3>
+      <p>The tool runs entirely in your browser. No analytics, no telemetry, no cookies. Your data and your AI provider key never leave your machine.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🏁</div>
+      <h3>Bar Chart Race</h3>
+      <p>Animated ranking race from 1990 to 2100 — or use your own dataset. Scenario effects apply live: watch how a pandemic or automation wave reshapes rankings in real time. Smart callouts highlight leader changes and landmark milestones automatically.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⑂</div>
+      <h3>Scenario branching (GitDiff)</h3>
+      <p>Branch the baseline into two rival futures — say, high automation vs severe demographic strain — and watch the two timelines diverge on a single graph. A shaded divergence band and live delta readout show the gap widening or narrowing year by year.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📤</div>
+      <h3>Social video export</h3>
+      <p>Export the animated race as a WebM video in 16:9, 1:1, or 9:16 format — ready to post on LinkedIn, Instagram, or TikTok without any post-production editing.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⚡️</div>
+      <h3>Export &amp; BI connectors</h3>
+      <p>Export to CSV, JSON, or a Power BI-ready ZIP (star schema: fact table + dimension tables). A native Power BI connector for DirectQuery is on the roadmap.</p>
+    </div>
+  </div>
+
+  <h2>Licence</h2>
+  <p>
+    <span class="pill">AGPLv3</span><span class="pill">Open source</span>
+  </p>
+  <p>The simulator is released under the GNU Affero General Public Licence v3. Academic research, personal use, and non-commercial projects are free. Commercial deployment requires a separate commercial licence. See <a href="/licence.html">Licence</a> for the full terms, or email <a href="mailto:license@dataisc.dev">license@dataisc.dev</a>.</p>
+
+  <h2>Data sources</h2>
+  <p>Historical GDP data is sourced from IMF World Economic Outlook, World Bank national accounts, and UN Statistics Division. See <a href="/model/data-sources.html">Data Sources</a> for full attribution and known outliers.</p>
+
+  <h2>Limitations</h2>
+  <p>This is a projection model, not a forecast. The further out the horizon, the less predictive power any model has. The 2100 figures should be read as <em>consistent extrapolations of calibrated long-run trends</em>, not predictions. Structural breaks, wars, pandemics, and technological discontinuities are not modelled.</p>
+  <p>See <a href="/disclaimer.html">Disclaimer</a> for the full statement.</p>
+
+  <h2>Contributing</h2>
+  <p>The source code is on <a href="https://github.com/dataisc/data-isc" target="_blank">GitHub</a>. Bug reports, scenario suggestions, and calibration improvements are welcome via issues and pull requests. Please read the <a href="/CLA.md">Contributor Licence Agreement</a> before submitting code.</p>
+</div>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span class="footer-brand">Data ISC <span style="font-size:0.75rem;font-weight:400;opacity:0.6">v1.0-rc</span></span>
+    <nav class="footer-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+      <a href="/licence.html">Licence</a>
+      <a href="/disclaimer.html">Disclaimer</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+    <a href="https://github.com/dataisc/data-isc" target="_blank" class="footer-github">⭐ GitHub</a>
+  </div>
+</footer>
+</body>
+</html>

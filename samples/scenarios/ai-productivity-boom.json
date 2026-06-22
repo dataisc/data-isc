@@ -1,0 +1,26 @@
+{
+  "id": "ai_productivity_boom",
+  "name": "AI Productivity Boom — Broad-Based Uplift",
+  "description": "The optimistic counterpart to Cyberpunk 2050. Generative AI diffuses widely and lifts total factor productivity across nearly every economy rather than concentrating gains. Early adopters move first and fastest, but diffusion broadens through the 2030s as tooling commoditises. A rising-tide scenario useful as a baseline-vs-upside comparison. Tested against the built-in GDP demo.",
+  "version": "1.0",
+  "author": "data-isc",
+  "default_delta_pct": 1.2,
+  "year_from": 2026,
+  "year_to": 2050,
+  "growth_ceiling": null,
+  "entity_overrides": [
+    { "entity": "United States", "delta_pct": 2.6 },
+    { "entity": "China", "delta_pct": 2.4 },
+    { "entity": "India", "delta_pct": 2.2 },
+    { "entity": "Singapore", "delta_pct": 2.5 },
+    { "entity": "South Korea", "delta_pct": 2.3 },
+    { "entity": "United Kingdom", "delta_pct": 2.0 },
+    { "entity": "Germany", "delta_pct": 1.8 },
+    { "entity": "Israel", "delta_pct": 2.4 }
+  ],
+  "phases": [
+    { "year_from": 2026, "year_to": 2030, "delta_pct": 0.8 },
+    { "year_from": 2031, "year_to": 2040, "delta_pct": 1.6 },
+    { "year_from": 2041, "year_to": 2050, "delta_pct": 1.1 }
+  ]
+}

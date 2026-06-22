@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Model — Data ISC</title>
+<link rel="stylesheet" href="/subpage.css">
+<script src="/theme.js" defer></script>
+</head>
+<body>
+<header class="global-header">
+  <div class="global-header-inner">
+    <p class="site-brand"><a href="/">Data ISC</a></p>
+    <nav class="header-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html" class="active">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+    </nav>
+    <div class="header-right">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle light / dark mode">
+        <svg id="themeIconMoon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px"><path d="M13.5 9.5A6 6 0 017.5 2.5a5.5 5.5 0 100 11 6 6 0 006-4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <svg id="themeIconSun" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;display:none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <h1>The Model</h1>
+  <p class="sub">Architecture, methodology, and data inputs — how the engine works</p>
+
+  <div class="sub-pages">
+    <a class="sub-card" href="/model/data-types.html">
+      <h3>🗂 Data Types &amp; Model Rules</h3>
+      <p>How the engine handles each data type, projection guardrails, supported time formats, and known limitations</p>
+    </a>
+    <a class="sub-card" href="/model/data-sources.html">
+      <h3>📦 Data Sources</h3>
+      <p>Historical data attribution, IMF/World Bank coverage, and known statistical outliers</p>
+    </a>
+    <a class="sub-card" href="/model/methodology.html">
+      <h3>🧮 Methodology</h3>
+      <p>The projection equations, growth accounting decomposition, and convergence mechanics</p>
+    </a>
+    <a class="sub-card" href="/model/constraints.html">
+      <h3>🔒 Fixed Constraints</h3>
+      <p>Hard-coded milestones and why they cannot be changed by scenarios or user inputs</p>
+    </a>
+    <a class="sub-card" href="/model/calibration.html">
+      <h3>⚖️ Calibration</h3>
+      <p>How growth rates are anchored to historical data and expert long-run consensus</p>
+    </a>
+  </div>
+
+  <h2>Bring your own data</h2>
+  <p>Data ISC is data-source agnostic. Upload any CSV or XLSX file with time-series data and the engine automatically detects its structure — which column is the entity, which is the time axis, which columns are values. No fixed schema is required beyond that.</p>
+  <p>Any domain works: economic indicators, environmental measurements, clinical trial progressions, sales figures, energy output — if it has entities evolving over time, the tool can visualise and simulate it.</p>
+  <p><strong>Supported input formats:</strong> CSV, XLSX, JSON (simulator export). Copy-paste from a spreadsheet also works via the import panel.</p>
+  <p><strong>No automatic database connections in this release.</strong> Data must be uploaded as a file. Direct connectors to SQL databases, REST APIs, or cloud data warehouses (BigQuery, Snowflake, Databricks) are planned for a future release.</p>
+  <p>For imported datasets the engine follows the same general logic as the GDP demo — year-by-year projections along each entity's detected trend, with what-if scenarios applied as adjustments over the horizon you define. The specific calibration, growth-rate assumptions, and fixed milestones documented in the sub-pages below apply only to the built-in GDP model and will not carry over to your data.</p>
+
+  <h2>Demo model: GDP Trajectories</h2>
+  <p>The built-in demo uses a deterministic, annual-step projection engine calibrated to historical IMF GDP data. It extends every country's trajectory from 2025 to 2100 using long-run growth rates that slow as economies mature (conditional convergence). Scenario shocks apply multiplicative adjustments over a user-specified window, then decay back toward baseline. All values are nominal USD — no PPP, no inflation deflators.</p>
+  <p>The sub-pages below document this model's methodology, data sources, calibration, and fixed constraints. These details apply specifically to the GDP demo dataset, not to user-imported data.</p>
+
+  <h2>Visualisation modes</h2>
+  <p>Once data is loaded — either the built-in GDP model or your own upload — the engine offers four chart modes:</p>
+  <ul>
+    <li><strong>Map view</strong> — choropleth world map, scrub through time with the year slider.</li>
+    <li><strong>Top 10 chart</strong> — ranked bar chart at a selected year.</li>
+    <li><strong>Trajectories</strong> — multi-entity line chart from start year to 2100. Includes a <strong>⑂ Branch (GitDiff)</strong> mode: split the baseline into two rival futures (e.g. high automation vs demographic strain), each its own stack of scenarios, and watch the two lines diverge on one graph with a shaded divergence band and a live gap readout.</li>
+    <li><strong>Bar Chart Race</strong> — animated ranking race. Scenario effects apply live, reshaping trajectories from the scenario start year onward. Automated callouts surface leader changes (🏆) and landmark milestones (🎯) so viewers don't miss critical moments. Export the animation as a 16:9, 1:1, or 9:16 video for social media.</li>
+  </ul>
+
+  <h2>What the engine does not do</h2>
+  <p>The engine produces <em>internally consistent projections</em>, not forecasts. For user datasets, what-if scenarios are powered by AI reasoning (if a provider is connected) or simple compound growth adjustments. The engine does not model causal mechanisms on its own — that reasoning is delegated to the AI layer.</p>
+
+  <h2>Server-side boundary</h2>
+  <p>The GDP model engine (<code>models/gdp-trajectories/compute.js</code>) and its calibration data run exclusively on the server. The browser receives only computed output arrays — never growth rate tables, scenario parameters, or calibration coefficients. User-imported data is processed entirely client-side and never sent to the server.</p>
+
+  <h2>Transparency</h2>
+  <p>The full source is published under AGPLv3 at <a href="https://github.com/dataisc/data-isc" target="_blank">GitHub</a>. The methodology pages below document the GDP model in enough detail for independent verification.</p>
+</div>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span class="footer-brand">Data ISC <span style="font-size:0.75rem;font-weight:400;opacity:0.6">v1.0-rc</span></span>
+    <nav class="footer-nav">
+      <a href="/about.html">About</a>
+      <a href="/model.html">The Model</a>
+      <a href="/scenarios.html">Scenarios</a>
+      <a href="/licence.html">Licence</a>
+      <a href="/disclaimer.html">Disclaimer</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+    <a href="https://github.com/dataisc/data-isc" target="_blank" class="footer-github">⭐ GitHub</a>
+  </div>
+</footer>
+</body>
+</html>

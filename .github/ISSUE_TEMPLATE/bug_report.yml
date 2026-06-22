@@ -1,0 +1,77 @@
+name: 🐛 Bug report
+description: Something isn't working as expected
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please search [existing issues](https://github.com/dataisc/data-isc/issues) first to avoid duplicates.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+      placeholder: When I upload a CSV with quarterly dates, the projection line flattens after 2030.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: How can a maintainer reproduce this? Include a sample dataset or scenario JSON if relevant.
+      placeholder: |
+        1. Go to '...'
+        2. Upload '...'
+        3. Click '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      options:
+        - Data import (CSV / XLSX / URL)
+        - Projection engine
+        - What-if scenarios
+        - Bar Chart Race / video export
+        - World map
+        - Share / embed
+        - Built-in GDP demo
+        - AI provider integration
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser + version, OS, and how you're running it (npm / Docker / hosted demo).
+      placeholder: Chrome 125, macOS 14, local `node server.js`
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console / server logs
+      description: Paste any relevant browser console errors or server output.
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag-and-drop images or a short clip if it helps.

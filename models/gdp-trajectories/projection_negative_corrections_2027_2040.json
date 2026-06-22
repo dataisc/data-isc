@@ -1,0 +1,136 @@
+{
+  "corrections": [
+    {
+      "country": "UKR",
+      "tier": 1,
+      "driver": "wartime damage + emigration",
+      "years": {
+        "2027": -3,
+        "2028": -1.5,
+        "2029": 1.5,
+        "2030": 4,
+        "2031": 5,
+        "2032": 5.5
+      }
+    },
+    {
+      "country": "VEN",
+      "tier": 1,
+      "driver": "institutional collapse + oil decline",
+      "years": {
+        "2027": -2,
+        "2028": -1.5,
+        "2029": -0.5,
+        "2030": 0.5,
+        "2031": 1,
+        "2032": 1.5
+      }
+    },
+    {
+      "country": "MMR",
+      "tier": 1,
+      "driver": "civil war + military junta",
+      "years": {
+        "2027": -2,
+        "2028": -1.5,
+        "2029": -1,
+        "2030": -0.5,
+        "2031": 0.5,
+        "2032": 1.5
+      }
+    },
+    {
+      "country": "SDN",
+      "tier": 1,
+      "driver": "active conflict / state dysfunction",
+      "years": {
+        "2027": -4,
+        "2028": -3,
+        "2029": -1,
+        "2030": 1
+      }
+    },
+    {
+      "country": "ARG",
+      "tier": 2,
+      "driver": "debt crisis + Milei austerity",
+      "years": {
+        "2027": 0,
+        "2028": -0.5,
+        "2029": -1,
+        "2030": 0.5,
+        "2031": 1,
+        "2032": 1.5
+      }
+    },
+    {
+      "country": "KOR",
+      "tier": 2,
+      "driver": "demographic cliff + workforce shrinkage",
+      "years": {
+        "2027": 2.2,
+        "2028": 2,
+        "2029": 1.8,
+        "2030": 1.7,
+        "2031": 1.6,
+        "2032": 1.5
+      }
+    },
+    {
+      "country": "BGR",
+      "tier": 2,
+      "driver": "population collapse + emigration",
+      "years": {
+        "2027": 0.3,
+        "2028": 0.2,
+        "2029": 0.1,
+        "2030": 0.1,
+        "2031": 0.2
+      }
+    },
+    {
+      "country": "LVA",
+      "tier": 2,
+      "driver": "emigration + demographic contraction",
+      "years": {
+        "2027": -0.5,
+        "2028": -0.5,
+        "2029": 0,
+        "2030": 0.2
+      }
+    },
+    {
+      "country": "LTU",
+      "tier": 2,
+      "driver": "emigration + slow growth",
+      "years": {
+        "2027": 0.5,
+        "2028": 0.5,
+        "2029": 0.5,
+        "2030": 0.7
+      }
+    },
+    {
+      "country": "BLR",
+      "tier": 2,
+      "driver": "sanctions + Russia dependency",
+      "years": {
+        "2027": 0.3,
+        "2028": 0.3,
+        "2029": 0.3,
+        "2030": 0.4
+      }
+    },
+    {
+      "country": "EGY",
+      "tier": 3,
+      "driver": "debt distress + currency crisis",
+      "years": {
+        "2027": 1.6,
+        "2028": 1.6,
+        "2029": 1.7,
+        "2030": 1.7
+      }
+    }
+  ]
+}
