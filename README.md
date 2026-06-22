@@ -34,7 +34,7 @@ The same static build also powers the [GitHub Pages demo](https://dataisc.github
 
 - **Any dataset** — upload a CSV or XLSX and the engine auto-detects time axis, entities, and value columns. Economic indicators, clinical trial data, energy output, sales figures — if it evolves over time, it works.
 - **Projection engine** — fits a trend (linear or exponential, auto-selected by R²) per entity and projects forward. Quarterly, weekly, monthly, fiscal-year time formats all handled.
-- **What-if scenarios** — start from the **🦢 Black Swan preset library** (one-click economic shocks like an automation wave, fertility crisis, decoupling, pandemic, or energy shock that auto-disperse across your entities), or build structured scenarios with per-entity rates, time-phased impacts, and value ceilings — no AI key required. Connect your own AI provider for causal per-entity breakdowns. Import/export scenarios as JSON for sharing and version control.
+- **What-if scenarios** — start from the **🦢 Black Swan preset library** (one-click economic shocks like an automation wave, fertility crisis, decoupling, pandemic, or energy shock that auto-disperse across your entities), or build structured scenarios with per-entity rates, time-phased impacts, and value ceilings — no AI key required. Connect your own AI provider for causal per-entity breakdowns or to **describe a GDP scenario in plain language** ("a trade war starting 2028 cuts growth 2%/yr for 5 years") and have the AI generate and apply the full parameter set automatically. Import/export scenarios as JSON for sharing and version control.
 - **Scenario branching (GitDiff)** — branch the baseline into two rival futures (e.g. high automation vs severe demographic strain), each its own stack of scenarios, and watch the two timelines diverge on a single graph. A shaded divergence band and live delta readout show the gap widening or narrowing year by year.
 - **Map, chart & trajectory views** — choropleth world map with a time scrubber, ranked Top 10 bars at any year, and a multi-entity trajectory line chart — switch freely and share any view by URL.
 - **Bar Chart Race** — animated ranking race across the full simulation timeline. Scenario effects apply live, reshaping trajectories from the shock year onward. Callouts mark leader changes and landmark crossings as they occur.
@@ -229,6 +229,10 @@ Built-in scenario analysis works without any API key. Connect your own AI provid
 | Anthropic / OpenAI | Paid | ~2 min |
 
 Click the **AI** button in the top-right corner. Your key is stored only in your browser — never sent to this server.
+
+Once connected, AI unlocks two things:
+- **Import datasets** — per-entity causal impact estimates with timing and rationale for any scenario you describe
+- **GDP demo** — describe any shock or policy in plain language; AI generates the full scenario parameters (`annual_growth_impact`, `duration_years`, `affected_countries`, recovery curve) and applies them live to the 100-country model
 
 ---
 
