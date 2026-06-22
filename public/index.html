@@ -7082,16 +7082,9 @@ function activateDataset(idx) {
     applyModelView();
     mountImportedViz(ds);
     _refreshDsSwitcher(idx);
-    renderHeroDsList();
-    showToast(`Viewing: ${ds.name}`);
-    // Scroll to viz when activating from above the fold
-    setTimeout(() => {
-        const vizEl = document.getElementById('model-import');
-        if (!vizEl) return;
-        if (window.scrollY < vizEl.offsetTop - 80) {
-            window.scrollTo(0, Math.max(0, vizEl.offsetTop - 16));
-        }
-    }, 80);
+    // Scroll into view if called from the hero (above the fold)
+    const vizEl = document.getElementById('model-import');
+    if (vizEl && window.scrollY < 200) vizEl.scrollIntoView({ behavior: 'instant' });
 }
 
 function _refreshDsSwitcher(activeIdx) {
