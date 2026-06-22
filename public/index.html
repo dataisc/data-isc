@@ -1086,7 +1086,7 @@
             <hr style="border:none;border-top:1px solid var(--c-surface);margin:0">
 
             <!-- Load new dataset -->
-            <div>
+            <div id="loadNewDatasetSection">
                 <p class="section-label" style="margin-bottom:8px">Load a new dataset</p>
                 <button class="export-btn" onclick="document.getElementById('importFileInput').click()" style="width:100%">
                     <span class="export-btn-icon">⬆</span>
@@ -4739,11 +4739,13 @@ function showImportPreview(filename, data, columns) {
     preview.innerHTML = _renderImportPreviewHTML(filename, data, columns);
     _updateMappingSummary();
 
-    // Hide the standalone GDP what-if section while the import flow is active
+    // Hide the file upload form and standalone section while mapping is active
+    const loadSection       = document.getElementById('loadNewDatasetSection');
     const standaloneSection = document.getElementById('standaloneWhatifSection');
     const standaloneSep     = document.getElementById('standaloneWhatifSep');
-    if (standaloneSection) standaloneSection.style.display = 'none';
-    if (standaloneSep)     standaloneSep.style.display     = 'none';
+    if (loadSection)        loadSection.style.display       = 'none';
+    if (standaloneSection)  standaloneSection.style.display = 'none';
+    if (standaloneSep)      standaloneSep.style.display     = 'none';
 
     // Show scenario step immediately below mapping — final "Confirm import →" is at the bottom
     _importScenarioCards = [];
@@ -5044,7 +5046,9 @@ function cancelImport() {
         stepEl.style.display = 'none';
         _importScenarioCards = [];
         document.getElementById('importScenariosList').innerHTML = '';
-        // Restore standalone section (it was hidden during import flow)
+        // Restore upload form and standalone section
+        const loadSection2 = document.getElementById('loadNewDatasetSection');
+        if (loadSection2)      loadSection2.style.display      = '';
         if (standaloneSection) standaloneSection.style.display = '';
         if (standaloneSep)     standaloneSep.style.display     = '';
     }
