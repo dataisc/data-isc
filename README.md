@@ -40,7 +40,7 @@ The same static build also powers the [GitHub Pages demo](https://dataisc.github
 - **Bar Chart Race** — animated ranking race across the full simulation timeline. Scenario effects apply live, reshaping trajectories from the shock year onward. Callouts mark leader changes and landmark crossings as they occur.
 - **Social video export** — export the race as an **MP4** (default, plays on iOS/PowerPoint/everywhere) or **WebM** (smaller) in 16:9 (LinkedIn/Facebook), 1:1 (Instagram feed), or 9:16 (Reels/TikTok/Shorts) — no post-production required.
 - **Share & embed** — every view is shareable via a URL hash. One click generates an `<iframe>` snippet or an `<economic-sandbox-widget>` web component ready for Notion, papers, Substacks, or BI dashboards.
-- **Built-in GDP demo** — 100 countries + 5 regional aggregates, 1990–2100, with ready-to-run scenario presets (global carbon tax, free-trade expansion, EU federal integration). Explore out of the box, replace with your own data when ready.
+- **Built-in GDP demo** — 100 countries + 5 regional aggregates, 1990–2100, with ready-to-run scenario presets (global carbon tax, free-trade expansion, EU federal integration). Always available as the first entry in the dataset switcher alongside any datasets you upload — explore out of the box, then switch between them freely.
 
 ---
 
@@ -50,7 +50,7 @@ The same static build also powers the [GitHub Pages demo](https://dataisc.github
 
 ![Step 1 — import: preview table and automatic column detection](docs/step-1-import.svg)
 
-Drop a **CSV, XLSX, JSON** file or paste a public URL. The engine auto-detects the time axis, entities, and value column — no fixed schema, no template. Confirm the mapping and you're in.
+Drop a **CSV, XLSX, JSON** file or paste a public URL. The engine auto-detects the time axis, entities, and value column — no fixed schema, no template. Confirm the mapping and you're in. Your dataset appears alongside the built-in GDP demo in the dataset switcher — switch between them at any time without losing your work. The GDP demo is always present as a non-deletable reference dataset.
 
 ### 2 · Visualize every view
 

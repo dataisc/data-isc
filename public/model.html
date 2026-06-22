@@ -54,7 +54,8 @@
   <h2>Bring your own data</h2>
   <p>Data ISC is data-source agnostic. Upload any CSV or XLSX file with time-series data and the engine automatically detects its structure — which column is the entity, which is the time axis, which columns are values. No fixed schema is required beyond that.</p>
   <p>Any domain works: economic indicators, environmental measurements, clinical trial progressions, sales figures, energy output — if it has entities evolving over time, the tool can visualise and simulate it.</p>
-  <p><strong>Supported input formats:</strong> CSV, XLSX, JSON (simulator export). Copy-paste from a spreadsheet also works via the import panel.</p>
+  <p><strong>Supported input formats:</strong> CSV, XLSX, JSON (simulator export). Copy-paste from a spreadsheet also works via the upload dialog.</p>
+  <p>Uploaded datasets appear in the dataset switcher alongside the built-in GDP demo. You can switch between them freely — the GDP demo is always present as a non-deletable reference. Both the scenario builder and the AI panel work identically across all datasets.</p>
   <p><strong>No automatic database connections in this release.</strong> Data must be uploaded as a file. Direct connectors to SQL databases, REST APIs, or cloud data warehouses (BigQuery, Snowflake, Databricks) are planned for a future release.</p>
   <p>For imported datasets the engine follows the same general logic as the GDP demo — year-by-year projections along each entity's detected trend, with what-if scenarios applied as adjustments over the horizon you define. The specific calibration, growth-rate assumptions, and fixed milestones documented in the sub-pages below apply only to the built-in GDP model and will not carry over to your data.</p>
 
