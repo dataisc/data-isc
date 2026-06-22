@@ -802,28 +802,34 @@
     <!-- Branch compare panel (shown when branch mode active) -->
     <div id="importBranchPanel" style="display:none;margin-bottom:10px;padding:14px 16px;border:1px solid var(--c-border);border-radius:12px;background:var(--c-bg)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <span style="font-size:0.82rem;font-weight:600;color:var(--c-heading)">Branch &amp; compare</span>
+            <span style="font-size:0.82rem;font-weight:600;color:var(--c-heading)">⑂ Branch &amp; compare two futures</span>
             <button onclick="closeImportBranchMode()" style="font-size:0.72rem;color:var(--c-text-dim);background:none;border:none;cursor:pointer;padding:2px 6px">✕ Close</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:start">
             <div>
-                <div style="font-size:0.72rem;font-weight:600;color:var(--c-text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Branch A</div>
+                <div style="font-size:0.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">
+                    <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--branch-a);margin-right:5px;vertical-align:middle"></span>Branch A
+                </div>
                 <select id="importBranchSelA" style="width:100%;font-size:0.8rem;padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-surface);color:var(--c-text)">
                     <option value="">Baseline (no scenario)</option>
                 </select>
             </div>
             <div style="font-size:0.78rem;color:var(--c-text-dim);padding-top:26px">vs</div>
             <div>
-                <div style="font-size:0.72rem;font-weight:600;color:var(--c-text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Branch B</div>
+                <div style="font-size:0.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">
+                    <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--branch-b);margin-right:5px;vertical-align:middle"></span>Branch B
+                </div>
                 <select id="importBranchSelB" style="width:100%;font-size:0.8rem;padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-surface);color:var(--c-text)">
                     <option value="">Baseline (no scenario)</option>
                 </select>
             </div>
         </div>
         <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
-            <button onclick="runImportBranchCompare()" style="padding:5px 16px;font-size:0.8rem;font-weight:600;background:var(--c-heading);color:var(--c-bg);border:none;border-radius:6px;cursor:pointer">▶ Compare</button>
+            <button onclick="runImportBranchCompare()" class="branch-run-btn">▶ Compare &amp; diverge</button>
+            <button id="importBranchReplayBtn" onclick="runImportBranchCompare(true)" class="branch-replay-btn" style="display:none">↻ Replay divergence</button>
             <span id="importBranchHint" style="font-size:0.75rem;color:var(--c-text-dim)">Pick a scenario for each branch, then compare.</span>
         </div>
+        <div id="importBranchDelta" class="branch-delta hidden" style="margin-top:14px"></div>
     </div>
     <div class="import-chart-card">
         <div id="importChartArea" style="position:relative;min-height:360px"></div>
@@ -8741,7 +8747,12 @@ function openImportBranchMode() {
 
 function closeImportBranchMode() {
     document.getElementById('importBranchPanel').style.display = 'none';
-    document.getElementById('importBranchHint').textContent = 'Pick a scenario for each branch, then compare.';
+    const hint = document.getElementById('importBranchHint');
+    if (hint) { hint.textContent = 'Pick a scenario for each branch, then compare.'; hint.style.display = ''; }
+    const replay = document.getElementById('importBranchReplayBtn');
+    if (replay) replay.style.display = 'none';
+    const delta = document.getElementById('importBranchDelta');
+    if (delta) { delta.innerHTML = ''; delta.classList.add('hidden'); }
 }
 
 function _populateImportBranchSelects() {
@@ -8834,12 +8845,13 @@ function _resolveBranchScenario(val, ds) {
     return null;
 }
 
-function runImportBranchCompare() {
+function runImportBranchCompare(replay = false) {
     const ds = _activeImportDS;
     if (!ds) return;
-    const hint = document.getElementById('importBranchHint');
-    const sch  = _activeSchema(ds.schema);
-    const baseData = _activeProjectedData ?? ds.data;
+    const hint      = document.getElementById('importBranchHint');
+    const replayBtn = document.getElementById('importBranchReplayBtn');
+    const sch       = _activeSchema(ds.schema);
+    const baseData  = _activeProjectedData ?? ds.data;
 
     const valA = document.getElementById('importBranchSelA').value;
     const valB = document.getElementById('importBranchSelB').value;
@@ -8861,12 +8873,20 @@ function runImportBranchCompare() {
 
     const labelA = scA ? (scA.name || 'Branch A') : 'Baseline';
     const labelB = scB ? (scB.name || 'Branch B') : 'Baseline';
-    hint.textContent = `Comparing: ${labelA} vs ${labelB}`;
+    hint.style.display = 'none';
+    if (replayBtn) replayBtn.style.display = '';
 
-    _renderLineBranchChart(area, sch, baseData, dataA, dataB, labelA, labelB);
+    // Branch year = earliest yearFrom across the two scenarios
+    const branchYear = Math.min(
+        scA?.yearFrom ?? Infinity,
+        scB?.yearFrom ?? Infinity
+    );
+
+    _renderLineBranchChart(area, sch, baseData, dataA, dataB, labelA, labelB, branchYear, !replay);
+    _renderImportBranchDelta(sch, baseData, dataA, dataB, labelA, labelB, branchYear);
 }
 
-function _renderLineBranchChart(container, schema, baseData, dataA, dataB, labelA, labelB) {
+function _renderLineBranchChart(container, schema, baseData, dataA, dataB, labelA, labelB, branchYear, animate = true) {
     const timeKey  = schema.keys.time;
     const valueKey = schema.keys.value;
     const groupKey = schema.keys.category || schema.keys.geo;
@@ -8893,7 +8913,6 @@ function _renderLineBranchChart(container, schema, baseData, dataA, dataB, label
         return arr.slice(0, 5);
     };
 
-    // Collapse a set of per-entity series into one average line
     const avgSeries = (serArr) => {
         const map = new Map();
         for (const s of serArr) {
@@ -8914,97 +8933,234 @@ function _renderLineBranchChart(container, schema, baseData, dataA, dataB, label
     const serA = buildSeries(dataA).filter(s => entities.includes(s.name));
     const serB = buildSeries(dataB).filter(s => entities.includes(s.name));
 
-    // One average line per branch
     const avgA = avgSeries(serA.length ? serA : aVisible);
     const avgB = avgSeries(serB.length ? serB : aVisible);
 
-    // Band data: time points common to both averages
-    const mapB = new Map(avgB.map(p => [p.t, p.v]));
-    const bandData = avgA.filter(p => mapB.has(p.t)).map(p => ({ t: p.t, vA: p.v, vB: mapB.get(p.t) }));
+    // Band between the two averages
+    const mapBv = new Map(avgB.map(p => [p.t, p.v]));
+    const bandData = avgA.filter(p => mapBv.has(p.t)).map(p => ({ t: p.t, vA: p.v, vB: mapBv.get(p.t) }));
 
     const allPts  = [...aVisible.flatMap(s => s.pts), ...avgA, ...avgB];
     const xExt    = d3.extent(allPts, p => p.t);
     const yMinRaw = d3.min(allPts, p => p.v) ?? 0;
-    const yMax    = (d3.max(allPts, p => p.v) || 1) * 1.08;
-    const yRange  = yMax - yMinRaw;
-    const yMin    = yMinRaw / yMax > 0.35 ? Math.max(0, yMinRaw - yRange * 0.12) : 0;
+    const yMaxRaw = d3.max(allPts, p => p.v) ?? 1;
+    const yPad    = (yMaxRaw - yMinRaw) * 0.08 || 0.5;
+    const yMin    = yMinRaw - yPad;
+    const yMax    = yMaxRaw + yPad;
 
     const W  = Math.max(container.clientWidth || 680, 320);
-    const H  = 380, M = { top: 20, right: 160, bottom: 44, left: 72 };
+    const H  = 380, M = { top: 20, right: 20, bottom: 36, left: 56 };
     const iW = W - M.left - M.right, iH = H - M.top - M.bottom;
 
-    const xScale = isYears ? d3.scaleLinear().domain(xExt).range([0,iW]) : d3.scaleTime().domain(xExt).range([0,iW]);
-    const yScale = d3.scaleLinear().domain([yMin, yMax]).nice().range([iH, 0]);
+    const xScale = isYears
+        ? d3.scaleLinear().domain(xExt).range([0, iW])
+        : d3.scaleTime().domain(xExt).range([0, iW]);
+    const yScale = d3.scaleLinear().domain([yMin, yMax]).range([iH, 0]);
 
-    const BLUE   = '#3b82f6';
-    const ORANGE = '#f97316';
-
-    const svg = d3.create('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width','100%').style('font-family','system-ui,sans-serif');
+    const svg = d3.create('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width','100%').style('font-family','system-ui,sans-serif').style('overflow','visible');
     const clipId = `lbc-${Math.random().toString(36).slice(2,7)}`;
     svg.append('defs').append('clipPath').attr('id', clipId).append('rect').attr('width', iW).attr('height', iH);
     const g = svg.append('g').attr('transform', `translate(${M.left},${M.top})`);
 
     g.append('rect').attr('width', iW).attr('height', iH).attr('fill', 'var(--c-surface)').attr('rx', 4);
-    const yTicks = yScale.ticks(5);
-    g.append('g').selectAll('line').data(yTicks).join('line')
-        .attr('x1', 0).attr('x2', iW).attr('y1', d => yScale(d)).attr('y2', d => yScale(d))
-        .attr('stroke', 'var(--c-border)').attr('stroke-width', 1);
 
-    const xAxis = isYears ? d3.axisBottom(xScale).tickFormat(d3.format('d')) : d3.axisBottom(xScale).ticks(6);
+    // Grid lines + y-axis
+    const yTicks = yScale.ticks(5);
+    yTicks.forEach(val => {
+        const y = yScale(val);
+        g.append('line').attr('x1', 0).attr('x2', iW).attr('y1', y).attr('y2', y)
+            .attr('stroke', 'var(--c-border)').attr('stroke-width', 1);
+        g.append('text').attr('x', -8).attr('y', y + 4).attr('text-anchor', 'end')
+            .attr('fill', 'var(--c-text-dim)').attr('font-size', 11)
+            .text(schema.isMonetary ? '$' + d3.format('.2s')(val) : d3.format('.3~g')(val));
+    });
+
+    // X-axis
+    const xAxis = isYears ? d3.axisBottom(xScale).tickFormat(d3.format('d')).ticks(7) : d3.axisBottom(xScale).ticks(6);
     g.append('g').attr('transform', `translate(0,${iH})`).call(xAxis)
         .call(el => el.select('.domain').attr('stroke','var(--c-border)'))
-        .call(el => el.selectAll('text').attr('fill','var(--c-text-dim)').attr('font-size','12px').attr('dy','1.4em'))
+        .call(el => el.selectAll('text').attr('fill','var(--c-text-dim)').attr('font-size',11).attr('dy','1.2em'))
         .call(el => el.selectAll('line').attr('stroke','var(--c-border)'));
-    const yFmt = schema.isMonetary ? v => '$' + d3.format('.2s')(v) : v => d3.format('.2s')(v);
-    g.append('g').call(d3.axisLeft(yScale).tickValues(yTicks).tickFormat(yFmt))
-        .call(el => el.select('.domain').remove())
-        .call(el => el.selectAll('text').attr('fill','var(--c-text-dim)').attr('font-size','12px').attr('dx','-4px'))
-        .call(el => el.selectAll('line').remove());
 
     const linesG  = g.append('g').attr('clip-path', `url(#${clipId})`);
     const lineGen = d3.line().x(p => xScale(p.t)).y(p => yScale(p.v)).curve(d3.curveMonotoneX);
 
-    // Baseline — thin grey dashed per-entity lines
-    aVisible.forEach(s => {
-        linesG.append('path').datum(s.pts).attr('fill','none').attr('stroke','var(--c-border)')
-            .attr('stroke-width', 1.5).attr('stroke-dasharray','4,3').attr('d', lineGen);
-    });
-
-    // Shaded band between Branch A and Branch B averages
-    if (bandData.length > 1) {
-        const areaGen = d3.area()
-            .x(d => xScale(d.t))
-            .y0(d => yScale(d.vA))
-            .y1(d => yScale(d.vB))
-            .curve(d3.curveMonotoneX);
-        linesG.append('path').datum(bandData)
-            .attr('fill', BLUE).attr('fill-opacity', 0.10)
-            .attr('stroke', 'none').attr('d', areaGen);
+    // Branch-point marker
+    if (branchYear != null && isFinite(branchYear)) {
+        const bx = xScale(branchYear);
+        g.append('line').attr('x1', bx).attr('x2', bx).attr('y1', 0).attr('y2', iH)
+            .attr('stroke', '#7c3aed').attr('stroke-width', 1).attr('stroke-dasharray', '4,3').attr('opacity', 0.6);
+        g.append('text').attr('x', bx + 4).attr('y', 12)
+            .attr('fill', '#a78bfa').attr('font-size', 10).attr('font-weight', 600)
+            .text('⑂ ' + branchYear);
     }
 
-    // Branch A — single blue average line
-    linesG.append('path').datum(avgA).attr('fill','none').attr('stroke', BLUE)
-        .attr('stroke-width', 2.5).attr('stroke-linecap','round').attr('d', lineGen);
-    // Branch B — single orange average line
-    linesG.append('path').datum(avgB).attr('fill','none').attr('stroke', ORANGE)
-        .attr('stroke-width', 2.5).attr('stroke-linecap','round').attr('d', lineGen);
+    // Baseline — thin grey dashed per-entity lines
+    aVisible.forEach(s => {
+        linesG.append('path').datum(s.pts).attr('fill','none')
+            .attr('stroke', 'var(--c-text-dim)').attr('stroke-width', 1.5)
+            .attr('stroke-dasharray','5,4').attr('opacity', 0.55).attr('d', lineGen);
+    });
+
+    // Divergence band
+    if (bandData.length > 1) {
+        const areaGen = d3.area().x(d => xScale(d.t)).y0(d => yScale(d.vA)).y1(d => yScale(d.vB)).curve(d3.curveMonotoneX);
+        const band = linesG.append('path').datum(bandData)
+            .attr('fill', '#7c3aed').attr('fill-opacity', 0).attr('stroke', 'none').attr('d', areaGen);
+        band.transition().delay(animate ? 600 : 0).duration(animate ? 700 : 0).attr('fill-opacity', 0.13);
+    }
+
+    // Animated branch line draw
+    const drawBranch = (pts, color, label, delay) => {
+        if (!pts.length) return;
+        const path = linesG.append('path').datum(pts).attr('fill','none')
+            .attr('stroke', color).attr('stroke-width', 2.8)
+            .attr('stroke-linejoin','round').attr('stroke-linecap','round').attr('d', lineGen);
+        if (animate) {
+            const len = path.node().getTotalLength();
+            path.attr('stroke-dasharray', len + ' ' + len).attr('stroke-dashoffset', len)
+                .transition().delay(delay).duration(1400).ease(d3.easeCubicOut).attr('stroke-dashoffset', 0);
+        }
+        // End-of-line label
+        const last = pts[pts.length - 1];
+        if (last) {
+            const lx = xScale(last.t);
+            const nearEdge = lx > iW - 70;
+            const lbl = g.append('text')
+                .attr('x', nearEdge ? lx - 6 : lx + 6).attr('y', yScale(last.v) - 6)
+                .attr('text-anchor', nearEdge ? 'end' : 'start')
+                .attr('fill', color).attr('font-size', 11).attr('font-weight', 700).text(label);
+            if (animate) lbl.attr('opacity', 0).transition().delay(delay + 1300).duration(400).attr('opacity', 1);
+        }
+    };
+    drawBranch(avgA, 'var(--branch-a)', labelA, animate ? 200  : 0);
+    drawBranch(avgB, 'var(--branch-b)', labelB, animate ? 450 : 0);
 
     // Plot border
     g.append('rect').attr('width', iW).attr('height', iH).attr('fill','none')
         .attr('stroke','var(--c-border)').attr('stroke-width', 1).attr('rx', 4);
 
-    // Legend
-    const leg = svg.append('g').attr('transform', `translate(${W - M.right + 16},${M.top + 4})`);
-    [['Baseline', 'var(--c-border)', true], [labelA, BLUE, false], [labelB, ORANGE, false]].forEach(([name, col, dashed], i) => {
-        const row = leg.append('g').attr('transform', `translate(0,${i * 22})`);
-        row.append('line').attr('x1', 0).attr('x2', 16).attr('y1', 6).attr('y2', 6)
-            .attr('stroke', col).attr('stroke-width', dashed ? 1.5 : 2.5)
-            .attr('stroke-dasharray', dashed ? '4,3' : null);
-        row.append('text').attr('x', 22).attr('y', 10).attr('fill','var(--c-text)').attr('font-size','12px').attr('font-weight','500')
-            .text(name.length > 14 ? name.slice(0,13) + '…' : name);
-    });
+    // Crosshair + tooltip
+    const crosshair = g.append('line').attr('y1', 0).attr('y2', iH)
+        .attr('stroke', 'var(--c-text-dim)').attr('stroke-width', 1).attr('stroke-dasharray','4,3').style('display','none');
+    const tooltip = d3.select(container).append('div')
+        .style('position','absolute').style('pointer-events','none')
+        .style('background','var(--c-bg)').style('border','1px solid var(--c-border)')
+        .style('border-radius','6px').style('padding','9px 12px')
+        .style('font-size','0.76rem').style('color','var(--c-text)')
+        .style('display','none').style('z-index','100').style('min-width','170px');
+
+    const mapA = new Map(avgA.map(p => [p.t, p.v]));
+    const mapBase = new Map(avgSeries(aVisible).map(p => [p.t, p.v]));
+    const allT = [...new Set(avgA.map(p => p.t))].sort((a,b) => a-b);
+    const fmt = v => isNaN(v) ? '—' : d3.format('.2f')(v);
+
+    svg.append('rect').attr('width', W).attr('height', H).attr('fill','none').attr('pointer-events','all')
+        .on('mousemove', function(event) {
+            const [mx] = d3.pointer(event, this);
+            const ix = mx - M.left;
+            const t0 = isYears
+                ? Math.round(xScale.invert(ix))
+                : xScale.invert(ix);
+            const nearest = allT.reduce((a, b) => Math.abs(b - t0) < Math.abs(a - t0) ? b : a, allT[0]);
+            if (nearest == null) return;
+            const cx = xScale(nearest) + M.left;
+            crosshair.attr('x1', xScale(nearest)).attr('x2', xScale(nearest)).style('display', null);
+            const av = mapA.get(nearest), bv = mapBv.get(nearest), bsv = mapBase.get(nearest);
+            const delta = (av != null && bv != null) ? av - bv : null;
+            const label = isYears ? nearest : d3.timeFormat('%Y')(nearest);
+            tooltip.style('display','block').html(
+                `<div style="font-weight:700;margin-bottom:5px;border-bottom:1px solid var(--c-border);padding-bottom:4px">${label}</div>` +
+                [[labelA, 'var(--branch-a)', av], [labelB, 'var(--branch-b)', bv], ['Baseline', 'var(--c-text-dim)', bsv]]
+                    .filter(r => r[2] != null).map(r =>
+                        `<div style="display:flex;justify-content:space-between;gap:14px;margin:2px 0">
+                            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r[1]};margin-right:6px"></span>${r[0]}</span>
+                            <span style="font-weight:600">${fmt(r[2])}</span></div>`).join('') +
+                (delta != null ? `<div style="display:flex;justify-content:space-between;gap:14px;margin-top:5px;padding-top:4px;border-top:1px solid var(--c-border)">
+                    <span style="color:var(--c-text-dim)">Divergence</span>
+                    <span style="font-weight:700;color:#a78bfa">${(delta >= 0 ? '+' : '') + fmt(delta)}</span></div>` : '')
+            );
+            tooltip.style('left', (cx > W * 0.6 ? cx - 190 : cx + 14) + 'px').style('top', (M.top + 6) + 'px');
+        })
+        .on('mouseleave', () => { crosshair.style('display','none'); tooltip.style('display','none'); });
 
     container.appendChild(svg.node());
+}
+
+function _renderImportBranchDelta(schema, baseData, dataA, dataB, labelA, labelB, branchYear) {
+    const el = document.getElementById('importBranchDelta');
+    if (!el) return;
+
+    const timeKey  = schema.keys.time;
+    const valueKey = schema.keys.value;
+    const groupKey = schema.keys.category || schema.keys.geo;
+    if (!timeKey || !valueKey) { el.classList.add('hidden'); return; }
+
+    const parseT = v => { const n = parseInt(v, 10); return (!isNaN(n) && n >= 1900 && n <= 2200 && String(v).length === 4) ? n : null; };
+
+    const avgOf = (data) => {
+        const map = new Map();
+        data.forEach(r => {
+            const t = parseT(r[timeKey]);
+            const v = parseFloat(String(r[valueKey]).replace(/[,$%]/g,''));
+            if (t != null && !isNaN(v)) {
+                if (!map.has(t)) map.set(t, { sum: 0, cnt: 0 });
+                const e = map.get(t); e.sum += v; e.cnt++;
+            }
+        });
+        return map;
+    };
+
+    const mapA = avgOf(dataA), mapB = avgOf(dataB);
+    const allT  = [...new Set([...mapA.keys(), ...mapB.keys()])].sort((a,b) => a-b);
+
+    const valA = t => mapA.has(t) ? mapA.get(t).sum / mapA.get(t).cnt : null;
+    const valB = t => mapB.has(t) ? mapB.get(t).sum / mapB.get(t).cnt : null;
+    const fmt  = v => schema.isMonetary ? '$' + d3.format('.2s')(v) : d3.format('.2f')(v);
+
+    // Gap at end year
+    const lastT = allT[allT.length - 1];
+    const endA  = valA(lastT), endB = valB(lastT);
+    const gap   = (endA != null && endB != null) ? endA - endB : null;
+    const leadCol = gap != null ? (gap >= 0 ? 'var(--branch-a)' : 'var(--branch-b)') : '#a78bfa';
+    const leadLbl = gap != null ? (gap >= 0 ? labelA : labelB) : '';
+
+    // Peak divergence after branch year
+    let peak = -Infinity, peakYr = null;
+    allT.forEach(t => {
+        if (branchYear != null && t < branchYear) return;
+        const a = valA(t), b = valB(t);
+        if (a == null || b == null) return;
+        const d = Math.abs(a - b);
+        if (d > peak) { peak = d; peakYr = t; }
+    });
+
+    const cards = [];
+    if (gap != null) {
+        cards.push(`<div class="branch-delta-card">
+            <div class="branch-delta-label">Gap by ${lastT}</div>
+            <div class="branch-delta-value" style="color:${leadCol}">${gap >= 0 ? '+' : ''}${fmt(gap)}</div>
+            <div class="branch-delta-sub">${leadLbl} leads</div>
+        </div>`);
+    }
+    if (peakYr != null && isFinite(peak)) {
+        cards.push(`<div class="branch-delta-card">
+            <div class="branch-delta-label">Peak divergence</div>
+            <div class="branch-delta-value" style="color:#a78bfa">${fmt(peak)}</div>
+            <div class="branch-delta-sub">widest in ${peakYr}</div>
+        </div>`);
+    }
+    cards.push(`<div class="branch-delta-card">
+        <div class="branch-delta-label">Branches</div>
+        <div class="branch-delta-value" style="font-size:0.92rem;line-height:1.5">
+            <span style="color:var(--branch-a)">●</span> ${labelA}<br>
+            <span style="color:var(--branch-b)">●</span> ${labelB}
+        </div>
+        <div class="branch-delta-sub">split at ${branchYear ?? '—'}</div>
+    </div>`);
+
+    el.innerHTML = cards.join('');
+    el.classList.remove('hidden');
 }
 
 // ── Chart router ─────────────────────────────────────────────────────
