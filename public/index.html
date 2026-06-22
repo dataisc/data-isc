@@ -7083,9 +7083,11 @@ function activateDataset(idx) {
     applyModelView();
     mountImportedViz(ds);
     _refreshDsSwitcher(idx);
-    // Scroll into view if called from the hero (above the fold)
-    const vizEl = document.getElementById('model-import');
-    if (vizEl && window.scrollY < 200) vizEl.scrollIntoView({ behavior: 'instant' });
+    // Scroll to the top-bar (dataset title) when called from the hero
+    if (window.scrollY < 200) {
+        const topBar = document.querySelector('.top-bar');
+        if (topBar) topBar.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 function _refreshDsSwitcher(activeIdx) {
@@ -7120,6 +7122,11 @@ function activateGDPModel() {
     renderHeroDsList();
     renderAll();
     if (currentView === 'chart') switchChartTab(activeChartTab || 'top10');
+    // Scroll to the top-bar (dataset title) when called from the hero
+    if (window.scrollY < 200) {
+        const topBar = document.querySelector('.top-bar');
+        if (topBar) topBar.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 // ── Mount orchestrator (called once per dataset activation) ──────────
