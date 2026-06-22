@@ -886,12 +886,7 @@
             </div>
         </div>
 
-        <p class="scenario-hint">Select one or more scenarios — effects stack and compound on the chart. Click an active card to deselect it. No scenario yet? Apply a ready-made preset.</p>
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
-            <button onclick="openPresetLibrary()" class="btn-blue-pill" style="border-radius:6px;padding:3px 10px;font-size:0.8rem;cursor:pointer;font-weight:600">🦢 Browse presets</button>
-            <button onclick="openSandbox()" class="btn-blue-pill" style="border-radius:6px;padding:3px 10px;font-size:0.8rem;cursor:pointer;font-weight:600">+ Add / edit</button>
-        </div>
-        <div id="importWhatifPills" class="scenario-grid" style="min-height:24px">
+        <div id="importWhatifPills" style="min-height:24px">
             <span style="font-size:0.82rem;color:var(--c-text-dim)">No scenarios added yet.</span>
         </div>
     </div>
@@ -7276,10 +7271,18 @@ function activateGDPModel() {
 
 let _activeScenarioIdxs  = []; // indices into ds.scenarios[] that are active & stacked (empty = baseline)
 
-// Active scenario objects, in stack order
+// Active scenario objects, in stack order (user scenarios + active built-in presets)
 function _activeScenarioObjs(ds) {
-    if (!ds?.scenarios) return [];
-    return _activeScenarioIdxs.map(i => ds.scenarios[i]).filter(Boolean);
+    const userScs = ds?.scenarios
+        ? _activeScenarioIdxs.map(i => ds.scenarios[i]).filter(Boolean)
+        : [];
+    if (!_activeBuiltinPresetIds.size) return userScs;
+    const dsType = _getDatasetType(ds);
+    const builtins = dsType ? (DATASET_PRESETS[dsType] || []) : [];
+    const builtinScs = builtins
+        .filter(p => _activeBuiltinPresetIds.has(p.id))
+        .map(p => _builtinScenarioObj(p, ds));
+    return [...builtinScs, ...userScs];
 }
 // Apply a list of scenarios in sequence — effects compound multiplicatively
 function _applyScenarioStack(data, schema, scenarios) {
@@ -7360,6 +7363,7 @@ function switchMetric(key) {
 function mountImportedViz(ds) {
     _activeImportDS = ds;
     _activeScenarioIdxs  = [];
+    _activeBuiltinPresetIds = new Set();
     _activeProjectedData = null;
     _projectionFit       = null;
     _activeMetricKey     = ds.schema.keys.value; // reset to primary metric on dataset switch
@@ -7510,6 +7514,97 @@ const BLACK_SWAN_PRESETS = [
       disperse:{ stat:'momentum', dir:-1, spread:1.6 } },
 ];
 
+// ── Dataset-specific built-in presets ─────────────────────────────────
+// Three always-visible scenarios per demo dataset, calibrated to the
+// actual data domain and realistic real-world mechanisms.
+// fromFrac/toFrac are fractional offsets of the dataset time range.
+const DATASET_PRESETS = {
+    life_expectancy: [
+        { id:'le-cancer-cure', icon:'🔬', name:'Cancer Treatment Breakthrough',
+          headline:'+0.4%/yr', deltaPct:0.4, fromFrac:0.5, toFrac:1.0, ceiling:95,
+          description:'Major advances in immunotherapy and targeted therapy cut cancer mortality 40%. Countries where cancer is the leading cause of death benefit most.',
+          disperse:{ stat:'size', dir:+1, spread:0.15 } },
+        { id:'le-clean-water', icon:'💧', name:'Universal Healthcare & Sanitation',
+          headline:'+0.35%/yr', deltaPct:0.35, fromFrac:0.0, toFrac:1.0,
+          description:'Expanded access to clean water, vaccines, and primary care. Transformative for lower-income nations; already high-LE countries see modest additional gains.',
+          disperse:{ stat:'size', dir:-1, spread:0.25 } },
+        { id:'le-pandemic', icon:'🦠', name:'Pandemic & Antimicrobial Crisis',
+          headline:'−0.6%/yr', deltaPct:-0.6, fromFrac:0.5, toFrac:0.76,
+          description:'A severe multi-year pandemic combined with rising antibiotic resistance reverses decades of progress — fragile health systems are hit hardest.',
+          disperse:{ stat:'volatility', dir:-1, spread:0.4 } },
+    ],
+    co2_emissions: [
+        { id:'co2-ev-fleet', icon:'⚡', name:'EV & Transport Electrification',
+          headline:'−2%/yr', deltaPct:-2.0, fromFrac:0.5, toFrac:1.0,
+          description:'Rapid replacement of petrol/diesel fleets with EVs. High per-capita emitters (US, Canada, Australia) see the steepest falls.',
+          disperse:{ stat:'size', dir:-1, spread:1.5 } },
+        { id:'co2-carbon-price', icon:'💰', name:'Carbon Price Shock ($150/t)',
+          headline:'−3%/yr', deltaPct:-3.0, fromFrac:0.5, toFrac:0.8,
+          description:'A binding global carbon price of $150/tonne forces rapid decarbonisation. Fast-growing, energy-intensive economies feel the sharpest adjustment.',
+          disperse:{ stat:'momentum', dir:-1, spread:2.0 } },
+        { id:'co2-industrial-boom', icon:'🏭', name:'Industrial Growth Wave',
+          headline:'+2.2%/yr', deltaPct:2.2, fromFrac:0.5, toFrac:0.8,
+          description:'A manufacturing renaissance in emerging economies drives energy demand beyond clean capacity — emissions rise before infrastructure catches up.',
+          disperse:{ stat:'momentum', dir:+1, spread:1.8 } },
+    ],
+    renewable_energy_share: [
+        { id:'re-green-surge', icon:'🌿', name:'Green Policy Surge',
+          headline:'+4%/yr', deltaPct:4.0, fromFrac:0.5, toFrac:1.0, ceiling:99,
+          description:'Major subsidy packages, renewable mandates, and grid investment accelerate the transition. Countries furthest from 100% gain the most headroom.',
+          disperse:{ stat:'size', dir:-1, spread:3.0 } },
+        { id:'re-ev-grid', icon:'🚗', name:'Mass EV Adoption',
+          headline:'+2.5%/yr', deltaPct:2.5, fromFrac:0.5, toFrac:1.0, ceiling:99,
+          description:'Rapid EV uptake electrifies transport demand and spurs grid-scale clean energy investment. Already fast-transitioning grids accelerate furthest.',
+          disperse:{ stat:'momentum', dir:+1, spread:1.5 } },
+        { id:'re-fossil-subsidy', icon:'🛢️', name:'Fossil Fuel Subsidy Resurgence',
+          headline:'−2%/yr', deltaPct:-2.0, fromFrac:0.5, toFrac:0.8,
+          description:'A sustained collapse in fossil fuel prices combined with new subsidies slows renewable investment as cheap gas undercuts wind and solar economics.',
+          disperse:{ stat:'momentum', dir:-1, spread:1.5 } },
+    ],
+};
+
+// Detect which demo dataset type is active (returns null for user-uploaded data)
+function _getDatasetType(ds) {
+    const n = (ds?.name || '').toLowerCase();
+    if (n.includes('life expectancy') || n.includes('life_expectancy')) return 'life_expectancy';
+    if (n.includes('co2') || n.includes('co₂') || n.includes('emission')) return 'co2_emissions';
+    if (n.includes('renewable') || n.includes('energy share') || n.includes('energy_share')) return 'renewable_energy_share';
+    return null;
+}
+
+// Active built-in preset IDs (separate from user-added ds.scenarios)
+let _activeBuiltinPresetIds = new Set();
+
+// Convert a DATASET_PRESETS entry into a runnable scenario object
+function _builtinScenarioObj(preset, ds) {
+    const tr   = _dataTimeRange();
+    const span = Math.max(tr.max - tr.min, 1);
+    const sc = {
+        name:           preset.name,
+        description:    preset.description,
+        yearFrom:       Math.round(tr.min + (preset.fromFrac ?? 0) * span),
+        yearTo:         Math.round(tr.min + (preset.toFrac   ?? 1) * span),
+        deltaPct:       preset.deltaPct,
+        entities:       [],
+        growth_ceiling: preset.ceiling ?? null,
+        preset:         preset.id,
+        _builtin:       true,
+    };
+    const overrides = _presetEntityOverrides(ds, preset, preset.deltaPct);
+    if (overrides.length) sc.entity_overrides = overrides;
+    return sc;
+}
+
+// Toggle a built-in preset on/off and refresh the chart
+function toggleBuiltinPreset(presetId) {
+    if (_activeBuiltinPresetIds.has(presetId)) _activeBuiltinPresetIds.delete(presetId);
+    else _activeBuiltinPresetIds.add(presetId);
+    const ds = _activeImportDS;
+    if (!ds) return;
+    _renderImportWhatifSection(ds);
+    _refreshActiveScenarios();
+}
+
 // Per-entity statistic → map of entity → number, computed from the dataset's own series.
 function _presetEntityStat(ds, statName) {
     const sch = ds.schema;
@@ -7651,28 +7746,74 @@ function applyPresetScenario(presetId) {
 function _renderImportWhatifSection(ds) {
     const pills = document.getElementById('importWhatifPills');
     if (!pills) return;
-    const scenarios = ds?.scenarios;
-    if (!scenarios || !scenarios.length) {
-        pills.innerHTML = '<span style="font-size:0.82rem;color:var(--c-text-dim)">No scenarios added yet — <button onclick="openPresetLibrary()" style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:0.82rem;padding:0;text-decoration:underline">browse presets</button> or build your own.</span>';
-        return;
+
+    const dsType        = _getDatasetType(ds);
+    const builtinList   = dsType ? (DATASET_PRESETS[dsType] || []) : [];
+    const userScenarios = ds?.scenarios || [];
+    let html = '';
+
+    // ── Built-in presets: always 3 across ──
+    if (builtinList.length) {
+        html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:${userScenarios.length ? 20 : 0}px">` +
+            builtinList.map(p => {
+                const active     = _activeBuiltinPresetIds.has(p.id);
+                const pos        = p.deltaPct >= 0;
+                const sign       = pos ? '+' : '−';
+                const abs        = Math.abs(p.deltaPct).toFixed(1);
+                const scopeClass = pos ? 'scope-global' : 'scope-country';
+                return `<div class="sc-card${active ? ' active' : ''}" onclick="toggleBuiltinPreset('${p.id}')" style="cursor:pointer">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                        <div class="sc-icon" style="filter:none;flex-shrink:0;margin-bottom:0">${p.icon}</div>
+                        <div class="sc-name" style="margin-bottom:0">${p.name}</div>
+                    </div>
+                    ${p.description ? `<div class="sc-desc" style="font-size:0.78rem">${p.description}</div>` : ''}
+                    <span class="sc-scope ${scopeClass}" style="margin-top:10px;display:inline-block">${sign}${abs}%/yr</span>
+                </div>`;
+            }).join('') +
+            `</div>`;
     }
-    pills.innerHTML = scenarios.map((sc, i) => {
-        const pos    = sc.deltaPct >= 0;
-        const sign   = pos ? '+' : '−';
-        const abs    = Math.abs(sc.deltaPct).toFixed(1);
-        const active = _activeScenarioIdxs.includes(i);
-        const emoji  = pos ? '📈' : '📉';
-        const scopeClass = pos ? 'scope-global' : 'scope-country';
-        return `<div class="sc-card import-sc-card${active ? ' active' : ''}" onclick="toggleImportScenario(${i})">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:8px">
-                <div class="sc-icon">${emoji}</div>
-                <button class="sc-pill-edit" onclick="event.stopPropagation();openAIScenarioModal(${i})" title="View &amp; edit scenario" style="flex-shrink:0;margin-top:2px">✎</button>
+
+    // ── User-added scenarios ──
+    if (userScenarios.length) {
+        if (builtinList.length) {
+            html += `<div style="border-top:1px solid var(--c-border);margin-bottom:14px;padding-top:14px">
+                <span style="font-size:0.72rem;font-weight:600;color:var(--c-text-dim);letter-spacing:0.06em;text-transform:uppercase">Your scenarios</span>
+                <button onclick="openSandbox()" class="btn-blue-pill" style="float:right;border-radius:6px;padding:2px 10px;font-size:0.78rem;cursor:pointer;font-weight:600">+ Add / edit</button>
+            </div>`;
+        }
+        html += `<div class="scenario-grid">` + userScenarios.map((sc, i) => {
+            const pos        = sc.deltaPct >= 0;
+            const sign       = pos ? '+' : '−';
+            const abs        = Math.abs(sc.deltaPct).toFixed(1);
+            const active     = _activeScenarioIdxs.includes(i);
+            const emoji      = pos ? '📈' : '📉';
+            const scopeClass = pos ? 'scope-global' : 'scope-country';
+            return `<div class="sc-card${active ? ' active' : ''}" onclick="toggleImportScenario(${i})" style="cursor:pointer">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:8px">
+                    <div class="sc-icon">${emoji}</div>
+                    <button class="sc-pill-edit" onclick="event.stopPropagation();openAIScenarioModal(${i})" title="View &amp; edit scenario" style="flex-shrink:0;margin-top:2px">✎</button>
+                </div>
+                <div class="sc-name">${sc.name}</div>
+                ${sc.description ? `<div class="sc-desc" style="font-size:0.78rem;margin-top:4px">${sc.description}</div>` : ''}
+                <span class="sc-scope ${scopeClass}" style="margin-top:8px;display:inline-block">${sign}${abs}%/yr</span>
+            </div>`;
+        }).join('') + `</div>`;
+    } else if (!builtinList.length) {
+        // No demo dataset and no user scenarios
+        html = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <span style="font-size:0.82rem;color:var(--c-text-dim)">No scenarios yet.</span>
+            <div style="display:flex;gap:8px">
+                <button onclick="openPresetLibrary()" class="btn-blue-pill" style="border-radius:6px;padding:3px 10px;font-size:0.8rem;cursor:pointer;font-weight:600">🦢 Browse presets</button>
+                <button onclick="openSandbox()" class="btn-blue-pill" style="border-radius:6px;padding:3px 10px;font-size:0.8rem;cursor:pointer;font-weight:600">+ Add / edit</button>
             </div>
-            <div class="sc-name">${sc.name}</div>
-            ${sc.description ? `<div class="sc-desc" style="font-size:0.78rem;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${sc.description}</div>` : ''}
-            <span class="sc-scope ${scopeClass}" style="margin-top:6px;display:inline-block">${sign}${abs}%/yr</span>
         </div>`;
-    }).join('');
+    }
+
+    pills.innerHTML = html;
+    // Hint text and Browse presets button are only needed when no built-ins are shown
+    const hint = document.querySelector('#importWhatifSection .scenario-hint');
+    const btns = document.querySelector('#importWhatifSection .scenario-btn-row');
+    // (elements removed from static HTML; handled inline above)
 }
 
 // ── Scenario simulation engine ────────────────────────────────────────
@@ -7704,6 +7845,18 @@ function _applyScenarioToData(data, schema, scenario) {
     const ceiling = scenario.growth_ceiling ?? null;
 
     const toYear = raw => { const p = _parseTimeValue(raw); return p ? p.year : null; };
+
+    // Floor for non-monetary data: prevent multiplicative compounding from producing
+    // physically impossible values (e.g. life expectancy at 34 years from -1.8%/yr over 50 yrs).
+    // Floor = minimum non-zero value observed across the full dataset.
+    const valueFloor = schema.isMonetary ? 0 : (() => {
+        let min = Infinity;
+        for (const r of data) {
+            const v = parseFloat(String(r[value]).replace(/[,$%]/g, ''));
+            if (!isNaN(v) && v > 0 && v < min) min = v;
+        }
+        return min === Infinity ? 0 : min;
+    })();
 
     return data.map(row => {
         const year = toYear(row[time]);
@@ -7748,8 +7901,12 @@ function _applyScenarioToData(data, schema, scenario) {
 
         const yearsIn = year - yearFrom + 1;
         const factor  = Math.pow(1 + deltaPct / 100, yearsIn);
-        let adjusted  = parseFloat(String(row[value]).replace(/[,$%]/g, '')) * factor;
+        const baseVal = parseFloat(String(row[value]).replace(/[,$%]/g, ''));
+        let adjusted  = baseVal * factor;
         if (ceiling !== null) adjusted = Math.min(ceiling, adjusted);
+        // Non-monetary data (life expectancy, emissions, %) can't fall below the dataset's
+        // historical minimum — prevents multiplicative compounding from producing impossible values.
+        if (!schema.isMonetary && deltaPct < 0 && valueFloor > 0 && adjusted < valueFloor) adjusted = valueFloor;
         return { ...row, [value]: +adjusted.toFixed(4) };
     });
 }
@@ -7921,12 +8078,14 @@ function toggleImportScenario(idx) {
     if (pos >= 0) _activeScenarioIdxs.splice(pos, 1);
     else          _activeScenarioIdxs.push(idx);
 
-    if (!_activeScenarioIdxs.length) { clearImportScenario(); return; }
+    // If no user scenarios left but built-in presets are still active, just refresh
+    if (!_activeScenarioIdxs.length && !_activeBuiltinPresetIds.size) { clearImportScenario(); return; }
     _refreshActiveScenarios();
 }
 
 function clearImportScenario() {
     _activeScenarioIdxs = [];
+    _activeBuiltinPresetIds = new Set();
     _updateImportActiveRow(null);
     renderImportImpactViz(null, null, null, null);
     if (_activeImportDS) {
@@ -9009,8 +9168,20 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
     const iW = W - M.left - M.right;
     const iH = H - M.top  - M.bottom;
 
-    const allPts = series.flatMap(s => s.points);
-    const xExt   = d3.extent(allPts, p => p.t);
+    // Include overlay (scenario) points so the y-axis expands to fit all lines
+    const overlayPtsForDomain = [];
+    if (overlayData && overlayData !== data) {
+        const visibleNames = new Set(series.map(s => s.name));
+        for (const row of overlayData) {
+            const name = groupKey ? String(row[groupKey] ?? 'Unknown').slice(0, 22) : valueKey;
+            if (groupKey && !visibleNames.has(name)) continue;
+            const v = parseFloat(String(row[valueKey]).replace(/[,$%]/g, ''));
+            const t = parseT(row[timeKey]);
+            if (!isNaN(v) && t != null && !isNaN(+t)) overlayPtsForDomain.push({ t, v });
+        }
+    }
+    const allPts = [...series.flatMap(s => s.points), ...overlayPtsForDomain];
+    const xExt   = d3.extent(series.flatMap(s => s.points), p => p.t);
     const yMax   = (d3.max(allPts, p => p.v) || 1) * 1.08;
     const yMinRaw = d3.min(allPts, p => p.v) ?? 0;
     // Use a sensible floor: if data doesn't start near 0, start axis below the min

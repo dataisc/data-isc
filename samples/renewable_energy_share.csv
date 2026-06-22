@@ -1,61 +1,511 @@
 country,year,renewables_pct_of_electricity
 Germany,2000,6.2
+Germany,2001,7.0
+Germany,2002,7.9
+Germany,2003,8.7
+Germany,2004,9.6
 Germany,2005,10.4
+Germany,2006,11.7
+Germany,2007,13.0
+Germany,2008,14.4
+Germany,2009,15.7
 Germany,2010,17.0
+Germany,2011,19.7
+Germany,2012,22.4
+Germany,2013,25.2
+Germany,2014,27.9
 Germany,2015,30.6
+Germany,2016,33.7
+Germany,2017,36.9
+Germany,2018,40.0
+Germany,2019,43.2
 Germany,2020,46.3
+Germany,2021,45.3
 Germany,2022,44.3
+Germany,2023,47.9
+Germany,2024,51.4
+Germany,2025,55.0
+Germany,2026,57.6
+Germany,2027,60.2
+Germany,2028,62.8
+Germany,2029,65.4
+Germany,2030,68.0
+Germany,2031,70.4
+Germany,2032,72.8
+Germany,2033,75.2
+Germany,2034,77.6
+Germany,2035,80.0
+Germany,2036,82.0
+Germany,2037,84.0
+Germany,2038,86.0
+Germany,2039,88.0
+Germany,2040,90.0
+Germany,2041,91.2
+Germany,2042,92.4
+Germany,2043,93.6
+Germany,2044,94.8
+Germany,2045,96.0
+Germany,2046,96.6
+Germany,2047,97.2
+Germany,2048,97.8
+Germany,2049,98.4
+Germany,2050,99.0
 United States,2000,8.9
+United States,2001,8.9
+United States,2002,8.8
+United States,2003,8.8
+United States,2004,8.7
 United States,2005,8.7
+United States,2006,9.0
+United States,2007,9.2
+United States,2008,9.5
+United States,2009,9.7
 United States,2010,10.0
+United States,2011,10.7
+United States,2012,11.4
+United States,2013,12.0
+United States,2014,12.7
 United States,2015,13.4
+United States,2016,14.7
+United States,2017,16.1
+United States,2018,17.4
+United States,2019,18.8
 United States,2020,20.1
+United States,2021,21.1
 United States,2022,22.0
+United States,2023,23.3
+United States,2024,24.7
+United States,2025,26.0
+United States,2026,28.0
+United States,2027,30.0
+United States,2028,32.0
+United States,2029,34.0
+United States,2030,36.0
+United States,2031,38.8
+United States,2032,41.6
+United States,2033,44.4
+United States,2034,47.2
+United States,2035,50.0
+United States,2036,52.6
+United States,2037,55.2
+United States,2038,57.8
+United States,2039,60.4
+United States,2040,63.0
+United States,2041,65.4
+United States,2042,67.8
+United States,2043,70.2
+United States,2044,72.6
+United States,2045,75.0
+United States,2046,77.0
+United States,2047,79.0
+United States,2048,81.0
+United States,2049,83.0
+United States,2050,85.0
 China,2000,20.1
+China,2001,19.5
+China,2002,18.9
+China,2003,18.2
+China,2004,17.6
 China,2005,17.0
+China,2006,17.5
+China,2007,18.1
+China,2008,18.6
+China,2009,19.2
 China,2010,19.7
+China,2011,20.6
+China,2012,21.4
+China,2013,22.3
+China,2014,23.1
 China,2015,24.0
+China,2016,25.0
+China,2017,25.9
+China,2018,26.9
+China,2019,27.8
 China,2020,28.8
+China,2021,30.2
 China,2022,31.6
+China,2023,33.4
+China,2024,35.2
+China,2025,37.0
+China,2026,39.2
+China,2027,41.4
+China,2028,43.6
+China,2029,45.8
+China,2030,48.0
+China,2031,50.0
+China,2032,52.0
+China,2033,54.0
+China,2034,56.0
+China,2035,58.0
+China,2036,59.8
+China,2037,61.6
+China,2038,63.4
+China,2039,65.2
+China,2040,67.0
+China,2041,68.6
+China,2042,70.2
+China,2043,71.8
+China,2044,73.4
+China,2045,75.0
+China,2046,76.4
+China,2047,77.8
+China,2048,79.2
+China,2049,80.6
+China,2050,82.0
 Denmark,2000,16.8
+Denmark,2001,18.5
+Denmark,2002,20.1
+Denmark,2003,21.8
+Denmark,2004,23.4
 Denmark,2005,25.1
+Denmark,2006,26.8
+Denmark,2007,28.5
+Denmark,2008,30.1
+Denmark,2009,31.8
 Denmark,2010,33.5
+Denmark,2011,39.0
+Denmark,2012,44.5
+Denmark,2013,49.9
+Denmark,2014,55.4
 Denmark,2015,60.9
+Denmark,2016,64.6
+Denmark,2017,68.3
+Denmark,2018,72.1
+Denmark,2019,75.8
 Denmark,2020,79.5
+Denmark,2021,81.3
 Denmark,2022,83.1
+Denmark,2023,85.4
+Denmark,2024,87.7
+Denmark,2025,90.0
+Denmark,2026,91.0
+Denmark,2027,92.0
+Denmark,2028,93.0
+Denmark,2029,94.0
+Denmark,2030,95.0
+Denmark,2031,95.6
+Denmark,2032,96.2
+Denmark,2033,96.8
+Denmark,2034,97.4
+Denmark,2035,98.0
+Denmark,2036,98.2
+Denmark,2037,98.4
+Denmark,2038,98.6
+Denmark,2039,98.8
+Denmark,2040,99.0
+Denmark,2041,99.0
+Denmark,2042,99.0
+Denmark,2043,99.0
+Denmark,2044,99.0
+Denmark,2045,99.0
+Denmark,2046,99.0
+Denmark,2047,99.0
+Denmark,2048,99.0
+Denmark,2049,99.0
+Denmark,2050,99.0
 India,2000,19.2
+India,2001,18.9
+India,2002,18.6
+India,2003,18.4
+India,2004,18.1
 India,2005,17.8
+India,2006,18.1
+India,2007,18.3
+India,2008,18.6
+India,2009,18.8
 India,2010,19.1
+India,2011,19.7
+India,2012,20.3
+India,2013,20.9
+India,2014,21.5
 India,2015,22.1
+India,2016,23.5
+India,2017,24.8
+India,2018,26.2
+India,2019,27.5
 India,2020,28.9
+India,2021,30.9
 India,2022,33.0
+India,2023,35.0
+India,2024,37.0
+India,2025,39.0
+India,2026,41.6
+India,2027,44.2
+India,2028,46.8
+India,2029,49.4
+India,2030,52.0
+India,2031,54.2
+India,2032,56.4
+India,2033,58.6
+India,2034,60.8
+India,2035,63.0
+India,2036,65.0
+India,2037,67.0
+India,2038,69.0
+India,2039,71.0
+India,2040,73.0
+India,2041,74.8
+India,2042,76.6
+India,2043,78.4
+India,2044,80.2
+India,2045,82.0
+India,2046,83.2
+India,2047,84.4
+India,2048,85.6
+India,2049,86.8
+India,2050,88.0
 United Kingdom,2000,2.8
+United Kingdom,2001,3.1
+United Kingdom,2002,3.4
+United Kingdom,2003,3.7
+United Kingdom,2004,4.0
 United Kingdom,2005,4.3
+United Kingdom,2006,4.9
+United Kingdom,2007,5.4
+United Kingdom,2008,6.0
+United Kingdom,2009,6.5
 United Kingdom,2010,7.1
+United Kingdom,2011,10.6
+United Kingdom,2012,14.1
+United Kingdom,2013,17.5
+United Kingdom,2014,21.0
 United Kingdom,2015,24.5
+United Kingdom,2016,28.2
+United Kingdom,2017,31.9
+United Kingdom,2018,35.5
+United Kingdom,2019,39.2
 United Kingdom,2020,42.9
+United Kingdom,2021,42.2
 United Kingdom,2022,41.5
+United Kingdom,2023,44.3
+United Kingdom,2024,47.2
+United Kingdom,2025,50.0
+United Kingdom,2026,53.0
+United Kingdom,2027,56.0
+United Kingdom,2028,59.0
+United Kingdom,2029,62.0
+United Kingdom,2030,65.0
+United Kingdom,2031,67.6
+United Kingdom,2032,70.2
+United Kingdom,2033,72.8
+United Kingdom,2034,75.4
+United Kingdom,2035,78.0
+United Kingdom,2036,80.0
+United Kingdom,2037,82.0
+United Kingdom,2038,84.0
+United Kingdom,2039,86.0
+United Kingdom,2040,88.0
+United Kingdom,2041,89.4
+United Kingdom,2042,90.8
+United Kingdom,2043,92.2
+United Kingdom,2044,93.6
+United Kingdom,2045,95.0
+United Kingdom,2046,95.8
+United Kingdom,2047,96.6
+United Kingdom,2048,97.4
+United Kingdom,2049,98.2
+United Kingdom,2050,99.0
 Australia,2000,10.1
+Australia,2001,10.1
+Australia,2002,10.0
+Australia,2003,10.0
+Australia,2004,9.9
 Australia,2005,9.9
+Australia,2006,10.0
+Australia,2007,10.2
+Australia,2008,10.3
+Australia,2009,10.5
 Australia,2010,10.6
+Australia,2011,11.4
+Australia,2012,12.3
+Australia,2013,13.1
+Australia,2014,14.0
 Australia,2015,14.8
+Australia,2016,17.4
+Australia,2017,20.0
+Australia,2018,22.5
+Australia,2019,25.1
 Australia,2020,27.7
+Australia,2021,31.8
 Australia,2022,35.9
+Australia,2023,38.9
+Australia,2024,42.0
+Australia,2025,45.0
+Australia,2026,48.4
+Australia,2027,51.8
+Australia,2028,55.2
+Australia,2029,58.6
+Australia,2030,62.0
+Australia,2031,64.6
+Australia,2032,67.2
+Australia,2033,69.8
+Australia,2034,72.4
+Australia,2035,75.0
+Australia,2036,77.0
+Australia,2037,79.0
+Australia,2038,81.0
+Australia,2039,83.0
+Australia,2040,85.0
+Australia,2041,86.4
+Australia,2042,87.8
+Australia,2043,89.2
+Australia,2044,90.6
+Australia,2045,92.0
+Australia,2046,93.0
+Australia,2047,94.0
+Australia,2048,95.0
+Australia,2049,96.0
+Australia,2050,97.0
 Brazil,2000,86.0
+Brazil,2001,85.5
+Brazil,2002,85.0
+Brazil,2003,84.4
+Brazil,2004,83.9
 Brazil,2005,83.4
+Brazil,2006,83.9
+Brazil,2007,84.3
+Brazil,2008,84.8
+Brazil,2009,85.2
 Brazil,2010,85.7
+Brazil,2011,84.2
+Brazil,2012,82.7
+Brazil,2013,81.2
+Brazil,2014,79.7
 Brazil,2015,78.2
+Brazil,2016,79.2
+Brazil,2017,80.1
+Brazil,2018,81.1
+Brazil,2019,82.0
 Brazil,2020,83.0
+Brazil,2021,85.0
 Brazil,2022,87.1
+Brazil,2023,87.4
+Brazil,2024,87.7
+Brazil,2025,88.0
+Brazil,2026,88.4
+Brazil,2027,88.8
+Brazil,2028,89.2
+Brazil,2029,89.6
+Brazil,2030,90.0
+Brazil,2031,90.4
+Brazil,2032,90.8
+Brazil,2033,91.2
+Brazil,2034,91.6
+Brazil,2035,92.0
+Brazil,2036,92.4
+Brazil,2037,92.8
+Brazil,2038,93.2
+Brazil,2039,93.6
+Brazil,2040,94.0
+Brazil,2041,94.4
+Brazil,2042,94.8
+Brazil,2043,95.2
+Brazil,2044,95.6
+Brazil,2045,96.0
+Brazil,2046,96.4
+Brazil,2047,96.8
+Brazil,2048,97.2
+Brazil,2049,97.6
+Brazil,2050,98.0
 France,2000,15.8
+France,2001,15.3
+France,2002,14.7
+France,2003,14.2
+France,2004,13.6
 France,2005,13.1
+France,2006,13.5
+France,2007,13.9
+France,2008,14.2
+France,2009,14.6
 France,2010,15.0
+France,2011,15.9
+France,2012,16.8
+France,2013,17.8
+France,2014,18.7
 France,2015,19.6
+France,2016,20.6
+France,2017,21.7
+France,2018,22.7
+France,2019,23.8
 France,2020,24.8
+France,2021,25.4
 France,2022,26.0
+France,2023,28.0
+France,2024,30.0
+France,2025,32.0
+France,2026,34.4
+France,2027,36.8
+France,2028,39.2
+France,2029,41.6
+France,2030,44.0
+France,2031,46.6
+France,2032,49.2
+France,2033,51.8
+France,2034,54.4
+France,2035,57.0
+France,2036,59.6
+France,2037,62.2
+France,2038,64.8
+France,2039,67.4
+France,2040,70.0
+France,2041,72.4
+France,2042,74.8
+France,2043,77.2
+France,2044,79.6
+France,2045,82.0
+France,2046,83.6
+France,2047,85.2
+France,2048,86.8
+France,2049,88.4
+France,2050,90.0
 Japan,2000,10.1
+Japan,2001,10.0
+Japan,2002,9.9
+Japan,2003,9.9
+Japan,2004,9.8
 Japan,2005,9.7
+Japan,2006,9.9
+Japan,2007,10.1
+Japan,2008,10.3
+Japan,2009,10.5
 Japan,2010,10.7
+Japan,2011,11.5
+Japan,2012,12.3
+Japan,2013,13.0
+Japan,2014,13.8
 Japan,2015,14.6
+Japan,2016,16.2
+Japan,2017,17.7
+Japan,2018,19.3
+Japan,2019,20.8
 Japan,2020,22.4
+Japan,2021,23.1
 Japan,2022,23.9
+Japan,2023,25.3
+Japan,2024,26.6
+Japan,2025,28.0
+Japan,2026,30.0
+Japan,2027,32.0
+Japan,2028,34.0
+Japan,2029,36.0
+Japan,2030,38.0
+Japan,2031,40.4
+Japan,2032,42.8
+Japan,2033,45.2
+Japan,2034,47.6
+Japan,2035,50.0
+Japan,2036,52.2
+Japan,2037,54.4
+Japan,2038,56.6
+Japan,2039,58.8
+Japan,2040,61.0
+Japan,2041,63.0
+Japan,2042,65.0
+Japan,2043,67.0
+Japan,2044,69.0
+Japan,2045,71.0
+Japan,2046,72.8
+Japan,2047,74.6
+Japan,2048,76.4
+Japan,2049,78.2
+Japan,2050,80.0
