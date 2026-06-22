@@ -7081,12 +7081,16 @@ function activateDataset(idx) {
     localStorage.setItem('wes_active_ds', idx);
     applyModelView();
     mountImportedViz(ds);
+    _refreshDsSwitcher(idx);
+    renderHeroDsList();
     // Scroll to viz when activating from above the fold
     setTimeout(() => {
         const vizEl = document.getElementById('model-import');
-        if (vizEl && window.scrollY < vizEl.offsetTop - 80)
-            window.scrollTo({ top: vizEl.offsetTop - 16, behavior: 'smooth' });
-    }, 60);
+        if (!vizEl) return;
+        if (window.scrollY < vizEl.offsetTop - 80) {
+            vizEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 80);
 }
 
 function _refreshDsSwitcher(activeIdx) {
