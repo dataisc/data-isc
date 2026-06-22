@@ -788,10 +788,8 @@
 <!-- ══ IMPORT VISUALIZATION PANEL ══════════════════════════════════════ -->
 <div id="model-import" style="display:none">
     <div class="import-viz-bar">
-        <button class="import-back-btn" onclick="activateGDPModel()">← Demo</button>
         <div class="import-ds-switcher" id="importDsSwitcher">
-            <span class="import-viz-name" id="importVizName">Dataset</span>
-            <select id="importDsSelect" class="import-ds-select" onchange="activateDataset(+this.value)" style="display:none"></select>
+            <select id="importDsSelect" class="import-ds-select" onchange="_onDsSelectChange(this.value)"></select>
         </div>
     </div>
     <div id="importSchemaBadges" class="import-schema-badges"></div>
@@ -1118,7 +1116,25 @@
                     <p class="section-label" style="margin:0">What-if scenarios <span style="color:#6b7f99;font-size:0.78rem;font-weight:400">(optional · up to 5)</span></p>
                     <button id="addScenarioBtn" onclick="addImportScenario()" class="btn-blue-pill" style="border-radius:6px;padding:3px 10px;font-size:0.82rem;cursor:pointer;font-weight:600">+ Add scenario</button>
                 </div>
-                <p id="scenarioStepHint" style="color:#6b7f99;font-size:0.8rem;margin:0 0 10px">Build scenarios with per-entity rates, phases, and growth ceilings — or upload a JSON file.</p>
+                <p id="scenarioStepHint" style="color:#6b7f99;font-size:0.8rem;margin:0 0 10px">Build scenarios with per-entity rates, phases, and growth ceilings — or describe one in plain language below.</p>
+                <!-- AI scenario generator (import mode) -->
+                <div id="importAIGenPanel" style="margin-bottom:12px;border:1px solid var(--c-border);border-radius:8px;overflow:hidden">
+                    <button onclick="toggleImportAIGen()" id="importAIGenToggle"
+                        style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c-surface);border:none;cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--c-text)">
+                        <span id="importAIStatusDot" class="ai-dot ai-dot-off" style="flex-shrink:0"></span>
+                        <span>Describe a scenario with AI</span>
+                        <span id="importAIGenChevron" style="margin-left:auto;color:var(--c-text-dim);font-size:0.72rem">▼</span>
+                    </button>
+                    <div id="importAIGenBody" style="display:none;padding:10px 12px;border-top:1px solid var(--c-border);background:var(--c-bg)">
+                        <textarea id="importAIGenInput" rows="2" placeholder="e.g. A supply chain disruption cuts growth 3%/yr for 2 years across all entities…"
+                            style="width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-surface);color:var(--c-text);font-size:0.8rem;resize:vertical;font-family:inherit"></textarea>
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+                            <button onclick="runImportScenarioAI()" class="btn-blue-pill"
+                                style="border-radius:6px;padding:4px 12px;font-size:0.8rem;cursor:pointer;font-weight:600">Generate &amp; add</button>
+                            <span id="importAIGenStatus" style="font-size:0.76rem;color:var(--c-text-dim)"></span>
+                        </div>
+                    </div>
+                </div>
                 <div id="importScenariosList" style="display:flex;flex-direction:column;gap:10px"></div>
                 <div style="display:flex;gap:8px;margin-top:14px">
                     <button class="btn-login" style="padding:8px 20px;font-size:0.875rem;width:auto" onclick="finalizeImport()">Done ✓</button>
@@ -5535,6 +5551,51 @@ function discardGDPScenarioAI() {
     if (r) r.style.display = 'none';
 }
 
+// ── Import mode AI panel ─────────────────────────────────────────────────────
+
+function toggleImportAIGen() {
+    const body    = document.getElementById('importAIGenBody');
+    const chevron = document.getElementById('importAIGenChevron');
+    const open    = body.style.display !== 'none';
+    body.style.display  = open ? 'none' : 'block';
+    chevron.textContent = open ? '▼' : '▲';
+    const dot = document.getElementById('importAIStatusDot');
+    if (dot) dot.className = 'ai-dot ' + (_aiConnected() ? 'ai-dot-on' : 'ai-dot-off');
+}
+
+async function runImportScenarioAI() {
+    if (!_aiConnected()) { openAISettings(); return; }
+    const ds = _activeImportDS;
+    if (!ds) return;
+    const input  = document.getElementById('importAIGenInput');
+    const status = document.getElementById('importAIGenStatus');
+    const desc   = input?.value?.trim();
+    if (!desc) { status.textContent = 'Please enter a description.'; return; }
+    if (_importScenarioCards.filter(Boolean).length >= 5) {
+        status.textContent = 'Maximum 5 scenarios reached.'; return;
+    }
+
+    status.textContent = '🤖 Generating…';
+    // Create a new blank card first so the user sees immediate feedback
+    addImportScenario();
+    const idx = _importScenarioCards.length - 1;
+
+    // Fill in the name from the description
+    const nameEl = document.getElementById(`sc-name-${idx}`);
+    if (nameEl) nameEl.value = desc.slice(0, 50);
+    _importScenarioCards[idx].name = desc.slice(0, 50);
+
+    // Run AI analysis on the new card
+    const impacts = await analyzeScenarioWithAI(desc, idx);
+    if (impacts) {
+        status.textContent = `Done — ${impacts.length} entities affected.`;
+        input.value = '';
+        setTimeout(() => { status.textContent = ''; }, 3000);
+    } else {
+        status.textContent = 'AI analysis ran but returned no impacts — refine your description.';
+    }
+}
+
 /**
  * Build a rich, domain-aware prompt for scenario analysis.
  * Works for any dataset — not just GDP / country data.
@@ -7023,21 +7084,19 @@ function activateDataset(idx) {
 }
 
 function _refreshDsSwitcher(activeIdx) {
-    const nameEl = document.getElementById('importVizName');
-    const sel    = document.getElementById('importDsSelect');
-    if (!nameEl || !sel) return;
-    if (customDatasets.length <= 1) {
-        // Only one dataset — just show the name
-        nameEl.style.display = '';
-        sel.style.display = 'none';
-    } else {
-        // Multiple — show a select dropdown
-        nameEl.style.display = 'none';
-        sel.style.display = '';
-        sel.innerHTML = customDatasets.map((d, i) =>
-            `<option value="${i}" ${i === activeIdx ? 'selected' : ''}>${d.name}</option>`
-        ).join('');
-    }
+    const sel = document.getElementById('importDsSelect');
+    if (!sel) return;
+    const gdpSelected = activeIdx === -1;
+    sel.innerHTML = [
+        `<option value="gdp" ${gdpSelected ? 'selected' : ''}>GDP Demo (built-in)</option>`,
+        ...customDatasets.map((d, i) =>
+            `<option value="${i}" ${i === activeIdx ? 'selected' : ''}>${d.name}</option>`)
+    ].join('');
+}
+
+function _onDsSelectChange(val) {
+    if (val === 'gdp') activateGDPModel();
+    else activateDataset(+val);
 }
 
 function activateGDPModel() {
@@ -7052,6 +7111,7 @@ function activateGDPModel() {
     if (sub) sub.textContent = 'Consensus baseline · 100 Countries + 5 Regional Aggregates';
     const lbl = document.getElementById('activeModelLabel');
     if (lbl) lbl.textContent = 'GDP Trajectories';
+    _refreshDsSwitcher(-1); // -1 = GDP active
     renderHeroDsList();
     renderAll();
     if (currentView === 'chart') switchChartTab(activeChartTab || 'top10');
