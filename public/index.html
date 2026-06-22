@@ -845,7 +845,7 @@
             <select id="pressureEntitySelect" onchange="renderPressureGauge()" class="import-ds-select" style="max-width:240px;display:none"></select>
         </div>
         <p class="scenario-hint" style="margin-top:6px">Reads the series' recent trajectory — growth velocity and acceleration — to score momentum from 0 (declining) to 100 (thriving). Reflects the active scenario and projection.</p>
-        <div id="pressureGaugeBody" style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center;padding:6px 0"></div>
+        <div id="pressureGaugeBody" style="display:flex;justify-content:center;padding:6px 0"></div>
     </div>
 
     <!-- What-if scenarios section — always shown for import mode -->
@@ -8088,7 +8088,7 @@ function renderPressureGauge() {
     // Readout — no color, clean monochrome rows
     const rSign = stats.recentGrowth >= 0 ? '+' : '−';
     const mDir  = stats.momentum >= 0 ? 'Accelerating' : 'Decelerating';
-    const readout = `<div style="min-width:160px;padding-left:8px;border-left:1px solid var(--c-border)">
+    const readout = `<div style="width:180px;flex-shrink:0;padding-left:8px;border-left:1px solid var(--c-border)">
         <div style="font-size:2.4rem;font-weight:800;line-height:1;color:var(--c-heading);letter-spacing:-0.02em">${growthScore}<span style="font-size:0.9rem;color:var(--c-text-dim);font-weight:400;margin-left:4px">/ 100</span></div>
         <div style="font-size:0.75rem;font-weight:600;color:var(--c-text);margin-top:6px;text-transform:uppercase;letter-spacing:0.07em">${stats.caption}</div>
         <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
@@ -8103,7 +8103,7 @@ function renderPressureGauge() {
         </div>
     </div>`;
 
-    body.innerHTML = svg + readout;
+    body.innerHTML = `<div style="display:flex;align-items:center;gap:28px">${svg}${readout}</div>`;
 
     // Contextual note when active scenarios ended before the data's final year —
     // in that case the gauge reads the post-scenario decay window, not the active boost.
