@@ -2,7 +2,7 @@
 
 **Open-source time-series simulation engine.** Upload any CSV or XLSX file, visualise trajectories, project forward, and run what-if scenarios — no account, no setup, data stays in your browser.
 
-![Data ISC — animated bar chart race demo](docs/demo.svg)
+![Data ISC — import a dataset, visualise trajectories, run what-if scenarios, compare futures, and race the rankings](docs/demo.svg)
 
 > **[▶ Try the live demo](https://dataisc.github.io/data-isc/)** — slide the dials in your browser, no install required.
 
