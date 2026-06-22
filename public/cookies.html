@@ -8,6 +8,9 @@
 <script src="/theme.js" defer></script>
 <style>
 .meta { color: var(--c-muted); font-size: 0.8rem; margin-bottom: 28px; margin-top: 4px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 16px 0; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--c-border, #e5e7eb); }
+th { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -29,27 +32,26 @@
 </header>
 <div class="wrap">
   <h1>Cookie Policy</h1>
-  <p class="meta">Last updated: June 2026 · Applies to dataisc.dev</p>
+  <p class="meta">Last updated: June 2026 · Applies to dataisc.dev and dataisc.github.io</p>
 
-  <h2>What are cookies?</h2>
-  <p>Cookies are small text files stored in your browser. We use browser <code>localStorage</code> (technically not HTTP cookies but treated identically under GDPR ePrivacy rules) for session management and preferences.</p>
+  <h2>No tracking cookies</h2>
+  <p>Data ISC uses no analytics, advertising, or tracking cookies of any kind. There is no cookie consent banner because none is needed.</p>
 
-  <h2>Cookies we use</h2>
+  <h2>Browser storage we use</h2>
+  <p>We use <code>localStorage</code> — stored locally in your browser only, never sent to a server — solely to remember your in-app preferences across page reloads:</p>
   <table>
-    <thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Duration</th></tr></thead>
+    <thead><tr><th>Key</th><th>Purpose</th><th>Stored where</th></tr></thead>
     <tbody>
-      <tr><td>ws_session</td><td>Essential</td><td>Keeps you signed in</td><td>Session</td></tr>
-      <tr><td>ws_pro</td><td>Essential</td><td>Remembers your Pro subscription status</td><td>Session</td></tr>
-      <tr><td>ws_cookie_consent</td><td>Essential</td><td>Stores your cookie preference</td><td>1 year</td></tr>
-      <tr><td>_analytics (future)</td><td>Analytics</td><td>Aggregated usage stats to improve the product</td><td>14 months</td></tr>
+      <tr><td>theme</td><td>Remembers light / dark mode preference</td><td>Your browser only</td></tr>
+      <tr><td>aiConfig</td><td>Stores your AI provider key and model selection (if you use the AI assistant)</td><td>Your browser only</td></tr>
+      <tr><td>wes_view / wes_scenario / wes_active_ds</td><td>Remembers your last active view, scenario, and dataset</td><td>Your browser only</td></tr>
+      <tr><td>ws_display_ccy</td><td>Remembers your selected display currency</td><td>Your browser only</td></tr>
     </tbody>
   </table>
-
-  <h2>Your choices</h2>
-  <p>You can change your cookie preference at any time via the "Cookie Settings" link in the footer. Refusing analytics cookies has no effect on your ability to use the simulator.</p>
+  <p>None of these values are transmitted to us or any third party. You can clear them at any time by clearing your browser's site data for this domain.</p>
 
   <h2>Legal basis</h2>
-  <p>Essential cookies: legitimate interest / strictly necessary (no consent required). Analytics cookies: consent (GDPR Art. 6.1.a / ePrivacy Directive).</p>
+  <p>localStorage used solely for user-interface preferences is strictly necessary and does not require consent under the GDPR ePrivacy rules.</p>
 
   <h2>Contact</h2>
   <p><a href="mailto:privacy@dataisc.dev">privacy@dataisc.dev</a></p>
