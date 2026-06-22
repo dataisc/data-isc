@@ -37,8 +37,8 @@ The same static build also powers the [GitHub Pages demo](https://dataisc.github
 - **What-if scenarios** — start from the **🦢 Black Swan preset library** (one-click economic shocks like an automation wave, fertility crisis, decoupling, pandemic, or energy shock that auto-disperse across your entities), or build structured scenarios with per-entity rates, time-phased impacts, and value ceilings — no AI key required. Connect your own AI provider for causal per-entity breakdowns. Import/export scenarios as JSON for sharing and version control.
 - **Scenario branching (GitDiff)** — branch the baseline into two rival futures (e.g. high automation vs severe demographic strain), each its own stack of scenarios, and watch the two timelines diverge on a single graph. A shaded divergence band and live delta readout show the gap widening or narrowing year by year.
 - **Map, chart & trajectory views** — choropleth world map with a time scrubber, ranked Top 10 bars at any year, and a multi-entity trajectory line chart — switch freely and share any view by URL.
-- **Bar Chart Race** — animated ranking race across the full simulation timeline. Scenario effects apply live, reshaping trajectories from the shock year onward. Smart callouts surface leader changes and landmark milestones automatically as they happen.
-- **Social video export** — export the race as a WebM video in 16:9 (LinkedIn/Facebook), 1:1 (Instagram feed), or 9:16 (Reels/TikTok/Shorts) — no post-production required.
+- **Bar Chart Race** — animated ranking race across the full simulation timeline. Scenario effects apply live, reshaping trajectories from the shock year onward. Callouts mark leader changes and landmark crossings as they occur.
+- **Social video export** — export the race as an **MP4** (default, plays on iOS/PowerPoint/everywhere) or **WebM** (smaller) in 16:9 (LinkedIn/Facebook), 1:1 (Instagram feed), or 9:16 (Reels/TikTok/Shorts) — no post-production required.
 - **Share & embed** — every view is shareable via a URL hash. One click generates an `<iframe>` snippet or an `<economic-sandbox-widget>` web component ready for Notion, papers, Substacks, or BI dashboards.
 - **Built-in GDP demo** — 100 countries + 5 regional aggregates, 1990–2100, with ready-to-run scenario presets (global carbon tax, free-trade expansion, EU federal integration). Explore out of the box, replace with your own data when ready.
 
@@ -74,13 +74,13 @@ Branch the baseline into **two rival futures**, each its own stack of scenarios,
 
 ![Step 5 — animated bar chart race of the rankings 1990 to 2100](docs/step-5-race.svg)
 
-Play an animated **bar-chart race** across the full timeline. Scenario effects reshape it live, and smart callouts surface leader changes and milestones as they happen.
+Play an animated **bar-chart race** across the full timeline. Scenario effects reshape it live, and callouts mark leader changes and milestone crossings.
 
 ### 6 · Export to social video
 
 ![Step 6 — exporting the race as a social video in multiple formats](docs/step-6-export.svg)
 
-Export the race as a **WebM video** in 16:9 (LinkedIn/Facebook), 1:1 (Instagram), or 9:16 (Reels/TikTok/Shorts) — ready to post, no editing required.
+Export the race as an **MP4** (default — plays on iOS, PowerPoint, and all social platforms) or **WebM** (smaller file size) in 16:9 (LinkedIn/Facebook), 1:1 (Instagram), or 9:16 (Reels/TikTok/Shorts) — ready to post, no editing required.
 
 ---
 
@@ -405,6 +405,19 @@ See the [GitHub repository](https://github.com/dataisc/data-isc) for the contrib
 AGPLv3: if you deploy a modified version as a network service, you must publish your changes under the same licence.
 
 Commercial licensing: [license@dataisc.dev](mailto:license@dataisc.dev)
+
+---
+
+## Known limitations
+
+- **Projection model is intentionally simple.** For imported datasets the engine fits a trend per entity and compounds a uniform δ. Without per-entity overrides or an AI provider, all in-scope entities receive the same rate — this is a sensitivity analysis, not a structural simulation.
+- **Static deploys (Netlify / Vercel / Cloudflare) pre-render scenario outputs at fixed start years** (2026, 2030, 2035, 2040, 2050). The full 2026–2080 range requires a live server (Render).
+- **Video recording browser support:** MP4 works on Chrome, Edge, and Safari. Firefox has no native MP4 recorder and falls back to WebM automatically (a toast confirms this). Recording is not supported on iOS browsers due to limited MediaRecorder API.
+- **Choropleth map requires ISO 3166-1 country codes.** The map view only renders for country-level datasets. Non-country data falls back to the chart, race, and table views automatically.
+- **MCP server exposes the built-in GDP model only** — it does not proxy imported datasets or custom scenarios.
+- **Web component has no `country` attribute.** The `<economic-sandbox-widget>` supports `scenario`, `start`, `view`, and `year` but not per-country selection.
+- **Docker image is not yet published.** The `ghcr.io/dataisc/data-isc` reference in the quick-start is a placeholder; no GHCR publish workflow exists yet. Use `npm start` locally or the one-click deploy buttons.
+- **GDP figures are nominal USD only.** No PPP conversion or inflation deflator is applied. Long-run values (especially post-2060) are trend extrapolations — not predictions — and should be read as "consistent with calibrated assumptions", not forecasts.
 
 ---
 
