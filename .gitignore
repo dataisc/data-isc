@@ -22,9 +22,8 @@ _site/
 # Local backups
 *.bak
 
-# Claude Code local settings (machine paths + permission/command history).
-# The shared launch.json is kept; only the per-machine local file is ignored.
-.claude/settings.local.json
+# Claude Code — local editor config, not needed by contributors.
+.claude/
 
 # Placeholder demo videos — first-pass Bar Chart Race exports, not referenced
 # anywhere and excluded from the static build. Replace with polished launch
