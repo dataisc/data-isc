@@ -1138,7 +1138,7 @@
                 </div>
                 <div id="importScenariosList" style="display:flex;flex-direction:column;gap:10px"></div>
                 <div style="display:flex;gap:8px;margin-top:14px">
-                    <button class="btn-login" style="padding:8px 20px;font-size:0.875rem;width:auto" onclick="finalizeImport()">Done ✓</button>
+                    <button class="btn-login" id="importDoneBtn" style="padding:8px 20px;font-size:0.875rem;width:auto" onclick="pendingImport ? finalizeNewImport() : finalizeImport()">Done ✓</button>
                     <button style="padding:8px 16px;font-size:0.875rem;background:none;border:1px solid var(--c-border);border-radius:8px;color:var(--c-text-dim);cursor:pointer;font-weight:500;width:auto" onclick="skipImportScenario()">Skip</button>
                 </div>
             </div>
@@ -4422,6 +4422,10 @@ function openSandbox() {
         const stepEl = document.getElementById('importScenarioStep');
         stepEl.style.display = 'block';
         stepEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const doneBtn = document.getElementById('importDoneBtn');
+        if (doneBtn) doneBtn.textContent = 'Done ✓';
+        const hintEl = document.getElementById('scenarioStepHint');
+        if (hintEl) hintEl.textContent = 'Build scenarios with per-entity rates, phases, and growth ceilings — or describe one in plain language below.';
         const aiPanel = document.getElementById('importAIGenPanel');
         if (aiPanel) aiPanel.style.display = _aiConnected() ? '' : 'none';
     }
@@ -4730,6 +4734,19 @@ function showImportPreview(filename, data, columns) {
     preview.style.display = 'block';
     preview.innerHTML = _renderImportPreviewHTML(filename, data, columns);
     _updateMappingSummary();
+
+    // Show scenario step immediately below mapping — final "Confirm import →" is at the bottom
+    _importScenarioCards = [];
+    document.getElementById('importScenariosList').innerHTML = '';
+    const stepEl = document.getElementById('importScenarioStep');
+    stepEl.style.display = 'block';
+    const doneBtn = document.getElementById('importDoneBtn');
+    if (doneBtn) doneBtn.textContent = 'Confirm import →';
+    const hintEl = document.getElementById('scenarioStepHint');
+    if (hintEl) hintEl.textContent = 'Optionally add what-if scenarios, then confirm import below.';
+    const aiPanel = document.getElementById('importAIGenPanel');
+    if (aiPanel) aiPanel.style.display = _aiConnected() ? '' : 'none';
+    _updateAddScenarioBtn();
 }
 
 function _buildInitialRoleMap(schema) {
@@ -4793,9 +4810,8 @@ function _renderImportPreviewHTML(filename, data, columns) {
         <div style="font-size:0.72rem;font-weight:700;color:var(--c-text-dim);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">Column roles — fix if auto-detection missed</div>
         ${cards}
         <div id="colMappingSummary" class="col-mapping-summary" style="margin-top:10px"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn-login" id="confirmMappingBtn" style="padding:7px 16px;font-size:0.82rem;flex:1" onclick="confirmColumnMapping()">Confirm import →</button>
-            <button style="padding:7px 16px;font-size:0.82rem;background:none;border:1px solid var(--c-border);border-radius:8px;color:var(--c-text-dim);cursor:pointer;font-weight:500;white-space:nowrap" onclick="cancelImport()">Cancel</button>
+        <div style="margin-top:10px;text-align:right">
+            <button style="padding:5px 14px;font-size:0.8rem;background:none;border:1px solid var(--c-border);border-radius:8px;color:var(--c-text-dim);cursor:pointer;font-weight:500" onclick="cancelImport()">Cancel upload</button>
         </div>`;
 }
 
@@ -4832,8 +4848,8 @@ function _updateMappingSummary() {
     parts.push(`<span style="background:#1d4ed8;color:#fff;border-radius:4px;padding:1px 8px;font-size:0.72rem;font-weight:600;margin-left:4px">${chartIcon} ${chart.charAt(0).toUpperCase()+chart.slice(1)} chart</span>`);
 
     el.innerHTML = parts.join(' &nbsp;·&nbsp; ');
-    const btn = document.getElementById('confirmMappingBtn');
-    if (btn) btn.disabled = !valueCol;
+    const doneBtn = document.getElementById('importDoneBtn');
+    if (doneBtn && pendingImport) doneBtn.disabled = !valueCol;
 }
 
 function confirmColumnMapping() {
@@ -4915,6 +4931,72 @@ function confirmColumnMapping() {
     if (aiPanel) aiPanel.style.display = _aiConnected() ? '' : 'none';
 }
 
+// Called by "Confirm import →" in the scenario step (initial upload flow).
+// Validates column mapping, adds dataset, collects scenarios, then activates — all in one step.
+function finalizeNewImport() {
+    if (!pendingImport) { finalizeImport(); return; }
+
+    const rm   = pendingImport._roleMap;
+    const data = pendingImport.data;
+    const cols = pendingImport.columns;
+
+    const entityCol  = Object.keys(rm).find(k => rm[k] === 'entity') ?? null;
+    const timeCol    = Object.keys(rm).find(k => rm[k] === 'time')   ?? null;
+    const primaryVal = Object.keys(rm).find(k => rm[k] === 'value')  ?? null;
+    const extraVals  = Object.keys(rm).filter(k => rm[k] === 'extra');
+    const valueKeys  = primaryVal ? [primaryVal, ...extraVals] : extraVals;
+    const valueCol   = primaryVal ?? extraVals[0] ?? null;
+
+    if (!valueCol) { showToast('Assign at least one Value column before importing.'); return; }
+
+    const isGeo = entityCol ? /country|nation|iso|geo|region|province|state/i.test(entityCol) : false;
+    const uniqueCategories = entityCol
+        ? new Set(data.map(r => r[entityCol]).filter(Boolean)).size : 0;
+
+    const charts = [];
+    if (timeCol && valueCol) charts.push('line');
+    if (entityCol && uniqueCategories <= 8 && valueCol && !timeCol) charts.push('donut');
+    if (valueCol) charts.push('bar');
+    charts.push('table');
+
+    pendingImport.schema = {
+        signals: { geographic: isGeo, temporal: !!timeCol, categorical: !!entityCol && !!valueCol },
+        keys: {
+            geo:       isGeo ? entityCol : null,
+            time:      timeCol,
+            category:  !isGeo ? entityCol : null,
+            value:     valueCol,
+            valueKeys,
+        },
+        charts,
+        primaryChart:     charts[0],
+        uniqueCategories,
+        rowCount:         data.length,
+        columnCount:      cols.length,
+        isMonetary:       pendingImport._detectedSchema?.isMonetary ?? false,
+        _classified:      pendingImport._detectedSchema?._classified ?? [],
+        _userMapped:      true,
+    };
+
+    if (customDatasets.some(d => d.name === pendingImport.name)) {
+        showToast(`Already imported: "${pendingImport.name}" — rename the file to import again`);
+        return;
+    }
+
+    pendingImport.type = pendingImport.schema.primaryChart;
+    customDatasets.push(pendingImport);
+    pendingImport = null;
+
+    document.getElementById('importPreview').style.display = 'none';
+    document.getElementById('importPreview').innerHTML = '';
+    renderImportedDatasetsList();
+    saveWorkspaceToIDB();
+    updateCurrencyVisibility();
+
+    // Collect scenarios and activate dataset
+    finalizeImport();
+}
+
 function confirmImport() {
     // Legacy path — runs analyzeSchema if schema not already set (kept for compatibility)
     if (!pendingImport) return;
@@ -4938,6 +5020,19 @@ function cancelImport() {
     const preview = document.getElementById('importPreview');
     preview.style.display = 'none';
     preview.innerHTML = '';
+    const stepEl = document.getElementById('importScenarioStep');
+    if (_activeImportDS) {
+        // Editing mode — restore "Done ✓" label and keep scenario step visible
+        const doneBtn = document.getElementById('importDoneBtn');
+        if (doneBtn) doneBtn.textContent = 'Done ✓';
+        const hintEl = document.getElementById('scenarioStepHint');
+        if (hintEl) hintEl.textContent = 'Build scenarios with per-entity rates, phases, and growth ceilings — or describe one in plain language below.';
+        stepEl.style.display = 'block';
+    } else {
+        stepEl.style.display = 'none';
+        _importScenarioCards = [];
+        document.getElementById('importScenariosList').innerHTML = '';
+    }
 }
 
 function renderImportedDatasetsList() {
@@ -5094,6 +5189,13 @@ function confirmImportAndShowScenario() {
 }
 
 function skipImportScenario() {
+    if (pendingImport) {
+        // Initial upload — skip scenarios but still confirm mapping and activate
+        _importScenarioCards = [];
+        document.getElementById('importScenariosList').innerHTML = '';
+        finalizeNewImport();
+        return;
+    }
     document.getElementById('importScenarioStep').style.display = 'none';
     _importScenarioCards = []; // prevent closeSandbox auto-save
     const ds = _activeImportDS || (customDatasets.length > 0 ? customDatasets[customDatasets.length - 1] : null);
