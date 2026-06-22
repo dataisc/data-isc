@@ -1,75 +1,91 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 470" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Data ISC — animated bar chart race of GDP by country, 1990 to 2100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Data ISC — animated bar chart race of GDP by country, 1990 to 2100">
   <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0b1220"/>
-      <stop offset="1" stop-color="#0f172a"/>
-    </linearGradient>
-    <linearGradient id="usa"  x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
-    <linearGradient id="chn"  x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dc2626"/><stop offset="1" stop-color="#f87171"/></linearGradient>
-    <linearGradient id="ind"  x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d97706"/><stop offset="1" stop-color="#fbbf24"/></linearGradient>
-    <linearGradient id="jpn"  x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
-    <linearGradient id="deu"  x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#059669"/><stop offset="1" stop-color="#34d399"/></linearGradient>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1220"/><stop offset="1" stop-color="#0f172a"/></linearGradient>
+    <linearGradient id="usa" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d4ed8"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
+    <linearGradient id="chn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dc2626"/><stop offset="1" stop-color="#fb7185"/></linearGradient>
+    <linearGradient id="ind" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d97706"/><stop offset="1" stop-color="#fbbf24"/></linearGradient>
+    <linearGradient id="jpn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+    <linearGradient id="deu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#059669"/><stop offset="1" stop-color="#34d399"/></linearGradient>
   </defs>
 
-  <!-- panel -->
-  <rect x="0" y="0" width="820" height="470" rx="14" fill="url(#bgGrad)"/>
-  <rect x="0.5" y="0.5" width="819" height="469" rx="13.5" fill="none" stroke="#1e293b"/>
+  <rect x="0" y="0" width="900" height="500" rx="16" fill="url(#bgGrad)"/>
+  <rect x="0.75" y="0.75" width="898.5" height="498.5" rx="15.25" fill="none" stroke="#1e293b" stroke-width="1.5"/>
 
-  <!-- header -->
-  <text x="28" y="44" fill="#f8fafc" font-size="22" font-weight="700">Data ISC</text>
-  <text x="118" y="44" fill="#64748b" font-size="15" font-weight="500">— Bar Chart Race</text>
-  <text x="28" y="66" fill="#475569" font-size="12.5">GDP · nominal USD · 100 countries · 1990–2100</text>
+  <g stroke="#1e293b" stroke-width="1">
+    <line x1="210" y1="138" x2="210" y2="414"/>
+    <line x1="360" y1="138" x2="360" y2="414"/>
+    <line x1="510" y1="138" x2="510" y2="414"/>
+    <line x1="660" y1="138" x2="660" y2="414"/>
+    <line x1="810" y1="138" x2="810" y2="414"/>
+  </g>
+  <line x1="210" y1="414" x2="810" y2="414" stroke="#334155" stroke-width="1.5"/>
 
-  <!-- year readout -->
-  <g text-anchor="end" font-weight="800" font-size="40" fill="#f1f5f9">
-    <text x="792" y="56" opacity="0">1990
-      <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.22;0.27;1" dur="12s" repeatCount="indefinite"/></text>
-    <text x="792" y="56" opacity="0">2025
-      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.22;0.27;0.47;0.52;1" dur="12s" repeatCount="indefinite"/></text>
-    <text x="792" y="56" opacity="0">2060
-      <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.47;0.52;0.72;0.77;1" dur="12s" repeatCount="indefinite"/></text>
-    <text x="792" y="56" opacity="0">2100
-      <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.72;0.77;1" dur="12s" repeatCount="indefinite"/></text>
+  <text x="30" y="48" fill="#f8fafc" font-size="23" font-weight="700">Data ISC</text>
+  <text x="128" y="48" fill="#64748b" font-size="15" font-weight="500">— Bar Chart Race</text>
+  <text x="30" y="72" fill="#475569" font-size="12.5">GDP · nominal USD · 100 countries · 1990–2100</text>
+
+  <g text-anchor="end" font-weight="800" font-size="46" fill="#f1f5f9">
+    <text x="872" y="64" opacity="0">1990<animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.12;0.15;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="872" y="64" opacity="0">2025<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.24;0.26;0.40;0.42;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="872" y="64" opacity="0">2060<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.52;0.54;0.68;0.70;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="872" y="64" opacity="0">2100<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.84;0.86;1" dur="16s" repeatCount="indefinite"/></text>
   </g>
 
-  <!-- bars -->
   <!-- United States -->
-  <g transform="translate(0,95)">
-    <animateTransform attributeName="transform" type="translate" values="0 95;0 95;0 155;0 215;0 215;0 215" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/>
-    <text x="182" y="31" text-anchor="end" fill="#e2e8f0" font-size="14" font-weight="600">🇺🇸 United States</text>
-    <rect x="192" y="6" height="34" rx="5" fill="url(#usa)" width="320">
-      <animate attributeName="width" values="320;360;380;400;410;420" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/></rect>
+  <g transform="translate(0,150)">
+    <animateTransform attributeName="transform" type="translate" values="0 150;0 150;0 150;0 150;0 205;0 205;0 260;0 260" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/>
+    <text x="200" y="26" text-anchor="end" fill="#e2e8f0" font-size="14.5" font-weight="600">🇺🇸 United States</text>
+    <rect x="210" y="0" height="40" rx="6" fill="url(#usa)" width="600"><animate attributeName="width" values="600;600;600;600;507;507;412;412" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/></rect>
+    <text x="822" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$6T<animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.12;0.15;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="822" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$29T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.24;0.26;0.40;0.42;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="729" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$38T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.52;0.54;0.68;0.70;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="634" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$55T<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.84;0.86;1" dur="16s" repeatCount="indefinite"/></text>
   </g>
   <!-- China -->
-  <g transform="translate(0,275)">
-    <animateTransform attributeName="transform" type="translate" values="0 275;0 155;0 95;0 95;0 95;0 95" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/>
-    <text x="182" y="31" text-anchor="end" fill="#e2e8f0" font-size="14" font-weight="600">🇨🇳 China</text>
-    <rect x="192" y="6" height="34" rx="5" fill="url(#chn)" width="120">
-      <animate attributeName="width" values="120;260;400;500;540;560" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/></rect>
+  <g transform="translate(0,315)">
+    <animateTransform attributeName="transform" type="translate" values="0 315;0 315;0 205;0 205;0 150;0 150;0 150;0 150" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/>
+    <text x="200" y="26" text-anchor="end" fill="#e2e8f0" font-size="14.5" font-weight="600">🇨🇳 China</text>
+    <rect x="210" y="0" height="40" rx="6" fill="url(#chn)" width="40"><animate attributeName="width" values="40;40;393;393;600;600;600;600" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/></rect>
+    <text x="262" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$0.4T<animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.12;0.15;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="615" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$19T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.24;0.26;0.40;0.42;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="822" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$45T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.52;0.54;0.68;0.70;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="822" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$80T<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.84;0.86;1" dur="16s" repeatCount="indefinite"/></text>
   </g>
   <!-- India -->
-  <g transform="translate(0,335)">
-    <animateTransform attributeName="transform" type="translate" values="0 335;0 335;0 275;0 155;0 155;0 155" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/>
-    <text x="182" y="31" text-anchor="end" fill="#e2e8f0" font-size="14" font-weight="600">🇮🇳 India</text>
-    <rect x="192" y="6" height="34" rx="5" fill="url(#ind)" width="60">
-      <animate attributeName="width" values="60;90;180;340;400;440" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/></rect>
+  <g transform="translate(0,370)">
+    <animateTransform attributeName="transform" type="translate" values="0 370;0 370;0 370;0 370;0 260;0 260;0 205;0 205" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/>
+    <text x="200" y="26" text-anchor="end" fill="#e2e8f0" font-size="14.5" font-weight="600">🇮🇳 India</text>
+    <rect x="210" y="0" height="40" rx="6" fill="url(#ind)" width="30"><animate attributeName="width" values="30;30;83;83;293;293;427;427" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/></rect>
+    <text x="252" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$0.3T<animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.12;0.15;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="305" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$4T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.24;0.26;0.40;0.42;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="515" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$22T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.52;0.54;0.68;0.70;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="649" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$57T<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.84;0.86;1" dur="16s" repeatCount="indefinite"/></text>
   </g>
   <!-- Japan -->
-  <g transform="translate(0,155)">
-    <animateTransform attributeName="transform" type="translate" values="0 155;0 215;0 215;0 275;0 275;0 275" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/>
-    <text x="182" y="31" text-anchor="end" fill="#e2e8f0" font-size="14" font-weight="600">🇯🇵 Japan</text>
-    <rect x="192" y="6" height="34" rx="5" fill="url(#jpn)" width="240">
-      <animate attributeName="width" values="240;250;250;240;235;230" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/></rect>
+  <g transform="translate(0,205)">
+    <animateTransform attributeName="transform" type="translate" values="0 205;0 205;0 315;0 315;0 315;0 315;0 315;0 315" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/>
+    <text x="200" y="26" text-anchor="end" fill="#e2e8f0" font-size="14.5" font-weight="600">🇯🇵 Japan</text>
+    <rect x="210" y="0" height="40" rx="6" fill="url(#jpn)" width="310"><animate attributeName="width" values="310;310;87;87;80;80;52;52" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/></rect>
+    <text x="532" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$3.1T<animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.12;0.15;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="309" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$4.2T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.24;0.26;0.40;0.42;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="302" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$6T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.52;0.54;0.68;0.70;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="274" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$7T<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.84;0.86;1" dur="16s" repeatCount="indefinite"/></text>
   </g>
   <!-- Germany -->
-  <g transform="translate(0,215)">
-    <animateTransform attributeName="transform" type="translate" values="0 215;0 275;0 335;0 335;0 335;0 335" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/>
-    <text x="182" y="31" text-anchor="end" fill="#e2e8f0" font-size="14" font-weight="600">🇩🇪 Germany</text>
-    <rect x="192" y="6" height="34" rx="5" fill="url(#deu)" width="200">
-      <animate attributeName="width" values="200;190;170;150;140;130" keyTimes="0;0.2;0.4;0.6;0.8;1" dur="12s" repeatCount="indefinite"/></rect>
+  <g transform="translate(0,260)">
+    <animateTransform attributeName="transform" type="translate" values="0 260;0 260;0 260;0 260;0 370;0 370;0 370;0 370" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/>
+    <text x="200" y="26" text-anchor="end" fill="#e2e8f0" font-size="14.5" font-weight="600">🇩🇪 Germany</text>
+    <rect x="210" y="0" height="40" rx="6" fill="url(#deu)" width="180"><animate attributeName="width" values="180;180;97;97;80;80;45;45" keyTimes="0;0.12;0.26;0.40;0.54;0.68;0.86;1" calcMode="spline" keySplines="0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1;0.6 0 0.4 1" dur="16s" repeatCount="indefinite"/></rect>
+    <text x="402" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$1.8T<animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.12;0.15;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="319" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$4.7T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.24;0.26;0.40;0.42;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="302" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$6T<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.52;0.54;0.68;0.70;1" dur="16s" repeatCount="indefinite"/></text>
+    <text x="267" y="26" fill="#cbd5e1" font-size="13" font-weight="700" opacity="0">$6T<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.84;0.86;1" dur="16s" repeatCount="indefinite"/></text>
   </g>
 
-  <!-- footer caption -->
-  <text x="28" y="452" fill="#475569" font-size="12">Upload a CSV · project forward · run what-if scenarios · export the race</text>
-  <text x="792" y="452" text-anchor="end" fill="#334155" font-size="11" font-style="italic">illustrative</text>
+  <text x="30" y="472" fill="#475569" font-size="12.5">Upload a CSV · project forward · run what-if scenarios · export the race</text>
+  <text x="872" y="472" text-anchor="end" fill="#334155" font-size="11" font-style="italic">illustrative</text>
+
+  <rect x="0" y="0" width="900" height="500" rx="16" fill="url(#bgGrad)" opacity="0">
+    <animate attributeName="opacity" values="1;0;0;0;1" keyTimes="0;0.05;0.5;0.95;1" dur="16s" repeatCount="indefinite"/>
+  </rect>
 </svg>
