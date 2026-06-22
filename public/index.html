@@ -5032,7 +5032,7 @@ function renderHeroDsList() {
                 <div class="hero-ds-row-meta">${rows.toLocaleString()} rows · ${cols} cols</div>
             </div>
             <div class="hero-ds-row-actions">
-                <button class="hero-ds-action-btn view" onclick="activateDataset(${i});closeDsDropdown()" title="View">View</button>
+                <button class="hero-ds-action-btn view" onclick="activateDataset(${i},{scroll:true});closeDsDropdown()" title="View">View</button>
                 <button class="hero-ds-action-btn" onclick="renameDataset(${i})" title="Rename">✏</button>
                 <button class="hero-ds-action-btn" onclick="duplicateDataset(${i})" title="Duplicate">⧉</button>
                 <button class="hero-ds-action-btn" onclick="removeDataset(${i})" title="Delete">🗑</button>
@@ -7074,7 +7074,7 @@ let _importTable = { data: [], filtered: [], page: 0, pageSize: 20, sortCol: nul
 
 // ── Model switching ───────────────────────────────────────────────────
 
-function activateDataset(idx) {
+function activateDataset(idx, { scroll = false } = {}) {
     const ds = customDatasets[idx];
     if (!ds) return;
     closeSandbox();
@@ -7083,8 +7083,8 @@ function activateDataset(idx) {
     applyModelView();
     mountImportedViz(ds);
     _refreshDsSwitcher(idx);
-    // Scroll to the top-bar (dataset title) when called from the hero
-    if (window.scrollY < 200) {
+    // Scroll to the top-bar only when explicitly requested (hero View button)
+    if (scroll && window.scrollY < 200) {
         const topBar = document.querySelector('.top-bar');
         if (topBar) topBar.scrollIntoView({ behavior: 'smooth' });
     }
