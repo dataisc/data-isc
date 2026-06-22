@@ -4387,6 +4387,11 @@ function closeExportPanel() { document.getElementById('exportPanel').classList.a
 function openSandbox() {
     document.getElementById('sandboxPanel').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    // Always scroll back to top so the upload section is the first thing visible
+    const scrollBody = document.querySelector('#sandboxPanel .modal-panel > div');
+    if (scrollBody) scrollBody.scrollTop = 0;
+
     renderCustomScenariosList();
     renderImportedDatasetsList();
 
@@ -4421,7 +4426,6 @@ function openSandbox() {
         });
         const stepEl = document.getElementById('importScenarioStep');
         stepEl.style.display = 'block';
-        stepEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         const doneBtn = document.getElementById('importDoneBtn');
         if (doneBtn) doneBtn.textContent = 'Done ✓';
         const hintEl = document.getElementById('scenarioStepHint');
