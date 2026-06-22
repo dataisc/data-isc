@@ -8890,7 +8890,19 @@ function _renderLineBranchChart(container, schema, baseData, dataA, dataB, label
             if (pts.length) arr.push({ name: String(name ?? '').slice(0, 22), pts });
         });
         arr.sort((a,b) => (b.pts[b.pts.length-1]?.v ?? 0) - (a.pts[a.pts.length-1]?.v ?? 0));
-        return arr.slice(0, 5); // limit to top 5 entities for clarity
+        return arr.slice(0, 5);
+    };
+
+    // Collapse a set of per-entity series into one average line
+    const avgSeries = (serArr) => {
+        const map = new Map();
+        for (const s of serArr) {
+            for (const p of s.pts) {
+                if (!map.has(p.t)) map.set(p.t, { sum: 0, cnt: 0 });
+                const e = map.get(p.t); e.sum += p.v; e.cnt++;
+            }
+        }
+        return [...map.entries()].sort((a,b) => a[0]-b[0]).map(([t,e]) => ({ t, v: e.sum / e.cnt }));
     };
 
     const baseSeries = buildSeries(baseData);
@@ -8902,7 +8914,15 @@ function _renderLineBranchChart(container, schema, baseData, dataA, dataB, label
     const serA = buildSeries(dataA).filter(s => entities.includes(s.name));
     const serB = buildSeries(dataB).filter(s => entities.includes(s.name));
 
-    const allPts  = [...aVisible, ...serA, ...serB].flatMap(s => s.pts);
+    // One average line per branch
+    const avgA = avgSeries(serA.length ? serA : aVisible);
+    const avgB = avgSeries(serB.length ? serB : aVisible);
+
+    // Band data: time points common to both averages
+    const mapB = new Map(avgB.map(p => [p.t, p.v]));
+    const bandData = avgA.filter(p => mapB.has(p.t)).map(p => ({ t: p.t, vA: p.v, vB: mapB.get(p.t) }));
+
+    const allPts  = [...aVisible.flatMap(s => s.pts), ...avgA, ...avgB];
     const xExt    = d3.extent(allPts, p => p.t);
     const yMinRaw = d3.min(allPts, p => p.v) ?? 0;
     const yMax    = (d3.max(allPts, p => p.v) || 1) * 1.08;
@@ -8944,21 +8964,30 @@ function _renderLineBranchChart(container, schema, baseData, dataA, dataB, label
     const linesG  = g.append('g').attr('clip-path', `url(#${clipId})`);
     const lineGen = d3.line().x(p => xScale(p.t)).y(p => yScale(p.v)).curve(d3.curveMonotoneX);
 
-    // Baseline — thin grey
+    // Baseline — thin grey dashed per-entity lines
     aVisible.forEach(s => {
         linesG.append('path').datum(s.pts).attr('fill','none').attr('stroke','var(--c-border)')
             .attr('stroke-width', 1.5).attr('stroke-dasharray','4,3').attr('d', lineGen);
     });
-    // Branch A — blue
-    serA.forEach(s => {
-        linesG.append('path').datum(s.pts).attr('fill','none').attr('stroke', BLUE)
-            .attr('stroke-width', 2.5).attr('stroke-linecap','round').attr('d', lineGen);
-    });
-    // Branch B — orange
-    serB.forEach(s => {
-        linesG.append('path').datum(s.pts).attr('fill','none').attr('stroke', ORANGE)
-            .attr('stroke-width', 2.5).attr('stroke-linecap','round').attr('d', lineGen);
-    });
+
+    // Shaded band between Branch A and Branch B averages
+    if (bandData.length > 1) {
+        const areaGen = d3.area()
+            .x(d => xScale(d.t))
+            .y0(d => yScale(d.vA))
+            .y1(d => yScale(d.vB))
+            .curve(d3.curveMonotoneX);
+        linesG.append('path').datum(bandData)
+            .attr('fill', BLUE).attr('fill-opacity', 0.10)
+            .attr('stroke', 'none').attr('d', areaGen);
+    }
+
+    // Branch A — single blue average line
+    linesG.append('path').datum(avgA).attr('fill','none').attr('stroke', BLUE)
+        .attr('stroke-width', 2.5).attr('stroke-linecap','round').attr('d', lineGen);
+    // Branch B — single orange average line
+    linesG.append('path').datum(avgB).attr('fill','none').attr('stroke', ORANGE)
+        .attr('stroke-width', 2.5).attr('stroke-linecap','round').attr('d', lineGen);
 
     // Plot border
     g.append('rect').attr('width', iW).attr('height', iH).attr('fill','none')
