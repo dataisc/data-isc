@@ -6891,26 +6891,30 @@ function renderMapYear(year) {
         if (minEl) minEl.textContent = '≤ −3%';
         if (maxEl) maxEl.textContent = '≥ +3%';
     } else {
-        // Absolute GDP mode — diverging log-ratio scale centred on year median
+        // Absolute GDP mode — log scale anchored to fixed 2025 median so colors
+        // change visibly as GDP grows over time (not renormalised each year).
         const gdpByNumeric = {};
-        const allGdps = [];
         Object.entries(ISO3_NUMERIC).forEach(([code3, num]) => {
             if (!TIMELINE?.countryMap[code3]) return;
             const g = getGdp(code3, year);
-            if (g > 0) { gdpByNumeric[num] = g; allGdps.push(g); }
+            if (g > 0) gdpByNumeric[num] = g;
         });
 
-        if (!allGdps.length) return;
-        allGdps.sort((a, b) => a - b);
-        const mid = Math.floor(allGdps.length / 2);
-        const medianGdp = allGdps.length % 2 === 0
-            ? (allGdps[mid - 1] + allGdps[mid]) / 2
-            : allGdps[mid];
-        const logMedian = Math.log(medianGdp);
+        // Fixed reference: 2025 world median (index 35 = 2025 - 1990)
+        const ref2025 = Object.values(TIMELINE.countryMap)
+            .filter(c => !c.isAggregate)
+            .map(c => c.gdp[35])
+            .filter(v => v > 0)
+            .sort((a, b) => a - b);
+        const rm = Math.floor(ref2025.length / 2);
+        const refMedian = ref2025.length % 2 === 0
+            ? (ref2025[rm - 1] + ref2025[rm]) / 2
+            : ref2025[rm];
+        const logMedian = Math.log(refMedian);
 
-        // Diverging on log-ratio: domain [-2.5, 0, 2.5], clamped
+        // Diverging on log-ratio vs 2025 median, clamped at ±3 log-units (~20× range)
         mapColorScale = d3.scaleDiverging(d3.interpolateRdYlGn)
-            .domain([-2.5, 0, 2.5])
+            .domain([-3, 0, 3])
             .clamp(true);
 
         // Stash median on the scale so buildLegend and tooltip can read it
@@ -6922,11 +6926,11 @@ function renderMapYear(year) {
         });
 
         const metaEl = document.getElementById('mapMetaText');
-        if (metaEl) metaEl.textContent = 'GDP vs world median · red = below · green = above · log scale';
+        if (metaEl) metaEl.textContent = 'GDP vs 2025 world median · red = below · green = above · log scale';
         const minEl = document.getElementById('mapLegendMin');
         const maxEl = document.getElementById('mapLegendMax');
-        if (minEl) minEl.textContent = '⅛× median';
-        if (maxEl) maxEl.textContent = '8×+ median';
+        if (minEl) minEl.textContent = '⅛× 2025 median';
+        if (maxEl) maxEl.textContent = '8×+ 2025 median';
     }
 
     // ── Scenario Δ mode ──────────────────────────────────────────────────
