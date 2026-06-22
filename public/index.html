@@ -9287,9 +9287,15 @@ function _buildChartPillsHTML(schema, active) {
         if (!charts.includes('trajectories')) charts.splice(charts.indexOf('line') + 1, 0, 'trajectories');
         if (!charts.includes('race')) charts.splice(charts.indexOf('bar') + 1, 0, 'race');
     }
-    return charts.map(c =>
+    let html = charts.map(c =>
         `<button class="import-chart-pill${c === active ? ' active' : ''}" data-chart="${c}" onclick="switchImportChart('${c}')">${LABELS[c] || c}</button>`
     ).join('');
+    // Branch & compare entry point — only for temporal datasets
+    if (schema.signals.temporal) {
+        html += `<span style="display:inline-block;width:1px;height:16px;background:var(--c-border);margin:0 6px;vertical-align:middle"></span>` +
+                `<button class="import-chart-pill" onclick="switchImportChart('line');openImportBranchMode()" style="gap:5px">⑂ Branch</button>`;
+    }
+    return html;
 }
 
 // ══════════════════════════════════════════════════════════════════════
