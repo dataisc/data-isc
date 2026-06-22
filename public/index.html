@@ -7396,6 +7396,9 @@ function mountImportedViz(ds) {
     // What-if section below chart
     _renderImportWhatifSection(ds);
 
+    // Refresh branch selects so they show presets for the newly active dataset
+    _populateImportBranchSelects();
+
     // Initialize start-year slider to dataset time range
     const _tr = _dataTimeRange();
     const _sl = document.getElementById('importScenarioYear');
@@ -8745,8 +8748,22 @@ function _populateImportBranchSelects() {
     const ds = _activeImportDS;
     if (!ds) return;
     const userScenarios = ds.scenarios || [];
+    const dsType        = _getDatasetType(ds);
+    const builtinList   = dsType ? (DATASET_PRESETS[dsType] || []) : [];
 
     let opts = '<option value="">Baseline (no scenario)</option>';
+
+    // Dataset-specific built-in presets (demo datasets)
+    if (builtinList.length) {
+        opts += '<optgroup label="Built-in scenarios">' +
+            builtinList.map(p => `<option value="bi:${p.id}">${p.icon || ''} ${p.name}</option>`).join('') +
+            '</optgroup>';
+    } else if (typeof BLACK_SWAN_PRESETS !== 'undefined' && BLACK_SWAN_PRESETS.length) {
+        // Fallback: Black Swan presets for GDP/custom datasets
+        opts += '<optgroup label="Black Swan presets">' +
+            BLACK_SWAN_PRESETS.map(p => `<option value="bs:${p.id}">${p.icon || ''} ${p.name}</option>`).join('') +
+            '</optgroup>';
+    }
 
     // User-created scenarios
     if (userScenarios.length) {
@@ -8755,23 +8772,19 @@ function _populateImportBranchSelects() {
             '</optgroup>';
     }
 
-    // Black Swan presets
-    if (typeof BLACK_SWAN_PRESETS !== 'undefined' && BLACK_SWAN_PRESETS.length) {
-        opts += '<optgroup label="Black Swan presets">' +
-            BLACK_SWAN_PRESETS.map(p => `<option value="bs:${p.id}">${p.icon || ''} ${p.name}</option>`).join('') +
-            '</optgroup>';
-    }
-
     document.getElementById('importBranchSelA').innerHTML = opts;
     document.getElementById('importBranchSelB').innerHTML = opts;
 
-    // Sensible defaults
+    // Sensible defaults: A = first preset (or user sc 0), B = last preset (most contrast) or user sc 1
+    const defA = builtinList.length ? `bi:${builtinList[0].id}`
+               : (BLACK_SWAN_PRESETS?.length ? `bs:${BLACK_SWAN_PRESETS[0].id}` : '');
+    const defB = builtinList.length > 1 ? `bi:${builtinList[builtinList.length - 1].id}`
+               : (BLACK_SWAN_PRESETS?.length > 1 ? `bs:${BLACK_SWAN_PRESETS[1].id}` : '');
+
     if (userScenarios.length > 0) document.getElementById('importBranchSelA').value = 'u:0';
-    else if (typeof BLACK_SWAN_PRESETS !== 'undefined' && BLACK_SWAN_PRESETS.length)
-        document.getElementById('importBranchSelA').value = `bs:${BLACK_SWAN_PRESETS[0].id}`;
+    else if (defA) document.getElementById('importBranchSelA').value = defA;
     if (userScenarios.length > 1) document.getElementById('importBranchSelB').value = 'u:1';
-    else if (typeof BLACK_SWAN_PRESETS !== 'undefined' && BLACK_SWAN_PRESETS.length > 1)
-        document.getElementById('importBranchSelB').value = `bs:${BLACK_SWAN_PRESETS[1].id}`;
+    else if (defB) document.getElementById('importBranchSelB').value = defB;
 }
 
 function _buildPresetScenario(ds, preset) {
@@ -8804,11 +8817,18 @@ function _resolveBranchScenario(val, ds) {
         const i = parseInt(val.slice(2), 10);
         return (ds.scenarios || [])[i] || null;
     }
+    if (val.startsWith('bi:')) {
+        const id     = val.slice(3);
+        const dsType = _getDatasetType(ds);
+        const list   = dsType ? (DATASET_PRESETS[dsType] || []) : [];
+        const preset = list.find(p => p.id === id);
+        if (!preset) return null;
+        return _builtinScenarioObj(preset, ds);
+    }
     if (val.startsWith('bs:')) {
         const id  = val.slice(3);
         const preset = (typeof BLACK_SWAN_PRESETS !== 'undefined' ? BLACK_SWAN_PRESETS : []).find(p => p.id === id);
         if (!preset) return null;
-        // Build a one-off scenario object from the preset using the active dataset
         return _buildPresetScenario(ds, preset);
     }
     return null;
