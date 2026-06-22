@@ -8995,12 +8995,11 @@ function _renderLineBranchChart(container, schema, baseData, dataA, dataB, label
             .text('⑂ ' + branchYear);
     }
 
-    // Baseline — thin grey dashed per-entity lines
-    aVisible.forEach(s => {
-        linesG.append('path').datum(s.pts).attr('fill','none')
-            .attr('stroke', 'var(--c-text-dim)').attr('stroke-width', 1.5)
-            .attr('stroke-dasharray','5,4').attr('opacity', 0.55).attr('d', lineGen);
-    });
+    // Baseline — single average dashed line
+    const avgBase = avgSeries(aVisible);
+    linesG.append('path').datum(avgBase).attr('fill','none')
+        .attr('stroke', 'var(--c-text-dim)').attr('stroke-width', 1.6)
+        .attr('stroke-dasharray','5,4').attr('opacity', 0.7).attr('d', lineGen);
 
     // Divergence band
     if (bandData.length > 1) {
