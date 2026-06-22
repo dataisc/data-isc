@@ -1534,8 +1534,15 @@ function startAutoPlay() {
         const year = parseInt(s.value);
         if (year >= 2100) { stopAutoPlay(); return; }
         s.value = year + 1;
-        if (isMap) onMapSlider(s.value);
-        else renderAll();
+        if (isMap) {
+            // Skip full renderAll (drawChart + renderImpactViz are too heavy at 120ms)
+            // and only repaint the map so the browser has time to flush SVG changes.
+            const main = document.getElementById('timeSlider');
+            if (main) main.value = year + 1;
+            renderMapYear(year + 1);
+        } else {
+            renderAll();
+        }
     }, 120);
 }
 
