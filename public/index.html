@@ -4680,8 +4680,8 @@ async function loadSampleDataset(key) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = await res.text();
         const result = Papa.parse(text, { header: true, skipEmptyLines: true });
-        showImportPreview(entry.label + '.csv', result.data, result.meta.fields);
         openSandbox();
+        showImportPreview(entry.label + '.csv', result.data, result.meta.fields);
     } catch (e) {
         showToast('Failed to load sample: ' + e.message);
     }
