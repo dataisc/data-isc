@@ -5170,6 +5170,8 @@ function confirmColumnMapping() {
     if (timeCol && valueCol) charts.push('line');
     if (entityCol && uniqueCategories <= 8 && valueCol && !timeCol) charts.push('donut');
     if (valueCol) charts.push('bar');
+    if (entityCol && valueCol) charts.push('treemap');
+    if (valueKeys.length >= 2 && entityCol) charts.push('scatter');
     charts.push('table');
 
     pendingImport.schema = {
@@ -5252,6 +5254,8 @@ function finalizeNewImport() {
     if (timeCol && valueCol) charts.push('line');
     if (entityCol && uniqueCategories <= 8 && valueCol && !timeCol) charts.push('donut');
     if (valueCol) charts.push('bar');
+    if (entityCol && valueCol) charts.push('treemap');
+    if (valueKeys.length >= 2 && entityCol) charts.push('scatter');
     charts.push('table');
 
     pendingImport.schema = {
@@ -5348,7 +5352,7 @@ function renderImportedDatasetsList() {
     }
 
     const activeDs = _activeImportDS;
-    const CHART_ICON = { line: '📈', bar: '📊', donut: '🍩', table: '⊞' };
+    const CHART_ICON = { line: '📈', bar: '📊', donut: '🍩', table: '⊞', treemap: '▦', scatter: '⬦' };
 
     el.innerHTML = customDatasets.map((ds, i) => {
         const sc = ds.schema;
@@ -9463,9 +9467,10 @@ function _renderImportChart(chartType, schema, data) {
     const pager = document.getElementById('importTablePager');
     if (pager) pager.style.display = chartType === 'table' ? 'flex' : 'none';
 
-    // Show/hide year slider — only useful for single-year bar/table views
+    // Show/hide year slider — useful for single-year views (bar, table, treemap, scatter)
     const sliderWrap = document.getElementById('importYearSliderWrap');
-    if (sliderWrap) sliderWrap.style.display = (chartType === 'bar' || chartType === 'table') ? 'block' : 'none';
+    if (sliderWrap) sliderWrap.style.display =
+        (['bar', 'table', 'treemap', 'scatter'].includes(chartType)) ? 'block' : 'none';
 
     // Reset visible-entity selection when switching chart type or reloading dataset
     delete area._lcVisibleNames;
@@ -9474,10 +9479,12 @@ function _renderImportChart(chartType, schema, data) {
             _renderLineChart(area, schema, data); break;
         case 'trajectories':
             _renderLineChart(area, _indexedSchema(schema), _indexData(schema, data)); break;
-        case 'donut': _renderDonut(area, schema, data); break;
-        case 'bar':   _renderBarChart(area, schema, data); break;
-        case 'race':  _launchImportRace(area); break;
-        default:      _renderTable(area, schema, data); break;
+        case 'donut':    _renderDonut(area, schema, data); break;
+        case 'bar':      _renderBarChart(area, schema, data); break;
+        case 'treemap':  _renderTreemap(area, schema, data); break;
+        case 'scatter':  _renderScatterChart(area, schema, data); break;
+        case 'race':     _launchImportRace(area); break;
+        default:         _renderTable(area, schema, data); break;
     }
 }
 
@@ -9564,7 +9571,7 @@ function _buildSchemaBadgesHTML(schema) {
 // ── Helper: chart-type pill HTML (only available chart types rendered) ─
 
 function _buildChartPillsHTML(schema, active) {
-    const LABELS = { line: 'Line', bar: 'Bar', donut: 'Donut', table: 'Table', trajectories: 'Trajectories', race: '🏁 Race' };
+    const LABELS = { line: 'Line', bar: 'Bar', donut: 'Donut', table: 'Table', trajectories: 'Trajectories', race: '🏁 Race', treemap: 'Treemap', scatter: 'Scatter' };
     // Add Trajectories and Race for temporal + categorical datasets
     const charts = [...schema.charts];
     if (schema.signals.temporal && schema.signals.categorical) {
@@ -10195,6 +10202,193 @@ function _renderDonut(container, schema, data) {
     // Hover expand
     arcs.on('mouseenter', function(_, d) { d3.select(this).attr('d', arcH(d)); })
         .on('mouseleave', function(_, d) { d3.select(this).attr('d', arc(d)); });
+
+    container.appendChild(svg.node());
+}
+
+// ── Treemap (part-of-whole at a single year) ─────────────────────────
+
+function _renderTreemap(container, schema, data) {
+    const keys     = schema.keys;
+    const catKey   = keys.category || keys.geo;
+    const valueKey = keys.value;
+    const timeKey  = keys.time;
+
+    if (!catKey || !valueKey) { _renderBarChart(container, schema, data); return; }
+
+    let rows = data;
+    if (timeKey) {
+        const sliderEl = document.getElementById('importYearSlider');
+        const idx      = sliderEl ? +sliderEl.value : (_importYearSliderValues.length - 1);
+        const yr       = String(_importYearSliderValues[idx] ?? _importYearSliderValues[_importYearSliderValues.length - 1]);
+        rows = data.filter(r => String(r[timeKey]) === yr);
+    }
+
+    const agg = d3.rollup(rows,
+        vals => d3.sum(vals, r => parseFloat(String(r[valueKey]).replace(/[,$%]/g, '')) || 0),
+        d => d[catKey]);
+    const slices = Array.from(agg, ([label, value]) => ({ label: String(label ?? 'Unknown'), value }))
+        .filter(d => d.value > 0).sort((a, b) => b.value - a.value);
+
+    if (slices.length < 2) { _renderBarChart(container, schema, data); return; }
+
+    const W = Math.max(container.clientWidth || 480, 300);
+    const H = 360;
+    const palette = d3.schemeTableau10;
+    const total   = d3.sum(slices, d => d.value);
+
+    const root = d3.hierarchy({ children: slices }).sum(d => d.value);
+    d3.treemap().size([W, H]).paddingOuter(3).paddingInner(2).round(true)(root);
+
+    const svg = d3.create('svg')
+        .attr('viewBox', `0 0 ${W} ${H}`)
+        .attr('width', '100%')
+        .style('font-family', 'system-ui,sans-serif');
+
+    const cell = svg.selectAll('g').data(root.leaves()).join('g')
+        .attr('transform', d => `translate(${d.x0},${d.y0})`);
+
+    cell.append('rect')
+        .attr('width',  d => Math.max(0, d.x1 - d.x0))
+        .attr('height', d => Math.max(0, d.y1 - d.y0))
+        .attr('fill', (_, i) => palette[i % palette.length])
+        .attr('fill-opacity', 0.85)
+        .attr('rx', 2);
+
+    cell.each(function(d) {
+        const cw = d.x1 - d.x0, ch = d.y1 - d.y0;
+        if (cw < 28 || ch < 16) return;
+        const g   = d3.select(this);
+        const pct = (d.data.value / total * 100).toFixed(1);
+        const fs  = Math.min(12, ch / 3.5);
+        g.append('text')
+            .attr('x', 4).attr('y', fs + 2)
+            .attr('fill', '#fff').attr('font-size', fs + 'px').attr('font-weight', '600')
+            .text(d.data.label.slice(0, Math.floor(cw / (fs * 0.6))));
+        if (ch > 30) {
+            g.append('text')
+                .attr('x', 4).attr('y', fs * 2 + 4)
+                .attr('fill', 'rgba(255,255,255,0.75)').attr('font-size', '9px')
+                .text(`${pct}% · ${(schema.isMonetary ? '$' : '') + d3.format('.3~s')(d.data.value)}`);
+        }
+    });
+
+    const tip = d3.select(document.body).selectAll('#_treemapTip').data([0]).join('div')
+        .attr('id', '_treemapTip')
+        .style('position', 'fixed').style('pointer-events', 'none').style('display', 'none')
+        .style('background', 'var(--c-card)').style('border', '1px solid var(--c-border)')
+        .style('border-radius', '6px').style('padding', '8px 12px').style('font-size', '12px')
+        .style('color', 'var(--c-text)').style('z-index', '9999');
+
+    cell.on('mouseenter', function(event, d) {
+        const pct = (d.data.value / total * 100).toFixed(2);
+        tip.style('display', 'block')
+            .html(`<strong>${d.data.label}</strong><br>${(schema.isMonetary ? '$' : '') + d3.format('.4~s')(d.data.value)} &nbsp;<span style="color:var(--c-muted)">(${pct}%)</span>`);
+    }).on('mousemove', function(event) {
+        tip.style('left', (event.clientX + 14) + 'px').style('top', (event.clientY - 32) + 'px');
+    }).on('mouseleave', () => tip.style('display', 'none'));
+
+    container.appendChild(svg.node());
+}
+
+// ── Scatter plot (two numeric columns vs each other) ──────────────────
+
+function _renderScatterChart(container, schema, data) {
+    const keys     = schema.keys;
+    const allVKeys = keys.valueKeys ?? [keys.value];
+    const xKey     = keys.value;
+    const yKey     = allVKeys.find(k => k !== xKey) ?? null;
+    const labelKey = keys.category || keys.geo;
+    const timeKey  = keys.time;
+
+    if (!xKey || !yKey) { _renderBarChart(container, schema, data); return; }
+
+    let rows = data;
+    if (timeKey) {
+        const sliderEl = document.getElementById('importYearSlider');
+        const idx      = sliderEl ? +sliderEl.value : (_importYearSliderValues.length - 1);
+        const yr       = String(_importYearSliderValues[idx] ?? _importYearSliderValues[_importYearSliderValues.length - 1]);
+        rows = data.filter(r => String(r[timeKey]) === yr);
+    }
+
+    const parse = v => parseFloat(String(v ?? '').replace(/[,$%]/g, ''));
+    const pts = rows.map(r => ({
+        x: parse(r[xKey]), y: parse(r[yKey]),
+        label: labelKey ? String(r[labelKey] ?? '') : ''
+    })).filter(p => !isNaN(p.x) && !isNaN(p.y));
+
+    if (pts.length < 2) { _renderBarChart(container, schema, data); return; }
+
+    const W  = Math.max(container.clientWidth || 480, 300);
+    const H  = 340;
+    const mg = { top: 16, right: 24, bottom: 48, left: 60 };
+    const w  = W - mg.left - mg.right;
+    const h  = H - mg.top  - mg.bottom;
+
+    const xSc = d3.scaleLinear().domain(d3.extent(pts, p => p.x)).nice().range([0, w]);
+    const ySc = d3.scaleLinear().domain(d3.extent(pts, p => p.y)).nice().range([h, 0]);
+
+    const svg = d3.create('svg')
+        .attr('viewBox', `0 0 ${W} ${H}`)
+        .attr('width', '100%')
+        .style('font-family', 'system-ui,sans-serif');
+
+    const g = svg.append('g').attr('transform', `translate(${mg.left},${mg.top})`);
+
+    // Subtle grid
+    g.append('g').call(d3.axisBottom(xSc).ticks(5).tickSize(-h).tickFormat(''))
+        .attr('transform', `translate(0,${h})`)
+        .call(g => g.select('.domain').remove())
+        .call(g => g.selectAll('.tick line').attr('stroke', 'var(--c-border)').attr('stroke-dasharray', '3,3'));
+    g.append('g').call(d3.axisLeft(ySc).ticks(5).tickSize(-w).tickFormat(''))
+        .call(g => g.select('.domain').remove())
+        .call(g => g.selectAll('.tick line').attr('stroke', 'var(--c-border)').attr('stroke-dasharray', '3,3'));
+
+    // Axes
+    g.append('g').attr('transform', `translate(0,${h})`)
+        .call(d3.axisBottom(xSc).ticks(5).tickFormat(d3.format('.3~s')))
+        .call(g => g.select('.domain').attr('stroke', 'var(--c-border)'))
+        .call(g => g.selectAll('.tick text').attr('fill', 'var(--c-text-dim)').attr('font-size', '10px'));
+    g.append('g')
+        .call(d3.axisLeft(ySc).ticks(5).tickFormat(d3.format('.3~s')))
+        .call(g => g.select('.domain').attr('stroke', 'var(--c-border)'))
+        .call(g => g.selectAll('.tick text').attr('fill', 'var(--c-text-dim)').attr('font-size', '10px'));
+
+    // Axis labels
+    g.append('text').attr('x', w / 2).attr('y', h + 40)
+        .attr('text-anchor', 'middle').attr('fill', 'var(--c-text-dim)').attr('font-size', '11px').text(xKey);
+    g.append('text').attr('transform', 'rotate(-90)').attr('x', -h / 2).attr('y', -50)
+        .attr('text-anchor', 'middle').attr('fill', 'var(--c-text-dim)').attr('font-size', '11px').text(yKey);
+
+    const palette = d3.schemeTableau10;
+    const dots = g.selectAll('circle').data(pts).join('circle')
+        .attr('cx', p => xSc(p.x)).attr('cy', p => ySc(p.y))
+        .attr('r', 5)
+        .attr('fill', (_, i) => palette[i % palette.length])
+        .attr('fill-opacity', 0.8)
+        .attr('stroke', 'var(--c-bg)').attr('stroke-width', 1);
+
+    // Inline labels for small sets
+    if (pts.length <= 25) {
+        g.selectAll('.sc-lbl').data(pts).join('text').attr('class', 'sc-lbl')
+            .attr('x', p => xSc(p.x) + 7).attr('y', p => ySc(p.y) + 4)
+            .attr('fill', 'var(--c-text-dim)').attr('font-size', '9px')
+            .text(p => p.label.slice(0, 14));
+    }
+
+    const tip = d3.select(document.body).selectAll('#_scatterTip').data([0]).join('div')
+        .attr('id', '_scatterTip')
+        .style('position', 'fixed').style('pointer-events', 'none').style('display', 'none')
+        .style('background', 'var(--c-card)').style('border', '1px solid var(--c-border)')
+        .style('border-radius', '6px').style('padding', '8px 12px').style('font-size', '12px')
+        .style('color', 'var(--c-text)').style('z-index', '9999').style('max-width', '220px');
+
+    dots.on('mouseenter', function(event, p) {
+        tip.style('display', 'block')
+            .html(`<strong>${p.label}</strong><br>${xKey}: ${d3.format('.4~s')(p.x)}<br>${yKey}: ${d3.format('.4~s')(p.y)}`);
+    }).on('mousemove', function(event) {
+        tip.style('left', (event.clientX + 14) + 'px').style('top', (event.clientY - 32) + 'px');
+    }).on('mouseleave', () => tip.style('display', 'none'));
 
     container.appendChild(svg.node());
 }
