@@ -98,14 +98,6 @@ node server.js
 
 Requires **Node.js ≥ 18**. No database, no external services, no API key required to get started.
 
-**Or with Docker:**
-
-```bash
-docker run -p 3000:3000 ghcr.io/dataisc/data-isc
-```
-
-Then open `http://localhost:3000`.
-
 ---
 
 ## Deploy your own instance
