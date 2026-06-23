@@ -65,7 +65,7 @@
                 </div>
             </div>
         </div>
-        <p class="hero-meta">CSV · XLSX · JSON &nbsp;·&nbsp; No file? Try: <button onclick="loadSampleDataset('co2')" class="sample-link">CO₂ emissions</button> · <button onclick="loadSampleDataset('life')" class="sample-link">Life expectancy</button> · <button onclick="loadSampleDataset('energy')" class="sample-link">Renewable energy</button></p>
+        <p class="hero-meta">CSV · XLSX · JSON &nbsp;·&nbsp; No file? Try: <button onclick="loadSampleDataset('co2')" class="sample-link">CO₂ emissions</button> · <button onclick="loadSampleDataset('life')" class="sample-link">Life expectancy</button> · <button onclick="loadSampleDataset('energy')" class="sample-link">Renewable energy</button> · <button onclick="loadSampleDataset('co2world')" class="sample-link">CO₂ by country ▦</button> · <button onclick="loadSampleDataset('co2life')" class="sample-link">CO₂ vs life exp ⬦</button></p>
         <div class="hero-ai-bar">
             <span class="hero-ai-dot"></span>
             <span>Basic scenario analysis included. Connect your preferred AI provider for deeper, more precise impact modeling.</span>
@@ -4951,9 +4951,11 @@ function handleImportFile(input) {
 
 async function loadSampleDataset(key) {
     const map = {
-        co2:    { file: '/samples/co2_emissions.csv',         label: 'CO₂ Emissions' },
-        life:   { file: '/samples/life_expectancy.csv',       label: 'Life Expectancy' },
-        energy: { file: '/samples/renewable_energy_share.csv',label: 'Renewable Energy Share' },
+        co2:      { file: '/samples/co2_emissions.csv',            label: 'CO₂ Emissions' },
+        life:     { file: '/samples/life_expectancy.csv',          label: 'Life Expectancy' },
+        energy:   { file: '/samples/renewable_energy_share.csv',   label: 'Renewable Energy Share' },
+        co2world: { file: '/samples/co2_per_capita_world.csv',     label: 'CO₂ per Capita — World' },
+        co2life:  { file: '/samples/co2_vs_life_exp_2022.csv',     label: 'CO₂ vs Life Expectancy' },
     };
     const entry = map[key];
     if (!entry) return;
@@ -5169,9 +5171,10 @@ function confirmColumnMapping() {
     const charts = [];
     if (timeCol && valueCol) charts.push('line');
     if (entityCol && uniqueCategories <= 8 && valueCol && !timeCol) charts.push('donut');
+    if (valueKeys.length >= 2 && entityCol && !timeCol) charts.push('scatter');
     if (valueCol) charts.push('bar');
     if (entityCol && valueCol) charts.push('treemap');
-    if (valueKeys.length >= 2 && entityCol) charts.push('scatter');
+    if (valueKeys.length >= 2 && entityCol && !!timeCol) charts.push('scatter');
     charts.push('table');
 
     pendingImport.schema = {
@@ -5253,9 +5256,10 @@ function finalizeNewImport() {
     const charts = [];
     if (timeCol && valueCol) charts.push('line');
     if (entityCol && uniqueCategories <= 8 && valueCol && !timeCol) charts.push('donut');
+    if (valueKeys.length >= 2 && entityCol && !timeCol) charts.push('scatter');
     if (valueCol) charts.push('bar');
     if (entityCol && valueCol) charts.push('treemap');
-    if (valueKeys.length >= 2 && entityCol) charts.push('scatter');
+    if (valueKeys.length >= 2 && entityCol && !!timeCol) charts.push('scatter');
     charts.push('table');
 
     pendingImport.schema = {

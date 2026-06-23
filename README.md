@@ -37,6 +37,7 @@ The same static build also powers the [GitHub Pages demo](https://dataisc.github
 - **What-if scenarios** — start from the **🦢 Black Swan preset library** (one-click economic shocks like an automation wave, fertility crisis, decoupling, pandemic, or energy shock that auto-disperse across your entities), or build structured scenarios with per-entity rates, time-phased impacts, and value ceilings — no AI key required. Connect your own AI provider for causal per-entity breakdowns or to **describe a GDP scenario in plain language** ("a trade war starting 2028 cuts growth 2%/yr for 5 years") and have the AI generate and apply the full parameter set automatically. Import/export scenarios as JSON for sharing and version control.
 - **Scenario branching (GitDiff)** — branch the baseline into two rival futures (e.g. high automation vs severe demographic strain), each its own stack of scenarios, and watch the two timelines diverge on a single graph. A shaded divergence band and live delta readout show the gap widening or narrowing year by year.
 - **Map, chart & trajectory views** — choropleth world map with a time scrubber, ranked Top 10 bars at any year, and a multi-entity trajectory line chart — switch freely and share any view by URL. The **Full Rankings** modal (available for both the GDP demo and imported datasets) shows a gold/silver/bronze podium plus a scrollable ranked table at any year, with a time slider to scrub through the timeline and live YoY % for every entry.
+- **Multiple chart types for imported data** — bar, line, treemap (part-of-whole at any year), scatter (two numeric columns plotted against each other), donut, trajectories index, and animated race. The chart-type pill row shows only the types that make sense for each dataset's shape — scatter appears automatically when a dataset has two or more numeric columns.
 - **Export imported datasets** — once a dataset is loaded, an **Export** button lets you download the current chart as PNG or SVG, the data (with any active scenario applied) as CSV, or the full dataset + scenario metadata as JSON.
 - **Bar Chart Race** — animated ranking race across the full simulation timeline. Scenario effects apply live, reshaping trajectories from the shock year onward. Callouts mark leader changes and landmark crossings as they occur.
 - **Social video export** — export the race as an **MP4** (default, plays on iOS/PowerPoint/everywhere) or **WebM** (smaller) in 16:9 (LinkedIn/Facebook), 1:1 (Instagram feed), or 9:16 (Reels/TikTok/Shorts) — no post-production required.
@@ -129,13 +130,15 @@ The static hosts read their config from [`netlify.toml`](netlify.toml) / [`verce
 
 The `samples/` folder contains ready-to-upload datasets to try the import flow immediately:
 
-| File | Domain | Rows | Source |
-|------|--------|------|--------|
-| `co2_emissions.csv` | Environment | 6 600 | Our World in Data |
-| `life_expectancy.csv` | Health | 7 200 | World Bank |
-| `renewable_energy_share.csv` | Energy | 660 | IEA / Our World in Data |
+| File | Domain | Rows | Best chart | Source |
+|------|--------|------|------------|--------|
+| `co2_emissions.csv` | Environment | 561 | Line / Bar | Our World in Data |
+| `life_expectancy.csv` | Health | 561 | Line / Trajectories | World Bank |
+| `renewable_energy_share.csv` | Energy | 660 | Line / Race | IEA / Our World in Data |
+| `co2_per_capita_world.csv` | Environment | 138 | **Treemap** (23 countries × 6 years) | IEA / Our World in Data |
+| `co2_vs_life_exp_2022.csv` | Environment / Health | 28 | **Scatter** (2022 snapshot, 28 countries) | IEA / World Bank |
 
-Download, drag into the **Upload your dataset** button, and the engine detects the schema automatically.
+Download any file, drag into the **Upload your dataset** button, and the engine detects the schema automatically. The last two files are designed to showcase the treemap and scatter chart types — quickload buttons for all five are in the import section hero.
 
 ---
 
