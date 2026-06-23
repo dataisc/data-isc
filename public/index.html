@@ -640,7 +640,7 @@
     <div class="view-actions">
         <div class="export-dropdown-wrap" style="position:relative">
             <button class="btn-export btn-blue-pill" onclick="toggleExportDropdown()" id="exportDropdownBtn">Export ▾</button>
-            <div id="exportDropdown" class="export-dropdown-menu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:999;background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.4);overflow:hidden">
+            <div id="exportDropdown" class="export-dropdown-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:999;background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.4);overflow:hidden">
                 <button class="export-drop-item" onclick="exportChart();closeExportDropdown()">🖼 PNG</button>
                 <button class="export-drop-item" onclick="exportCSV();closeExportDropdown()">⬇ CSV</button>
                 <button class="export-drop-item" onclick="exportPowerBI();closeExportDropdown()">📊 Power BI / BI Tools</button>
@@ -835,6 +835,21 @@
         <div id="importChartArea" style="position:relative;min-height:360px"></div>
     </div>
 
+    <!-- Rankings + Export row — shown once a dataset is loaded -->
+    <div id="importRankingsBar" style="display:none;margin-top:8px;gap:8px;align-items:center">
+        <button class="btn-table" onclick="openImportTableModal()">📋 Full Rankings</button>
+        <div id="importExportRow" class="export-dropdown-wrap" style="position:relative">
+            <button class="btn-export" onclick="toggleImportExportDropdown()" id="importExportDropdownBtn">Export ▾</button>
+            <div id="importExportDropdown" class="export-dropdown-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:999;background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.4);overflow:hidden">
+                <button class="export-drop-item" onclick="exportImportData('png');closeImportExportDropdown()">🖼 PNG chart</button>
+                <button class="export-drop-item" onclick="exportImportData('svg');closeImportExportDropdown()">📐 SVG chart</button>
+                <hr class="export-drop-sep">
+                <button class="export-drop-item" onclick="exportCSV();closeImportExportDropdown()">⬇ CSV with scenario</button>
+                <button class="export-drop-item" onclick="exportImportData('json');closeImportExportDropdown()">{ } JSON</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Year slider — shown for temporal datasets -->
     <div id="importYearSliderWrap" style="display:none;margin-top:14px">
         <div style="display:flex;align-items:center;gap:10px">
@@ -851,7 +866,7 @@
             <select id="pressureEntitySelect" onchange="renderPressureGauge()" class="import-ds-select" style="max-width:240px;display:none"></select>
         </div>
         <p class="scenario-hint" style="margin-top:6px">Reads the series' recent trajectory — growth velocity and acceleration — to score momentum from 0 (declining) to 100 (thriving). Reflects the active scenario and projection.</p>
-        <div id="pressureGaugeBody" style="display:flex;justify-content:center;padding:6px 0"></div>
+        <div id="pressureGaugeBody" style="display:flex;flex-direction:column;align-items:center;padding:6px 0"></div>
     </div>
 
     <!-- What-if scenarios section — always shown for import mode -->
@@ -1188,6 +1203,32 @@
                 <div id="customScenariosList" style="border-top:1px solid var(--c-surface);padding-top:12px;margin-top:12px"></div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- ══ IMPORT FULL RANKINGS MODAL — at body level so model-gdp display:none doesn't hide it ══ -->
+<div id="importTableModal" class="modal-overlay hidden" onclick="if(event.target===this)closeImportTableModal()">
+    <div class="modal-panel">
+        <div class="modal-header">
+            <span id="importRankingsHeader">📊 Rankings — </span><span id="importModalYear"></span>
+            <button class="modal-close" onclick="closeImportTableModal()">✕</button>
+        </div>
+        <div id="importModalSliderWrap" class="modal-slider-wrap" style="display:none">
+            <input type="range" id="importModalSlider" min="2000" max="2100" value="2025"
+                   oninput="onImportModalSlider(this.value)">
+            <div class="modal-slider-labels" id="importModalSliderLabels"></div>
+        </div>
+        <p class="section-label" style="margin:16px 0 8px">🏆 Top 3 <span class="unit-note" id="importUnitNote"></span></p>
+        <div class="podium" id="importPodium" style="margin-bottom:20px"></div>
+        <div class="modal-body">
+            <div class="lb-header">
+                <span>#</span>
+                <span>Entity</span>
+                <span style="text-align:right">Value</span>
+                <span style="text-align:right">YoY%</span>
+            </div>
+            <div id="importLeaderboard"></div>
         </div>
     </div>
 </div>
@@ -1985,11 +2026,38 @@ function renderLeaderboard(year) {
             return lbSortDir * (b.gdp - a.gdp);
         });
 
+    // Podium — must stay in sync with the modal slider year
+    const isProj = year >= 2026;
+    const podium = document.getElementById('podium');
+    if (podium) {
+        podium.innerHTML = ranked.slice(0, 3).map((c, i) => {
+            const affected  = isAffected(c.code);
+            const hasDelta  = affected && year >= scenarioStartYear;
+            const delta     = hasDelta ? ((c.gdp - c.baseline) / c.baseline * 100) : null;
+            const base2026  = TIMELINE.countryMap[c.code]?.gdp[36] ?? 0;
+            const yearsFrom = year - 2026;
+            const cagr      = (isProj && yearsFrom > 0 && base2026 > 0)
+                ? ((Math.pow(c.gdp / base2026, 1 / yearsFrom) - 1) * 100) : null;
+            const deltaHtml = delta !== null
+                ? `<div class="card-delta ${delta >= 0 ? 'delta-pos' : 'delta-neg'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta).toFixed(1)}% vs no-scenario</div>`
+                : (cagr !== null
+                    ? `<div class="card-delta" style="color:var(--c-text-dim)">≈ ${cagr >= 0 ? '+' : ''}${cagr.toFixed(1)}% CAGR from 2026</div>`
+                    : '');
+            const yoy = yoyGrowth(c.code, year);
+            return `<div class="card ${MEDAL_CLASS[i]}">
+                    <div class="medal">${MEDALS[i]}</div>
+                    <div class="card-name">${getCountryName(c.code)}</div>
+                    <div class="card-gdp">${fmtGDP(c.gdp, 1)}</div>
+                    ${yoyHtml(yoy, false)}
+                    ${deltaHtml}
+                </div>`;
+        }).join('');
+    }
+
     const showDelta = !!(activeScenarios.length && SCENARIO_RESULT && scenarioEnabled);
     document.getElementById('lbDeltaHeader').classList.toggle('hidden', !showDelta);
     const lb = document.getElementById('leaderboard');
-    lb.innerHTML = '';
-    ranked.forEach((c, i) => {
+    lb.innerHTML = ranked.map((c, i) => {
         const hasDelta  = showDelta && isAffected(c.code) && year >= scenarioStartYear;
         const delta     = hasDelta ? ((c.gdp - c.baseline) / c.baseline * 100) : null;
         const deltaHtml = delta !== null
@@ -1998,15 +2066,165 @@ function renderLeaderboard(year) {
         const isAgg = !!c.isAggregate;
         const yoy = yoyGrowth(c.code, year);
         const flag = isAgg ? '' : countryFlag(c.code);
-        lb.innerHTML += `
-            <div class="lb-row${isAgg ? ' lb-aggregate' : ''}" onclick="showCountryPopup('${c.code}')" style="cursor:pointer">
+        return `<div class="lb-row${isAgg ? ' lb-aggregate' : ''}" onclick="showCountryPopup('${c.code}')" style="cursor:pointer">
                 <span class="lb-rank">${isAgg ? '~' : '#' + (i + 1)}</span>
                 <span>${flag ? `<span style="margin-right:6px">${flag}</span>` : ''}${getCountryName(c.code)} <span class="lb-region">${getRegionName(c.region)}</span></span>
                 <span class="lb-gdp">${fmtGDP(c.gdp, 2)}</span>
                 ${yoyHtml(yoy, true)}
                 ${deltaHtml}
             </div>`;
-    });
+    }).join('');
+}
+
+// ── Import dataset full-rankings modal ───────────────────────────────
+function openImportTableModal() {
+    const ds = _activeImportDS;
+    if (!ds) { showToast('Rankings: no dataset loaded'); console.warn('[Rankings] _activeImportDS is null'); return; }
+    console.log('[Rankings] opening with dataset:', ds.name, 'rows:', ds.data?.length);
+    try {
+        const isTemporal = !!ds.schema.signals?.temporal;
+        const sliderWrap = document.getElementById('importModalSliderWrap');
+        const slider     = document.getElementById('importModalSlider');
+        const labelsEl   = document.getElementById('importModalSliderLabels');
+
+        let year = null;
+        if (isTemporal) {
+            const tr = _dataTimeRange();
+            slider.min   = tr.min;
+            slider.max   = tr.max;
+            slider.value = tr.max;
+            year = tr.max;
+            // Five evenly-spaced tick labels
+            const step = (tr.max - tr.min) / 4;
+            labelsEl.innerHTML = [0,1,2,3,4].map(i => `<span>${Math.round(tr.min + i * step)}</span>`).join('');
+            document.getElementById('importModalYear').textContent = year;
+            sliderWrap.style.display = '';
+        } else {
+            sliderWrap.style.display = 'none';
+            document.getElementById('importModalYear').textContent = '';
+        }
+
+        document.getElementById('importRankingsHeader').textContent = `📊 ${ds.name} Rankings — `;
+        document.getElementById('importUnitNote').textContent = `· ${ds.schema.keys.value}`;
+        renderImportLeaderboard(year);
+    } catch(e) {
+        console.error('[Rankings] error:', e);
+        document.getElementById('importPodium').innerHTML = '';
+        document.getElementById('importLeaderboard').innerHTML =
+            `<div style="padding:20px;color:var(--c-text-dim);font-size:0.85rem">Could not render rankings: ${e.message}</div>`;
+    }
+    document.getElementById('importTableModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImportTableModal() {
+    document.getElementById('importTableModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function onImportModalSlider(val) {
+    const year = parseInt(val);
+    document.getElementById('importModalYear').textContent = year;
+    renderImportLeaderboard(year);
+}
+
+function renderImportLeaderboard(year) {
+    const ds = _activeImportDS;
+    if (!ds) return;
+    const { time: timeKey, value: valKey } = ds.schema.keys;
+    const groupKey  = ds.schema.keys.category || ds.schema.keys.geo;
+    const isTemporal = !!ds.schema.signals?.temporal;
+    const num = v => parseFloat(String(v).replace(/[,$%]/g, '')) || 0;
+
+    const baseRows  = _activeProjectedData ?? ds.data;
+    const activeScs = _activeScenarioObjs(ds);
+    const hasScenario = activeScs.length > 0;
+    const scenRows  = hasScenario ? _applyScenarioStack(baseRows, ds.schema, activeScs) : null;
+
+    // Build ranked entries
+    let entries;
+    if (isTemporal && year !== null) {
+        const yr = String(year);
+        const prevYr = String(year - 1);
+        // Pre-index baseRows by "entity|timeVal" for O(1) YoY lookups instead of O(N) scans
+        const rowIdx = new Map();
+        for (const r of baseRows) {
+            const t = String(r[timeKey]);
+            const e = groupKey ? String(r[groupKey]) : '__all__';
+            rowIdx.set(e + '|' + t, r);
+        }
+        const atYear = (rows) => rows.filter(r => String(r[timeKey]) === yr);
+        const baseAtY = atYear(baseRows);
+        const scenAtY = scenRows ? atYear(scenRows) : null;
+
+        entries = baseAtY.map((r, i) => {
+            const entity  = groupKey ? r[groupKey] : 'All';
+            const eKey    = groupKey ? String(r[groupKey]) : '__all__';
+            const baseVal = num(r[valKey]);
+            const scenVal = scenAtY ? num(scenAtY[i]?.[valKey] ?? r[valKey]) : baseVal;
+            const prevRow = rowIdx.get(eKey + '|' + prevYr);
+            const prevVal = prevRow ? num(prevRow[valKey]) : null;
+            const yoy     = (prevVal !== null && prevVal !== 0) ? ((baseVal - prevVal) / Math.abs(prevVal) * 100) : null;
+            return { entity, baseVal, scenVal, yoy };
+        });
+    } else {
+        const seen = new Set();
+        entries = baseRows
+            .filter(r => { const e = groupKey ? r[groupKey] : 'Data'; if (seen.has(e)) return false; seen.add(e); return true; })
+            .map((r, i) => {
+                const entity  = groupKey ? r[groupKey] : 'Data';
+                const baseVal = num(r[valKey]);
+                const scenVal = scenRows ? num(scenRows[i]?.[valKey] ?? r[valKey]) : baseVal;
+                return { entity, baseVal, scenVal, yoy: null };
+            });
+    }
+
+    // Remove duplicate entities (keep first occurrence per entity at this year)
+    const seenEnt = new Set();
+    entries = entries.filter(e => { if (seenEnt.has(e.entity)) return false; seenEnt.add(e.entity); return true; });
+    entries.sort((a, b) => b.scenVal - a.scenVal);
+
+    const fmtVal = v => {
+        const abs = Math.abs(v);
+        if (abs >= 1e9)  return (v / 1e9).toFixed(1) + 'B';
+        if (abs >= 1e6)  return (v / 1e6).toFixed(1) + 'M';
+        if (abs >= 1e3)  return (v / 1e3).toFixed(1) + 'K';
+        return v % 1 === 0 ? String(v) : v.toFixed(2);
+    };
+    const yoySpan = yoy => yoy === null ? '' :
+        `<span class="yoy ${yoy >= 0 ? 'yoy-pos' : 'yoy-neg'}">${yoy >= 0 ? '+' : ''}${yoy.toFixed(1)}% YoY</span>`;
+    const deltaPct = e => e.baseVal !== 0 ? ((e.scenVal - e.baseVal) / Math.abs(e.baseVal) * 100) : 0;
+
+    // Podium
+    const podium = document.getElementById('importPodium');
+    podium.innerHTML = entries.slice(0, 3).map((e, i) => {
+        const dp = hasScenario ? deltaPct(e) : null;
+        const deltaHtml = dp !== null && Math.abs(dp) > 0.01
+            ? `<div class="card-delta ${dp >= 0 ? 'delta-pos' : 'delta-neg'}">${dp >= 0 ? '▲' : '▼'} ${Math.abs(dp).toFixed(1)}% vs baseline</div>` : '';
+        return `<div class="card ${MEDAL_CLASS[i]}">
+                <div class="medal">${MEDALS[i]}</div>
+                <div class="card-name">${e.entity}</div>
+                <div class="card-gdp">${fmtVal(e.scenVal)}</div>
+                ${yoySpan(e.yoy)}${deltaHtml}
+            </div>`;
+    }).join('');
+
+    // Table
+    const lb = document.getElementById('importLeaderboard');
+    lb.innerHTML = entries.map((e, i) => {
+        const dp = hasScenario ? deltaPct(e) : null;
+        const deltaHtml = dp !== null && Math.abs(dp) > 0.01
+            ? `<span class="lb-delta ${dp >= 0 ? 'delta-pos' : 'delta-neg'}">${dp >= 0 ? '▲' : '▼'} ${Math.abs(dp).toFixed(1)}%</span>` : '';
+        const yoyCell = e.yoy !== null
+            ? `<span class="${e.yoy >= 0 ? 'yoy yoy-pos' : 'yoy yoy-neg'}" style="font-size:0.78rem;text-align:right">${e.yoy >= 0 ? '+' : ''}${e.yoy.toFixed(1)}%</span>`
+            : '<span style="color:var(--c-border);text-align:right">—</span>';
+        return `<div class="lb-row">
+                <span class="lb-rank">#${i + 1}</span>
+                <span>${e.entity}</span>
+                <span class="lb-gdp">${fmtVal(e.scenVal)}</span>
+                ${yoyCell}
+            </div>`;
+    }).join('');
 }
 
 let impactHorizon = 10;
@@ -3495,6 +3713,70 @@ function closeExportDropdown() {
 document.addEventListener('click', e => {
     if (!document.getElementById('exportDropdownBtn')?.contains(e.target)) closeExportDropdown();
 });
+
+function toggleImportExportDropdown() {
+    const m = document.getElementById('importExportDropdown');
+    m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+function closeImportExportDropdown() {
+    const m = document.getElementById('importExportDropdown');
+    if (m) m.style.display = 'none';
+}
+document.addEventListener('click', e => {
+    if (!document.getElementById('importExportDropdownBtn')?.contains(e.target)) closeImportExportDropdown();
+});
+
+function exportImportData(format) {
+    if (format === 'json') {
+        if (!_activeImportDS) return;
+        const ds = _activeImportDS;
+        const activeScs = _activeScenarioObjs(ds);
+        const baseRows  = _activeProjectedData ?? ds.data;
+        const adjRows   = activeScs.length ? _applyScenarioStack(baseRows, ds.schema, activeScs) : baseRows;
+        const payload   = { name: ds.name, schema: ds.schema,
+            scenarios: activeScs.map(s => ({ name: s.name, deltaPct: s.deltaPct, yearFrom: s.yearFrom, yearTo: s.yearTo })),
+            data: adjRows };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.download = `${ds.name.replace(/\s+/g,'_').replace(/\.[^.]+$/,'')}_export.json`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        return;
+    }
+    const svg = document.querySelector('#importChartArea svg');
+    if (!svg) { showToast('No chart to export'); return; }
+    const fname = (_activeImportDS?.name || 'chart').replace(/\s+/g,'_').replace(/\.[^.]+$/,'');
+    if (format === 'svg') {
+        const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' });
+        const link = document.createElement('a');
+        link.download = `${fname}.svg`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        return;
+    }
+    // PNG
+    const serialized = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([serialized], { type: 'image/svg+xml' });
+    const url  = URL.createObjectURL(blob);
+    const img  = new Image();
+    img.onload = () => {
+        const dpr = window.devicePixelRatio || 2;
+        const c   = document.createElement('canvas');
+        c.width   = svg.clientWidth  * dpr;
+        c.height  = svg.clientHeight * dpr;
+        const ctx = c.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--c-bg').trim() || '#0f172a';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0);
+        const link = document.createElement('a');
+        link.download = `${fname}.png`;
+        link.href = c.toDataURL('image/png');
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+    img.src = url;
+}
 
 // ══════════════════════════════════════════════════════════════════════
 // CHART A — Multi-Country GDP Trajectory Line Chart
@@ -7388,6 +7670,7 @@ function mountImportedViz(ds) {
     document.getElementById('importVizName').textContent = name;
     document.getElementById('importSchemaBadges').innerHTML = _buildSchemaBadgesHTML(schema);
     document.getElementById('importChartPills').innerHTML   = _buildChartPillsHTML(schema, schema.primaryChart);
+    document.getElementById('importRankingsBar').style.display = 'flex';
     document.getElementById('importTablePager').style.display = 'none';
 
     // Projection controls (only for temporal data)
@@ -8198,9 +8481,9 @@ function renderPressureGauge() {
     // ── SVG semicircular gauge — monochrome, professional ──────────────
     // Hub at bottom-center. Arc sweeps 180° from left (Declining/0) to right (Thriving/100).
     // Score is inverted from internal strain so higher = better growth.
-    const VW = 220, VH = 140;
-    const cx = 110, cy = 118;   // hub well inside the viewBox bottom
-    const R = 90, sw = 9;
+    const VW = 220, VH = 165;
+    const cx = 110, cy = 128;   // hub well inside the viewBox bottom
+    const R = 90, sw = 24;
     const toRad = d => d * Math.PI / 180;
     const angleFor = v => 180 - Math.max(0, Math.min(100, v)) * 1.8; // 0→180°, 100→0°
     const gpt = a => [cx + R * Math.cos(toRad(a)), cy - R * Math.sin(toRad(a))];
@@ -8222,19 +8505,20 @@ function renderPressureGauge() {
     // Tick marks at quartiles
     const ticks = [0, 25, 50, 75, 100].map(v => {
         const a = toRad(angleFor(v));
-        const r1 = R - sw / 2 - 1, r2 = R + sw / 2 + 5;
+        const r1 = R - sw / 2 - 1, r2 = R + sw / 2 + 4;
         return `<line x1="${(cx + r1*Math.cos(a)).toFixed(1)}" y1="${(cy - r1*Math.sin(a)).toFixed(1)}"
                       x2="${(cx + r2*Math.cos(a)).toFixed(1)}" y2="${(cy - r2*Math.sin(a)).toFixed(1)}"
                       stroke="var(--c-border)" stroke-width="1.5"/>`;
     }).join('');
 
-    // Labels: Declining (left), 50 (top), Thriving (right)
+    // All three labels share the same y (bottom row), text-anchors keep each inside the SVG
+    const labelY = cy + 28;
     const labels = [
-        [lx - 4,  ly + 14, 'end',    'Declining'],
-        [cx,      cy - R - 12, 'middle', '50'],
-        [rx + 4,  ry + 14, 'start',  'Thriving'],
+        [lx + 2,  labelY, 'start',  'Declining'],
+        [cx,      labelY, 'middle', '50'],
+        [rx - 2,  labelY, 'end',    'Thriving'],
     ].map(([x, y, anchor, text]) =>
-        `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="9.5"
+        `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="12"
             fill="var(--c-text-dim)" text-anchor="${anchor}" font-family="system-ui,sans-serif">${text}</text>`
     ).join('');
 
@@ -8271,7 +8555,7 @@ function renderPressureGauge() {
         </div>
     </div>`;
 
-    body.innerHTML = `<div style="display:flex;align-items:center;gap:28px">${svg}${readout}</div>`;
+    body.innerHTML = `<div style="display:flex;align-items:flex-end;gap:28px">${svg}${readout}</div>`;
 
     // Contextual note when active scenarios ended before the data's final year —
     // in that case the gauge reads the post-scenario decay window, not the active boost.
@@ -9374,7 +9658,7 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
     const hasLegend = series.length > 1;
     const W  = Math.max(container.clientWidth || 680, 320);
     const H  = 380;
-    const M  = { top: 20, right: hasLegend ? 160 : 32, bottom: 44, left: 72 };
+    const M  = { top: 20, right: (hasLegend || !!scenario) ? 160 : 32, bottom: 44, left: 72 };
     const iW = W - M.left - M.right;
     const iH = H - M.top  - M.bottom;
 
@@ -9565,46 +9849,62 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
                 .attr('d', lineGen);
         });
 
-        // Scenario label + with/without key
-        if (scenario) {
-            const sign = scenario.deltaPct >= 0 ? '+' : '';
-            const legY = M.top + series.length * 22 + 28;
-            svg.append('line')
-                .attr('x1', W - M.right + 12).attr('x2', W - M.right + 28)
-                .attr('y1', legY - 5).attr('y2', legY - 5)
-                .attr('stroke', '#fbbf24').attr('stroke-width', 2).attr('stroke-dasharray', '5,3');
-            svg.append('text')
-                .attr('x', W - M.right + 32).attr('y', legY)
-                .attr('fill', '#fbbf24').attr('font-size', '11px').attr('font-weight', '600')
-                .text(scenario.name.length > 14 ? scenario.name.slice(0, 13) + '…' : scenario.name);
-            svg.append('text')
-                .attr('x', W - M.right + 32).attr('y', legY + 13)
-                .attr('fill', 'var(--c-text-dim)').attr('font-size', '10px')
-                .text(`${sign}${scenario.deltaPct.toFixed(1)}%/yr`);
-            // Key: solid=baseline, dashed=scenario, shaded=impact
-            const keyX = W - M.right + 12;
-            [
-                { dy: 34, draw: g => { g.append('line').attr('x1',0).attr('x2',16).attr('y1',4).attr('y2',4).attr('stroke','var(--c-text-dim)').attr('stroke-width',1.5); }, label: 'baseline' },
-                { dy: 48, draw: g => { g.append('line').attr('x1',0).attr('x2',16).attr('y1',4).attr('y2',4).attr('stroke','#fbbf24').attr('stroke-width',1.5).attr('stroke-dasharray','4,3'); }, label: 'scenario' },
-                { dy: 62, draw: g => { g.append('rect').attr('x',0).attr('y',0).attr('width',14).attr('height',8).attr('fill','#22c55e').attr('opacity',0.25).attr('rx',2); }, label: 'impact' },
-            ].forEach(({ dy, draw, label }) => {
-                const kg = svg.append('g').attr('transform', `translate(${keyX},${legY + dy})`);
-                draw(kg);
-                kg.append('text').attr('x', 20).attr('y', 8).attr('fill', 'var(--c-text-dim)').attr('font-size', '10px').text(label);
-            });
-        }
     }
 
-    // Legend — colour dot + name
-    if (hasLegend) {
-        const leg = svg.append('g').attr('transform', `translate(${W - M.right + 16},${M.top + 4})`);
-        series.forEach((s, i) => {
-            const row = leg.append('g').attr('transform', `translate(0,${i * 22})`);
-            row.append('circle').attr('cx', 6).attr('cy', 6).attr('r', 5).attr('fill', clr(i));
-            row.append('text').attr('x', 16).attr('y', 10)
-                .attr('fill', 'var(--c-text)').attr('font-size', '12px').attr('font-weight', '500')
-                .text(s.name.length > 15 ? s.name.slice(0, 14) + '…' : s.name);
-        });
+    // Unified right-side legend: country dots + scenario label + key
+    if (hasLegend || scenario) {
+        const legG = svg.append('g').attr('transform', `translate(${W - M.right + 10},${M.top + 4})`);
+
+        // Country colour dots
+        if (hasLegend) {
+            series.forEach((s, i) => {
+                const row = legG.append('g').attr('transform', `translate(0,${i * 22})`);
+                row.append('circle').attr('cx', 6).attr('cy', 6).attr('r', 5).attr('fill', clr(i));
+                row.append('text').attr('x', 16).attr('y', 10)
+                    .attr('fill', 'var(--c-text)').attr('font-size', '12px').attr('font-weight', '500')
+                    .attr('text-anchor', 'start')
+                    .text(s.name.length > 15 ? s.name.slice(0, 14) + '…' : s.name);
+            });
+        }
+
+        // Scenario name + delta + key swatches
+        if (scenario) {
+            const sign  = scenario.deltaPct >= 0 ? '+' : '';
+            const scenY = hasLegend ? series.length * 22 + 12 : 0;
+
+            // Yellow dashed swatch
+            legG.append('line')
+                .attr('x1', 0).attr('x2', 16).attr('y1', scenY + 8).attr('y2', scenY + 8)
+                .attr('stroke', '#fbbf24').attr('stroke-width', 2).attr('stroke-dasharray', '5,3');
+
+            // Scenario name
+            legG.append('text')
+                .attr('x', 20).attr('y', scenY + 12)
+                .attr('fill', '#fbbf24').attr('font-size', '13px').attr('font-weight', '600')
+                .attr('text-anchor', 'start')
+                .text(scenario.name.length > 17 ? scenario.name.slice(0, 16) + '…' : scenario.name);
+
+            // Delta %/yr
+            legG.append('text')
+                .attr('x', 20).attr('y', scenY + 27)
+                .attr('fill', 'var(--c-text-dim)').attr('font-size', '11px')
+                .attr('text-anchor', 'start')
+                .text(`${sign}${scenario.deltaPct.toFixed(1)}%/yr`);
+
+            // Key: solid=baseline, dashed=scenario, shaded=impact
+            const impactClr = scenario.deltaPct >= 0 ? '#34d399' : '#f87171';
+            [
+                { dy: 42, draw: kg => { kg.append('line').attr('x1',0).attr('x2',16).attr('y1',5).attr('y2',5).attr('stroke','var(--c-text-dim)').attr('stroke-width',1.5); }, label: 'baseline' },
+                { dy: 58, draw: kg => { kg.append('line').attr('x1',0).attr('x2',16).attr('y1',5).attr('y2',5).attr('stroke','#fbbf24').attr('stroke-width',1.5).attr('stroke-dasharray','4,3'); }, label: 'scenario' },
+                { dy: 74, draw: kg => { kg.append('rect').attr('x',0).attr('y',1).attr('width',14).attr('height',8).attr('fill',impactClr).attr('opacity',0.25).attr('rx',2); }, label: 'impact' },
+            ].forEach(({ dy, draw, label }) => {
+                const kg = legG.append('g').attr('transform', `translate(0,${scenY + dy})`);
+                draw(kg);
+                kg.append('text').attr('x', 20).attr('y', 9)
+                    .attr('fill', 'var(--c-text-dim)').attr('font-size', '11px')
+                    .attr('text-anchor', 'start').text(label);
+            });
+        }
     }
 
     // Tooltip (shows both baseline and scenario values)
@@ -9617,6 +9917,8 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
     svgEl.addEventListener('mousemove', evt => {
         const rect = svgEl.getBoundingClientRect();
         const px   = (evt.clientX - rect.left) * (W / rect.width) - M.left;
+        const py   = (evt.clientY - rect.top)  * (H / rect.height) - M.top;
+        if (px < 0 || px > iW || py < 0 || py > iH) { tip.style.display = 'none'; return; }
         const xVal = xScale.invert(px);
         const lines = series.map((s, i) => {
             let best = s.points[0], bestD = Infinity;

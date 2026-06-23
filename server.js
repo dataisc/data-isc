@@ -13,7 +13,13 @@ const policies  = require('./models/gdp-trajectories/data/scenarios_policy.json'
 const app = express();
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders(res, filePath) {
+        if (filePath.endsWith('.html')) {
+            res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+    },
+}));
 app.use('/samples', express.static(path.join(__dirname, 'samples')));
 
 // ── Pre-cache the timeline so it's computed once ────────────────────
