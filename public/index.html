@@ -7861,11 +7861,42 @@ const DATASET_PRESETS = {
           description:'A sustained collapse in fossil fuel prices combined with new subsidies slows renewable investment as cheap gas undercuts wind and solar economics.',
           disperse:{ stat:'momentum', dir:-1, spread:1.5 } },
     ],
+    co2_world: [
+        { id:'cw-netzero', icon:'🌍', name:'Net Zero Accelerator',
+          headline:'−3.5%/yr', deltaPct:-3.5, fromFrac:0.5, toFrac:1.0,
+          description:'Binding international carbon targets drive rapid decarbonisation. Qatar, UAE, Australia, and Canada — the highest per-capita emitters — face the steepest falls.',
+          disperse:{ stat:'size', dir:-1, spread:2.5 } },
+        { id:'cw-h2', icon:'⚗️', name:'Green Hydrogen Scaling',
+          headline:'−1.8%/yr', deltaPct:-1.8, fromFrac:0.6, toFrac:1.0,
+          description:'Cheap green hydrogen displaces coal and gas in heavy industry and shipping. Industrial economies (South Korea, Germany, Poland) benefit most.',
+          disperse:{ stat:'momentum', dir:-1, spread:1.5 } },
+        { id:'cw-fossil-rebound', icon:'🛢️', name:'Fossil Fuel Rebound',
+          headline:'+2%/yr', deltaPct:2.0, fromFrac:0.4, toFrac:0.75,
+          description:'Geopolitical energy security concerns prompt governments to expand fossil fuel production, reversing efficiency gains from the prior decade.',
+          disperse:{ stat:'volatility', dir:+1, spread:1.8 } },
+    ],
+    co2_vs_life: [
+        { id:'cl-policy', icon:'🌿', name:'Aggressive Climate Policy',
+          headline:'−30% CO₂', deltaPct:-30, fromFrac:0, toFrac:1,
+          description:'If all countries enacted binding 2030 climate targets, per-capita CO₂ would fall sharply — especially for Gulf states and Australia. Scatter dots shift left along the X axis.',
+          disperse:{ stat:'size', dir:-1, spread:15 } },
+        { id:'cl-fossil', icon:'🛢️', name:'Fossil Dependency Surge',
+          headline:'+25% CO₂', deltaPct:25, fromFrac:0, toFrac:1,
+          description:'Energy demand growth without clean alternatives pushes per-capita emissions higher across both developed and emerging economies. High-emitters drift further right.',
+          disperse:{ stat:'size', dir:+1, spread:12 } },
+        { id:'cl-nordic', icon:'🧊', name:'Nordic Green Model Globally',
+          headline:'−20% CO₂', deltaPct:-20, fromFrac:0, toFrac:1,
+          description:'Top emitters adopt Scandinavian-style carbon taxes, clean energy mandates, and efficiency standards. High-emission countries converge toward 5–8 t per capita.',
+          disperse:{ stat:'size', dir:-1, spread:8 } },
+    ],
 };
 
 // Detect which demo dataset type is active (returns null for user-uploaded data)
 function _getDatasetType(ds) {
     const n = (ds?.name || '').toLowerCase();
+    // More specific patterns first — prevent "co2 vs life" from matching co2_emissions or life_expectancy
+    if (n.includes('co2_vs_life') || n.includes('co₂ vs life') || n.includes('co2 vs life')) return 'co2_vs_life';
+    if (n.includes('co2_per_capita_world') || n.includes('co₂ per capita') || n.includes('co2 per capita')) return 'co2_world';
     if (n.includes('life expectancy') || n.includes('life_expectancy')) return 'life_expectancy';
     if (n.includes('co2') || n.includes('co₂') || n.includes('emission')) return 'co2_emissions';
     if (n.includes('renewable') || n.includes('energy share') || n.includes('energy_share')) return 'renewable_energy_share';
@@ -8121,7 +8152,17 @@ function _renderImportWhatifSection(ds) {
 function _applyScenarioToData(data, schema, scenario) {
     const { time, value } = schema.keys;
     const groupKey = schema.keys.category || schema.keys.geo;
-    if (!time || !value) return data;
+    if (!value) return data;
+
+    // Non-temporal dataset: apply deltaPct as a flat percentage shift on the value column
+    if (!time) {
+        const mult = 1 + (scenario.deltaPct ?? 0) / 100;
+        return data.map(row => {
+            const v = parseFloat(String(row[value]).replace(/[,$%]/g, ''));
+            if (isNaN(v)) return row;
+            return { ...row, [value]: +(v * mult).toFixed(4) };
+        });
+    }
 
     // Priority 1 — AI per-entity impacts
     const aiMap = {};
