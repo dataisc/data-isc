@@ -72,6 +72,12 @@ Scenario JSON files are self-contained. To add one to the repository:
 
 ---
 
+## Response time
+
+Issues and PRs are reviewed by a solo maintainer. Expect a first response within **10 days** — usually sooner. If you haven't heard back after two weeks, a polite comment bump on the issue or PR is welcome.
+
+---
+
 ## Questions?
 
 Open a [discussion](https://github.com/dataisc/data-isc/discussions) — we're happy to help.
