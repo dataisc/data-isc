@@ -85,7 +85,7 @@
   <table class="data-table" style="width:100%">
     <thead><tr><th>Priority</th><th>Source</th><th>When active</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td><strong>AI per-entity impacts</strong></td><td>AI provider connected and analysis has run</td></tr>
+      <tr><td>1</td><td><strong>AI per-entity impacts</strong></td><td>AI provider connected; impacts reviewed and confirmed in the review modal</td></tr>
       <tr><td>2</td><td><strong>Per-entity overrides</strong></td><td>Entity is checked in the Per-Entity tab with its own δ%/yr</td></tr>
       <tr><td>3</td><td><strong>Phase rate</strong></td><td>Current year falls inside a defined phase window</td></tr>
       <tr><td>4</td><td><strong>Global default δ</strong></td><td>Fallback for all in-scope entities</td></tr>
@@ -100,6 +100,17 @@
     <li><strong>Phases</strong> — time-segmented rates (e.g. aggressive growth 2010–2015, then slowdown 2015–2020)</li>
     <li><strong>↑ JSON</strong> — upload or paste a scenario JSON file; download a pre-filled template with your dataset's entity names</li>
   </ul>
+
+  <h2>AI scenario generation (imported datasets)</h2>
+  <p>When an AI provider is connected, the <strong>Describe a scenario with AI</strong> panel appears above the scenario cards. Click <strong>Generate &amp; review</strong> and describe the scenario in plain language. The AI returns per-entity impact estimates; a review modal opens before anything is applied:</p>
+  <ul>
+    <li>Every affected entity is listed with its AI-generated <code>Δ%/yr</code>, year window (<code>From</code> / <code>To</code>), and a one-line rationale</li>
+    <li>All values are editable inline — adjust any entity's rate or time window</li>
+    <li>Uncheck a row to exclude that entity from the scenario entirely</li>
+    <li>Rename the scenario before confirming</li>
+    <li>Click <strong>Create scenario →</strong> to confirm; click <strong>Discard</strong> to cancel without creating anything</li>
+  </ul>
+  <p>Once created, the scenario card's Per-Entity tab is pre-populated with the reviewed values and can be edited further at any time using the ✎ edit button on the scenario pill.</p>
 
   <h2>Custom scenario JSON format</h2>
   <p>Scenarios can be written as standalone JSON files and shared or version-controlled independently of the application. Download a template from the ↑ JSON tab — it will be pre-filled with your dataset's entity names.</p>
