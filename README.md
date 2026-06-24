@@ -98,26 +98,6 @@ node server.js
 
 Requires **Node.js ≥ 18**. No database, no external services, no API key required to get started.
 
----
-
-## Deploy your own instance
-
-Spin up your own live copy in under a minute — no local clone, no `npm install`.
-
-**Full app (live server)** — runs `server.js`, so scenarios compute live at any start year (2026–2080) and the FX / CSV-import proxies work. Model logic stays server-side.
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dataisc/data-isc)
-
-**Static demo (instant, free, no server)** — publishes the `public/` site with the model's pre-rendered API output. Scenarios are shown at preset start years; live FX and CSV-from-URL import are disabled. Same build the [GitHub Pages demo](https://dataisc.github.io/data-isc/) uses.
-
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/dataisc/data-isc)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/dataisc/data-isc)
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/dataisc/data-isc)
-
-The static hosts read their config from [`netlify.toml`](netlify.toml) / [`vercel.json`](vercel.json) (build command `node scripts/build-static.js`, publish `public/`). For Cloudflare Pages, set the build command to `node scripts/build-static.js` and the output directory to `public`.
-
----
-
 ## Sample datasets
 
 The `samples/` folder contains ready-to-upload datasets to try the import flow immediately:
@@ -426,7 +406,6 @@ Commercial licensing: [license@dataisc.dev](mailto:license@dataisc.dev)
 - **Choropleth map requires ISO 3166-1 country codes.** The map view only renders for country-level datasets. Non-country data falls back to the chart, race, and table views automatically.
 - **MCP server generic tool accepts local file paths only** — `run_generic_scenario` reads CSV files from the local filesystem where the server runs. It does not accept remote URLs or datasets that exist only in the browser session.
 - **Web component has no `country` attribute.** The `<economic-sandbox-widget>` supports `scenario`, `start`, `view`, and `year` but not per-country selection.
-- **Docker image is not yet published.** The `ghcr.io/dataisc/data-isc` reference in the quick-start is a placeholder; no GHCR publish workflow exists yet. Use `npm start` locally or the one-click deploy buttons.
 - **GDP figures are nominal USD only.** No PPP conversion or inflation deflator is applied. Long-run values (especially post-2060) are trend extrapolations — not predictions — and should be read as "consistent with calibrated assumptions", not forecasts.
 
 ---
