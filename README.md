@@ -206,16 +206,21 @@ Built-in scenario analysis works without any API key. Connect your own AI provid
 
 Click the **AI** button in the top-right corner. Your key is stored only in your browser — never sent to this server.
 
-Once connected, AI unlocks two things:
+Once connected, AI unlocks two things.
 
-- **Import datasets** — a structured, validated pipeline:
-  1. **Prompt** — describe the scenario in plain language (e.g. *"a supply chain disruption cuts growth 3%/yr for 2 years"*)
-  2. **AI maps to schema** — the prompt includes your dataset's variable names, units, observed ranges, allowed ranges, time granularity, and cross-variable dependencies; AI returns a structured JSON object with a scenario name, mechanism summary, and per-entity impacts
-  3. **Validator checks** — variable existence is verified and normalized; entity names are matched case-insensitively; year windows are clamped to dataset bounds; `Δ%/yr` is bounded by unit type (±20% for percentage columns, ±50 otherwise); ceiling projections are flagged; conflicts on the same entity are detected; all fixes and warnings are shown in a report
-  4. **Review modal** — shows the AI mechanism summary, a validator report (auto-fixes and warnings), and a structured diff table: **Baseline → Δ%/yr → Projected** per entity, with confidence chip (high/medium/low), editable year window, and AI rationale; uncheck any row to exclude it
-  5. **Create scenario** — click to confirm; nothing is applied until then; the reviewed diffs populate the card's Per-Entity tab and feed the simulation engine
+### Imported datasets — AI pipeline
 
-- **GDP demo** — describe any shock or policy in plain language; AI generates the full scenario parameters (`annual_growth_impact`, `duration_years`, `affected_countries`, recovery curve), shows a preview card with rationale, and applies it when you click **Apply**.
+![AI scenario pipeline for imported datasets — six stages: upload, describe, AI maps to schema, validator checks, review modal, simulation runs](docs/ai-import-flow.svg)
+
+1. **Prompt** — describe the scenario in plain language (e.g. *"a supply chain disruption cuts growth 3%/yr for 2 years"*)
+2. **AI maps to schema** — the prompt includes your dataset's variable names, units, observed ranges, allowed ranges, time granularity, and cross-variable dependencies; AI returns a structured JSON object with a scenario name, mechanism summary, and per-entity impacts
+3. **Validator checks** — variable existence is verified and normalized; entity names are matched case-insensitively; year windows are clamped to dataset bounds; `Δ%/yr` is bounded by unit type (±20% for percentage columns, ±50 otherwise); ceiling projections are flagged; conflicts on the same entity are detected; all fixes and warnings are shown in a report
+4. **Review modal** — shows the AI mechanism summary, a validator report (auto-fixes and warnings), and a structured diff table: **Baseline → Δ%/yr → Projected** per entity, with confidence chip (high/medium/low), editable year window, and AI rationale; uncheck any row to exclude it
+5. **Create scenario** — click to confirm; nothing is applied until then; the reviewed diffs populate the card's Per-Entity tab and feed the simulation engine
+
+### GDP demo
+
+Describe any shock or policy in plain language; AI generates the full scenario parameters (`annual_growth_impact`, `duration_years`, `affected_countries`, recovery curve), shows a preview card with rationale, and applies it when you click **Apply**.
 
 ---
 
