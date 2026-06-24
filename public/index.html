@@ -1146,8 +1146,8 @@
                         <textarea id="importAIGenInput" rows="2" placeholder="e.g. A supply chain disruption cuts growth 3%/yr for 2 years across all entities…"
                             style="width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-surface);color:var(--c-text);font-size:0.8rem;resize:vertical;font-family:inherit"></textarea>
                         <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
-                            <button onclick="runImportScenarioAI()" class="btn-blue-pill"
-                                style="border-radius:6px;padding:4px 12px;font-size:0.8rem;cursor:pointer;font-weight:600">Generate &amp; add</button>
+                            <button id="importAIGenRunBtn" onclick="runImportScenarioAI()" class="btn-blue-pill"
+                                style="border-radius:6px;padding:4px 12px;font-size:0.8rem;cursor:pointer;font-weight:600">Generate &amp; review</button>
                             <span id="importAIGenStatus" style="font-size:0.76rem;color:var(--c-text-dim)"></span>
                         </div>
                     </div>
@@ -6000,31 +6000,165 @@ async function runImportScenarioAI() {
     if (!ds) return;
     const input  = document.getElementById('importAIGenInput');
     const status = document.getElementById('importAIGenStatus');
+    const runBtn = document.getElementById('importAIGenRunBtn');
     const desc   = input?.value?.trim();
     if (!desc) { status.textContent = 'Please enter a description.'; return; }
     if (_importScenarioCards.filter(Boolean).length >= 5) {
         status.textContent = 'Maximum 5 scenarios reached.'; return;
     }
 
-    status.textContent = '🤖 Generating…';
-    // Create a new blank card first so the user sees immediate feedback
-    addImportScenario();
-    const idx = _importScenarioCards.length - 1;
+    status.textContent = '🤖 Analysing…';
+    if (runBtn) runBtn.disabled = true;
 
-    // Fill in the name from the description
-    const nameEl = document.getElementById(`sc-name-${idx}`);
-    if (nameEl) nameEl.value = desc.slice(0, 50);
-    _importScenarioCards[idx].name = desc.slice(0, 50);
+    try {
+        const prompt = _buildScenarioPrompt(desc, ds);
+        const raw    = await callAI(prompt, { maxTokens: 800 });
+        const match  = raw.match(/\[[\s\S]*\]/);
+        if (!match) throw new Error('No JSON array in response');
+        const impacts = JSON.parse(match[0]);
+        if (!Array.isArray(impacts) || impacts.length === 0) throw new Error('Empty result');
 
-    // Run AI analysis on the new card
-    const impacts = await analyzeScenarioWithAI(desc, idx);
-    if (impacts) {
-        status.textContent = `Done — ${impacts.length} entities affected.`;
-        input.value = '';
-        setTimeout(() => { status.textContent = ''; }, 3000);
-    } else {
-        status.textContent = 'AI analysis ran but returned no impacts — refine your description.';
+        const { valid, warnings } = _validateAndFixAIImpacts(impacts, ds);
+        if (warnings.length) console.warn('[AI scenario] warnings:', warnings);
+        if (valid.length === 0) throw new Error('No impacts matched dataset entities — try rephrasing');
+
+        status.textContent = '';
+        _openAIPreviewModal(valid, desc);
+    } catch (e) {
+        status.textContent = `⚠ ${e.message}`;
+    } finally {
+        if (runBtn) runBtn.disabled = false;
     }
+}
+
+function _openAIPreviewModal(impacts, description) {
+    _aiScenarioPreview  = { impacts, description };
+    _aiScenarioModalIdx = null;
+
+    const pos = impacts.filter(i => i.deltaPct > 0).length;
+    const neg = impacts.filter(i => i.deltaPct < 0).length;
+
+    const rows = impacts.map((imp, i) => {
+        const col   = imp.deltaPct >= 0 ? '#86efac' : '#fca5a5';
+        const rowBg = i % 2 === 0 ? 'var(--c-bg-deep,#0d1117)' : '#0a1525';
+        const rat   = (imp.rationale || '—').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const INP   = `background:var(--c-surface);border:1px solid var(--c-border);border-radius:4px;color:var(--c-text);padding:3px 5px;font-size:0.82rem;text-align:center`;
+        return `
+        <div style="padding:6px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);display:flex;align-items:center;justify-content:center">
+            <input type="checkbox" class="ai-preview-check" data-imp="${i}" checked style="accent-color:#38bdf8;cursor:pointer;width:14px;height:14px"></div>
+        <div style="padding:7px 12px;font-size:0.875rem;color:var(--c-text);background:${rowBg};border-bottom:1px solid var(--c-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${imp.entity.replace(/</g,'&lt;')}</div>
+        <div style="padding:7px 12px;font-size:0.78rem;color:#7dd3fc;background:${rowBg};border-bottom:1px solid var(--c-bg);font-style:italic;line-height:1.4">${rat}</div>
+        <div style="padding:4px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">
+            <input type="number" class="ai-preview-field" data-imp="${i}" data-field="yearFrom" value="${imp.yearFrom}" style="${INP};width:62px"></div>
+        <div style="padding:4px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">
+            <input type="number" class="ai-preview-field" data-imp="${i}" data-field="yearTo"   value="${imp.yearTo}"   style="${INP};width:62px"></div>
+        <div style="padding:4px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">
+            <input type="number" step="0.1" class="ai-preview-field" data-imp="${i}" data-field="deltaPct" value="${imp.deltaPct.toFixed(1)}" style="${INP};width:68px;color:${col};font-weight:600"></div>`;
+    }).join('');
+
+    const HDR = `padding:7px 12px;font-size:0.74rem;font-weight:700;color:var(--c-text-dim);background:var(--c-surface);border-bottom:1px solid var(--c-border);position:sticky;top:0;z-index:1`;
+
+    document.getElementById('aiScenarioModalTitle').textContent = 'Review AI scenario — edit before creating';
+    document.getElementById('aiScenarioModalBody').innerHTML = `
+        <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:14px 16px">
+            <label style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c-text-dim);display:block;margin-bottom:6px">Scenario name</label>
+            <input type="text" id="aiPreviewName" value="${description.slice(0,60).replace(/"/g,'&quot;')}"
+                style="width:100%;background:var(--c-bg);border:1px solid var(--c-border);border-radius:6px;color:var(--c-text);padding:8px 10px;font-size:0.875rem;box-sizing:border-box">
+            <p style="margin:8px 0 0;font-size:0.8rem;color:#6b7f99">
+                ${impacts.length} entities · <span style="color:#86efac">${pos} positive</span> · <span style="color:#fca5a5">${neg} negative</span> · uncheck rows to exclude from the scenario
+            </p>
+        </div>
+        <div>
+            <p style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c-text-dim);margin:0 0 10px">
+                Per-entity impacts <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#6b7f99"> — all values editable</span>
+            </p>
+            <div style="display:grid;grid-template-columns:28px 1fr 2fr 70px 70px 80px;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;max-height:340px;overflow-y:auto">
+                <div style="${HDR}"></div>
+                <div style="${HDR}">Entity</div>
+                <div style="${HDR}">AI rationale</div>
+                <div style="${HDR};text-align:center">From</div>
+                <div style="${HDR};text-align:center">To</div>
+                <div style="${HDR};text-align:center">Δ %/yr</div>
+                ${rows}
+            </div>
+        </div>`;
+
+    const note   = document.getElementById('aiScModalNote');
+    const cancel = document.getElementById('aiScModalCancel');
+    const save   = document.getElementById('aiScModalSave');
+    if (note)   note.textContent  = 'Review and adjust — nothing is created until you click "Create scenario".';
+    if (cancel) { cancel.textContent = 'Discard';           cancel.onclick = closeAIScenarioModal; }
+    if (save)   { save.textContent   = 'Create scenario →'; save.onclick   = _applyAIPreview; }
+
+    document.getElementById('aiScenarioModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function _applyAIPreview() {
+    if (!_aiScenarioPreview) { closeAIScenarioModal(); return; }
+    if (_importScenarioCards.filter(Boolean).length >= 5) {
+        showToast('Maximum 5 scenarios reached'); return;
+    }
+
+    const name = (document.getElementById('aiPreviewName')?.value.trim() || _aiScenarioPreview.description).slice(0, 60);
+
+    // Read edited field values back into the impacts array
+    document.querySelectorAll('.ai-preview-field').forEach(input => {
+        const imp = _aiScenarioPreview.impacts[+input.dataset.imp];
+        const val = parseFloat(input.value);
+        if (imp && isFinite(val)) imp[input.dataset.field] = val;
+    });
+
+    // Filter to checked rows only
+    const checked = new Set();
+    document.querySelectorAll('.ai-preview-check').forEach(cb => { if (cb.checked) checked.add(+cb.dataset.imp); });
+    const finalImpacts = _aiScenarioPreview.impacts.filter((_, i) => checked.has(i));
+    if (finalImpacts.length === 0) { showToast('Select at least one entity'); return; }
+
+    // Create the card
+    addImportScenario();
+    const idx  = _importScenarioCards.length - 1;
+    const card = _importScenarioCards[idx];
+    if (card) { card.name = name; card.description = _aiScenarioPreview.description; card.aiImpacts = finalImpacts; }
+
+    // Populate Basic tab fields
+    const nameEl = document.getElementById(`sc-name-${idx}`);
+    if (nameEl) nameEl.value = name;
+    const descEl = document.getElementById(`sc-desc-${idx}`);
+    if (descEl) descEl.value = _aiScenarioPreview.description;
+    const avg = finalImpacts.reduce((s, i) => s + Math.abs(i.deltaPct), 0) / finalImpacts.length;
+    const deltaEl = document.getElementById(`sc-delta-${idx}`);
+    if (deltaEl) deltaEl.value = avg.toFixed(1);
+
+    // Populate Per-Entity tab: check entities and fill individual δ values
+    const entList = document.getElementById(`sc-ent-list-${idx}`);
+    if (entList) {
+        const impMap = new Map(finalImpacts.map(imp => [String(imp.entity).toLowerCase(), imp]));
+        entList.querySelectorAll('.sc-ent-row').forEach(row => {
+            const imp = impMap.get(String(row.dataset.entity).toLowerCase());
+            if (!imp) return;
+            const cb      = row.querySelector('.sc-ent-check');
+            const deltaIn = row.querySelector('.sc-ent-delta');
+            if (cb)      cb.checked    = true;
+            if (deltaIn) deltaIn.value = imp.deltaPct.toFixed(1);
+        });
+    }
+
+    // Update AI badge on the card
+    const badge = document.getElementById(`sc-analysis-${idx}`);
+    if (badge) {
+        const pos    = finalImpacts.filter(i => i.deltaPct > 0).length;
+        const neg    = finalImpacts.filter(i => i.deltaPct < 0).length;
+        const maxImp = finalImpacts.reduce((a, b) => Math.abs(b.deltaPct) > Math.abs(a.deltaPct) ? b : a, finalImpacts[0]);
+        const sign   = maxImp.deltaPct > 0 ? '+' : '';
+        badge.innerHTML = `<span style="display:inline-block;padding:4px 9px;border-radius:6px;background:var(--c-surface);border:1px solid var(--c-border);color:#93c5fd;font-size:0.82rem">
+            🤖 AI · ${finalImpacts.length} entities · <span style="color:#86efac">${pos}↑</span> <span style="color:#fca5a5">${neg}↓</span> · peak: <b>${maxImp.entity}</b> ${sign}${maxImp.deltaPct.toFixed(1)}%/yr
+        </span>`;
+    }
+
+    closeAIScenarioModal();
+    showToast(`Scenario "${name}" created`);
+    switchScTab(idx, 'entities');
 }
 
 /**
@@ -10505,7 +10639,8 @@ function sortImportTable(col) {
 
 // ── AI Scenario Detail / Override Modal ─────────────────────────────────────
 
-let _aiScenarioModalIdx = null;
+let _aiScenarioModalIdx  = null;
+let _aiScenarioPreview   = null;
 
 function openAIScenarioModal(idx) {
     const ds = _activeImportDS;
@@ -10588,6 +10723,15 @@ function closeAIScenarioModal() {
     document.getElementById('aiScenarioModal').classList.add('hidden');
     document.body.style.overflow = '';
     _aiScenarioModalIdx = null;
+    if (_aiScenarioPreview) {
+        _aiScenarioPreview = null;
+        const note   = document.getElementById('aiScModalNote');
+        const cancel = document.getElementById('aiScModalCancel');
+        const save   = document.getElementById('aiScModalSave');
+        if (note)   note.textContent  = 'Changes apply immediately when you close this panel.';
+        if (cancel) { cancel.textContent = 'Close';          cancel.onclick = closeAIScenarioModal; }
+        if (save)   { save.textContent   = 'Apply overrides'; save.onclick   = saveAIScenarioOverrides; }
+    }
 }
 
 function saveAIScenarioOverrides() {
@@ -10729,9 +10873,9 @@ document.addEventListener('keydown', e => {
             <p style="color:var(--c-text-dim);font-size:0.875rem;margin:0">Loading…</p>
         </div>
         <div class="ai-modal-footer">
-            <span style="font-size:0.8rem;color:#6b7f99;flex:1">Changes apply immediately when you close this panel.</span>
-            <button class="ai-btn-cancel" onclick="closeAIScenarioModal()">Close</button>
-            <button class="ai-btn-save" onclick="saveAIScenarioOverrides()">Apply overrides</button>
+            <span id="aiScModalNote" style="font-size:0.8rem;color:#6b7f99;flex:1">Changes apply immediately when you close this panel.</span>
+            <button id="aiScModalCancel" class="ai-btn-cancel" onclick="closeAIScenarioModal()">Close</button>
+            <button id="aiScModalSave" class="ai-btn-save" onclick="saveAIScenarioOverrides()">Apply overrides</button>
         </div>
     </div>
 </div>
