@@ -218,9 +218,9 @@ Once connected, AI unlocks two things.
 4. **Review modal** — shows the AI mechanism summary, a validator report (auto-fixes and warnings), and a structured diff table: **Baseline → Δ%/yr → Projected** per entity, with confidence chip (high/medium/low), editable year window, and AI rationale; uncheck any row to exclude it
 5. **Create scenario** — click to confirm; nothing is applied until then; the reviewed diffs populate the card's Per-Entity tab and feed the simulation engine
 
-### GDP demo
+### Built-in GDP demo
 
-Describe any economic shock or policy in plain language (e.g. *"a global carbon tax starting in 2030"*). AI translates it into scenario parameters — affected countries, severity, duration, and recovery shape — shows a preview card with a plain-language rationale, and applies it when you click **Apply**. No JSON editing required.
+The built-in GDP demo has a lighter, self-contained AI flow: describe an economic shock in plain language (e.g. *"a global carbon tax starting in 2030"*), and AI generates the scenario parameters calibrated to the GDP model — affected countries, severity, duration, and recovery shape — then shows a preview card with a rationale. Click **Apply** to add it instantly. This flow is specific to the built-in demo; the full structured pipeline above is what runs for any dataset you upload.
 
 ---
 
