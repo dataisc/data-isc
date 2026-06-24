@@ -220,7 +220,7 @@ Once connected, AI unlocks two things.
 
 ### GDP demo
 
-Describe any shock or policy in plain language; AI generates the full scenario parameters (`annual_growth_impact`, `duration_years`, `affected_countries`, recovery curve), shows a preview card with rationale, and applies it when you click **Apply**.
+Describe any economic shock or policy in plain language (e.g. *"a global carbon tax starting in 2030"*). AI translates it into scenario parameters — affected countries, severity, duration, and recovery shape — shows a preview card with a plain-language rationale, and applies it when you click **Apply**. No JSON editing required.
 
 ---
 
