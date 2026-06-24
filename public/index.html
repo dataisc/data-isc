@@ -6012,18 +6012,31 @@ async function runImportScenarioAI() {
 
     try {
         const prompt = _buildScenarioPrompt(desc, ds);
-        const raw    = await callAI(prompt, { maxTokens: 800 });
-        const match  = raw.match(/\[[\s\S]*\]/);
-        if (!match) throw new Error('No JSON array in response');
-        const impacts = JSON.parse(match[0]);
-        if (!Array.isArray(impacts) || impacts.length === 0) throw new Error('Empty result');
+        const raw    = await callAI(prompt, { maxTokens: 1000 });
 
-        const { valid, warnings } = _validateAndFixAIImpacts(impacts, ds);
-        if (warnings.length) console.warn('[AI scenario] warnings:', warnings);
-        if (valid.length === 0) throw new Error('No impacts matched dataset entities — try rephrasing');
+        // Parse structured object; fall back gracefully to legacy bare array
+        const objMatch = raw.match(/\{[\s\S]*\}/);
+        const arrMatch = raw.match(/\[[\s\S]*\]/);
+        if (!objMatch && !arrMatch) throw new Error('No JSON in AI response');
+        let parsed;
+        if (objMatch) {
+            parsed = JSON.parse(objMatch[0]);
+            if (!parsed.impacts) parsed = { scenario_name: 'AI Scenario', overall_rationale: '', impacts: Array.isArray(parsed) ? parsed : [] };
+        } else {
+            const arr = JSON.parse(arrMatch[0]);
+            parsed = { scenario_name: 'AI Scenario', overall_rationale: '', impacts: arr };
+        }
+        if (!Array.isArray(parsed.impacts) || parsed.impacts.length === 0) throw new Error('AI returned no impacts — try rephrasing');
+
+        const { scenario, impacts, report } = _validateAIScenario(parsed, ds);
+        if (report.errors.length) throw new Error(report.errors[0]);
+        if (impacts.length === 0) throw new Error('No valid impacts after validation — try rephrasing');
+
+        const baselines = _entityBaselines(ds);
+        const valueKey  = ds.schema.keys.value || ds.schema.keys.valueKeys?.[0] || 'value';
 
         status.textContent = '';
-        _openAIPreviewModal(valid, desc);
+        _openAIPreviewModal(impacts, desc, scenario, report, baselines, valueKey);
     } catch (e) {
         status.textContent = `⚠ ${e.message}`;
     } finally {
@@ -6031,54 +6044,100 @@ async function runImportScenarioAI() {
     }
 }
 
-function _openAIPreviewModal(impacts, description) {
-    _aiScenarioPreview  = { impacts, description };
+function _openAIPreviewModal(impacts, description, scenario, report, baselines, valueKey) {
+    _aiScenarioPreview  = { impacts, description, scenario, valueKey };
     _aiScenarioModalIdx = null;
 
-    const pos = impacts.filter(i => i.deltaPct > 0).length;
-    const neg = impacts.filter(i => i.deltaPct < 0).length;
+    const pos  = impacts.filter(i => i.deltaPct > 0).length;
+    const neg  = impacts.filter(i => i.deltaPct < 0).length;
+    const scName = (scenario?.name || description).slice(0, 60);
+
+    // ── Validation report banner ──
+    const allNotes = [...(report?.fixes || []), ...(report?.warnings || [])];
+    const validationBanner = allNotes.length ? `
+        <div style="background:color-mix(in srgb,#f59e0b 10%,var(--c-surface));border:1px solid #92400e;border-radius:8px;padding:10px 14px">
+            <div style="font-size:0.74rem;font-weight:700;color:#fbbf24;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">
+                ⚠ Validator report — ${report.fixes.length} auto-fix${report.fixes.length!==1?'es':''}, ${report.warnings.length} warning${report.warnings.length!==1?'s':''}
+            </div>
+            ${allNotes.map(n => `<div style="font-size:0.78rem;color:#fde68a;line-height:1.5">· ${n.replace(/</g,'&lt;')}</div>`).join('')}
+        </div>` : '';
+
+    // ── Overall rationale from AI ──
+    const rationaleBlock = scenario?.rationale ? `
+        <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:10px 14px">
+            <div style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--c-text-dim);margin-bottom:4px">AI mechanism summary</div>
+            <p style="margin:0;font-size:0.82rem;color:#7dd3fc;font-style:italic;line-height:1.5">${scenario.rationale.replace(/</g,'&lt;')}</p>
+        </div>` : '';
+
+    // ── Per-entity rows ──
+    const INP = `background:var(--c-surface);border:1px solid var(--c-border);border-radius:4px;color:var(--c-text);padding:3px 5px;font-size:0.82rem;text-align:center`;
+    const HDR = `padding:7px 10px;font-size:0.72rem;font-weight:700;color:var(--c-text-dim);background:var(--c-surface);border-bottom:1px solid var(--c-border);position:sticky;top:0;z-index:1`;
 
     const rows = impacts.map((imp, i) => {
-        const col   = imp.deltaPct >= 0 ? '#86efac' : '#fca5a5';
-        const rowBg = i % 2 === 0 ? 'var(--c-bg-deep,#0d1117)' : '#0a1525';
-        const rat   = (imp.rationale || '—').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const INP   = `background:var(--c-surface);border:1px solid var(--c-border);border-radius:4px;color:var(--c-text);padding:3px 5px;font-size:0.82rem;text-align:center`;
+        const sign    = imp.deltaPct >= 0 ? '+' : '';
+        const dCol    = imp.deltaPct >= 0 ? '#86efac' : '#fca5a5';
+        const rowBg   = i % 2 === 0 ? 'var(--c-bg-deep,#0d1117)' : '#0a1525';
+        const rat     = (imp.rationale || '—').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const confCol = imp.confidence === 'high' ? '#86efac' : imp.confidence === 'low' ? '#fca5a5' : '#fbbf24';
+        const conf    = imp.confidence ? `<span style="font-size:0.68rem;padding:1px 5px;border-radius:3px;background:color-mix(in srgb,${confCol} 15%,transparent);color:${confCol};margin-left:4px">${imp.confidence}</span>` : '';
+
+        // Baseline & projected
+        const baseline  = baselines?.get(String(imp.entity).toLowerCase());
+        const hasBase   = baseline !== undefined && !isNaN(baseline);
+        const projected = hasBase ? baseline * Math.pow(1 + imp.deltaPct / 100, Math.max(1, imp.yearTo - imp.yearFrom + 1)) : NaN;
+        const baseCell  = hasBase
+            ? `<div style="font-size:0.8rem;color:var(--c-text-dim)">${baseline.toFixed(2)}</div><div style="font-size:0.7rem;color:#6b7f99">baseline</div>`
+            : `<div style="font-size:0.78rem;color:#6b7f99">—</div>`;
+        const projCell  = hasBase
+            ? `<div style="font-size:0.8rem;color:${dCol};font-weight:600">${projected.toFixed(2)}</div><div style="font-size:0.7rem;color:#6b7f99">projected</div>`
+            : `<div style="font-size:0.78rem;color:#6b7f99">—</div>`;
+        const varBadge  = imp.variable && imp.variable !== valueKey
+            ? `<div style="font-size:0.68rem;color:#38bdf8;margin-top:1px">${imp.variable}</div>` : '';
+
         return `
         <div style="padding:6px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);display:flex;align-items:center;justify-content:center">
             <input type="checkbox" class="ai-preview-check" data-imp="${i}" checked style="accent-color:#38bdf8;cursor:pointer;width:14px;height:14px"></div>
-        <div style="padding:7px 12px;font-size:0.875rem;color:var(--c-text);background:${rowBg};border-bottom:1px solid var(--c-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${imp.entity.replace(/</g,'&lt;')}</div>
-        <div style="padding:7px 12px;font-size:0.78rem;color:#7dd3fc;background:${rowBg};border-bottom:1px solid var(--c-bg);font-style:italic;line-height:1.4">${rat}</div>
+        <div style="padding:7px 10px;background:${rowBg};border-bottom:1px solid var(--c-bg)">
+            <div style="font-size:0.875rem;color:var(--c-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${imp.entity.replace(/</g,'&lt;')}</div>${varBadge}
+        </div>
+        <div style="padding:6px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">${baseCell}</div>
         <div style="padding:4px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">
-            <input type="number" class="ai-preview-field" data-imp="${i}" data-field="yearFrom" value="${imp.yearFrom}" style="${INP};width:62px"></div>
-        <div style="padding:4px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">
-            <input type="number" class="ai-preview-field" data-imp="${i}" data-field="yearTo"   value="${imp.yearTo}"   style="${INP};width:62px"></div>
-        <div style="padding:4px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">
-            <input type="number" step="0.1" class="ai-preview-field" data-imp="${i}" data-field="deltaPct" value="${imp.deltaPct.toFixed(1)}" style="${INP};width:68px;color:${col};font-weight:600"></div>`;
+            <input type="number" step="0.1" class="ai-preview-field" data-imp="${i}" data-field="deltaPct" value="${imp.deltaPct.toFixed(1)}"
+                style="${INP};width:68px;color:${dCol};font-weight:700" oninput="this.style.color=parseFloat(this.value)>=0?'#86efac':'#fca5a5'">
+            <div style="font-size:0.68rem;color:#6b7f99">%/yr</div>
+        </div>
+        <div style="padding:6px 8px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">${projCell}</div>
+        <div style="padding:4px 6px;background:${rowBg};border-bottom:1px solid var(--c-bg);text-align:center">
+            <input type="number" class="ai-preview-field" data-imp="${i}" data-field="yearFrom" value="${imp.yearFrom}" style="${INP};width:56px;margin-bottom:2px">
+            <input type="number" class="ai-preview-field" data-imp="${i}" data-field="yearTo"   value="${imp.yearTo}"   style="${INP};width:56px">
+        </div>
+        <div style="padding:7px 10px;font-size:0.78rem;color:#7dd3fc;background:${rowBg};border-bottom:1px solid var(--c-bg);font-style:italic;line-height:1.4">${rat}${conf}</div>`;
     }).join('');
-
-    const HDR = `padding:7px 12px;font-size:0.74rem;font-weight:700;color:var(--c-text-dim);background:var(--c-surface);border-bottom:1px solid var(--c-border);position:sticky;top:0;z-index:1`;
 
     document.getElementById('aiScenarioModalTitle').textContent = 'Review AI scenario — edit before creating';
     document.getElementById('aiScenarioModalBody').innerHTML = `
-        <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:14px 16px">
+        ${validationBanner}
+        ${rationaleBlock}
+        <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:12px 14px">
             <label style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c-text-dim);display:block;margin-bottom:6px">Scenario name</label>
-            <input type="text" id="aiPreviewName" value="${description.slice(0,60).replace(/"/g,'&quot;')}"
+            <input type="text" id="aiPreviewName" value="${scName.replace(/"/g,'&quot;')}"
                 style="width:100%;background:var(--c-bg);border:1px solid var(--c-border);border-radius:6px;color:var(--c-text);padding:8px 10px;font-size:0.875rem;box-sizing:border-box">
             <p style="margin:8px 0 0;font-size:0.8rem;color:#6b7f99">
-                ${impacts.length} entities · <span style="color:#86efac">${pos} positive</span> · <span style="color:#fca5a5">${neg} negative</span> · uncheck rows to exclude from the scenario
+                ${impacts.length} entities · <span style="color:#86efac">${pos} positive</span> · <span style="color:#fca5a5">${neg} negative</span> · uncheck rows to exclude
             </p>
         </div>
         <div>
-            <p style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c-text-dim);margin:0 0 10px">
-                Per-entity impacts <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#6b7f99"> — all values editable</span>
+            <p style="font-size:0.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c-text-dim);margin:0 0 8px">
+                Structured diffs — baseline → Δ%/yr → projected <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#6b7f99">(all values editable · projected is indicative)</span>
             </p>
-            <div style="display:grid;grid-template-columns:28px 1fr 2fr 70px 70px 80px;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;max-height:340px;overflow-y:auto">
+            <div style="display:grid;grid-template-columns:28px 1.2fr 80px 78px 80px 70px 2fr;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;max-height:360px;overflow-y:auto">
                 <div style="${HDR}"></div>
-                <div style="${HDR}">Entity</div>
-                <div style="${HDR}">AI rationale</div>
-                <div style="${HDR};text-align:center">From</div>
-                <div style="${HDR};text-align:center">To</div>
+                <div style="${HDR}">Entity / variable</div>
+                <div style="${HDR};text-align:center">Baseline</div>
                 <div style="${HDR};text-align:center">Δ %/yr</div>
+                <div style="${HDR};text-align:center">Projected</div>
+                <div style="${HDR};text-align:center">From / To</div>
+                <div style="${HDR}">AI rationale</div>
                 ${rows}
             </div>
         </div>`;
@@ -6086,7 +6145,7 @@ function _openAIPreviewModal(impacts, description) {
     const note   = document.getElementById('aiScModalNote');
     const cancel = document.getElementById('aiScModalCancel');
     const save   = document.getElementById('aiScModalSave');
-    if (note)   note.textContent  = 'Review and adjust — nothing is created until you click "Create scenario".';
+    if (note)   note.textContent  = 'Nothing is created until you click "Create scenario".';
     if (cancel) { cancel.textContent = 'Discard';           cancel.onclick = closeAIScenarioModal; }
     if (save)   { save.textContent   = 'Create scenario →'; save.onclick   = _applyAIPreview; }
 
@@ -6100,7 +6159,7 @@ function _applyAIPreview() {
         showToast('Maximum 5 scenarios reached'); return;
     }
 
-    const name = (document.getElementById('aiPreviewName')?.value.trim() || _aiScenarioPreview.description).slice(0, 60);
+    const name = (document.getElementById('aiPreviewName')?.value.trim() || _aiScenarioPreview.scenario?.name || _aiScenarioPreview.description).slice(0, 60);
 
     // Read edited field values back into the impacts array
     document.querySelectorAll('.ai-preview-field').forEach(input => {
@@ -6166,105 +6225,259 @@ function _applyAIPreview() {
  * Works for any dataset — not just GDP / country data.
  */
 function _buildScenarioPrompt(description, ds) {
-    const schema   = ds.schema;
-    const entities = _dataEntities();
-    const tr       = _dataTimeRange();
+    const schema    = ds.schema;
+    const entities  = _dataEntities();
+    const tr        = _dataTimeRange();
+    const colStr    = ds.columns.join(' ').replace(/[_\-]/g, ' ').toLowerCase();
+    const isGeo     = !!schema.keys.geo;
+    const isMonetary= schema.isMonetary;
+    const valueKey  = schema.keys.value || schema.keys.valueKeys?.[0] || 'value';
+    const allVKeys  = schema.keys.valueKeys?.length > 1 ? schema.keys.valueKeys : [valueKey];
+    const entityKey = schema.keys.category || schema.keys.geo || 'entity';
+    const timeKey   = schema.keys.time;
 
-    // ── 1. Detect domain from schema signals and column names ──
-    const colStr = ds.columns.join(' ').replace(/[_\-]/g, ' ').toLowerCase();
-    const isGeo        = !!schema.keys.geo;
-    const isTemporal   = !!schema.keys.time;
-    const isMonetary   = schema.isMonetary;
-    const valueKey     = schema.keys.value || schema.keys.valueKeys?.[0] || 'value';
-    const entityKey    = schema.keys.category || schema.keys.geo || 'entity';
-    const timeKey      = schema.keys.time || 'time';
-
-    // Infer domain label and value interpretation
     let domain = 'general time-series';
-    let valueInterpretation = `numeric values in column "${valueKey}"`;
-    let deltaMeaning = 'percentage change per time period (positive = increase, negative = decrease)';
+    if (isMonetary && isGeo) domain = 'macroeconomic / country GDP';
+    else if (isMonetary)     domain = 'financial / revenue';
+    else if (isGeo)          domain = 'geospatial / country data';
+    else if (/stock|ticker|equity|price|close|open/.test(colStr))      domain = 'financial markets';
+    else if (/temp|celsius|emission|co2|ghg|climate/.test(colStr))     domain = 'environmental / climate';
+    else if (/patient|trial|mortality|clinical|health/.test(colStr))   domain = 'biomedical / clinical';
+    else if (/species|population|biological|sample/.test(colStr))      domain = 'biological / ecological';
+    else if (/sales|revenue|order|customer/.test(colStr))              domain = 'business / sales';
 
-    if (isMonetary && isGeo)          { domain = 'macroeconomic / country GDP'; valueInterpretation = `GDP or financial values in "${valueKey}" (monetary units)`; }
-    else if (isMonetary)              { domain = 'financial / revenue'; valueInterpretation = `monetary values in "${valueKey}"`; }
-    else if (isGeo)                   { domain = 'geospatial / country data'; }
-    else if (/stock|ticker|equity|share|price|close|open/.test(colStr))  { domain = 'financial markets / equities'; valueInterpretation = `price or return values in "${valueKey}"`; }
-    else if (/temp|celsius|fahrenheit|climate|emission|co2|ghg/.test(colStr)) { domain = 'environmental / climate'; valueInterpretation = `environmental measurements in "${valueKey}"`; deltaMeaning = 'absolute change per time period (positive = increase, negative = decrease)'; }
-    else if (/patient|trial|dose|cohort|survival|mortality|clinical|medical|health/.test(colStr)) { domain = 'biomedical / clinical'; valueInterpretation = `clinical measurements in "${valueKey}"`; deltaMeaning = 'percentage change per time period (positive = improvement or increase, negative = decline)'; }
-    else if (/species|population|count|abundance|biological|sample/.test(colStr)) { domain = 'biological / ecological'; valueInterpretation = `counts or measurements in "${valueKey}"`; }
-    else if (/sales|unit|order|customer|revenue|product/.test(colStr))  { domain = 'business / sales'; valueInterpretation = `sales or volume values in "${valueKey}"`; }
+    // ── Variable metadata: unit, observed range, allowed range ──
+    const varMeta = allVKeys.map(k => {
+        const vals = ds.data.map(r => parseFloat(r[k])).filter(v => !isNaN(v));
+        const vMin = vals.length ? Math.min(...vals) : 0;
+        const vMax = vals.length ? Math.max(...vals) : 0;
+        const vMean= vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+        const kl   = k.toLowerCase();
+        let unit = 'numeric';
+        let range = 'non-negative (≥ 0)';
+        if (/pct|percent|share|rate/.test(kl) || (vMax <= 100 && vMin >= 0 && vMax > 1)) { unit = '% (percentage)'; range = '[0, 100] — hard ceiling enforced by engine'; }
+        else if (/gdp|usd|dollar|revenue|bn|trillion/.test(kl) || isMonetary) { unit = 'monetary (USD)'; }
+        else if (/co2|emission|ton|tonne/.test(kl)) unit = 'tons / metric measure';
+        else if (/year|age|life|expect/.test(kl))   { unit = 'years'; range = '[0, 120]'; }
+        else if (/temp|celsius/.test(kl))           { unit = '°C'; range = 'unbounded'; }
+        else if (/pop|population/.test(kl))         unit = 'count (persons)';
+        return `  • "${k}": unit=${unit}, observed=[${vMin.toFixed(2)}, ${vMax.toFixed(2)}], mean=${vMean.toFixed(2)}, allowed range: ${range}`;
+    }).join('\n');
 
-    // ── 2. Build statistical context from actual data ──
-    const allValues = ds.data.map(r => parseFloat(r[valueKey])).filter(v => !isNaN(v));
-    const valMin  = allValues.length ? Math.min(...allValues).toFixed(2) : 'n/a';
-    const valMax  = allValues.length ? Math.max(...allValues).toFixed(2) : 'n/a';
-    const valMean = allValues.length ? (allValues.reduce((a,b)=>a+b,0)/allValues.length).toFixed(2) : 'n/a';
+    // ── Time granularity ──
+    let timeGranularity = 'none (cross-sectional snapshot — yearFrom/yearTo are not applicable)';
+    if (timeKey) {
+        const tVals = [...new Set(ds.data.map(r => r[timeKey]))].filter(Boolean).sort((a,b) => parseFloat(a)-parseFloat(b));
+        if (tVals.length >= 2) {
+            const diffs = [];
+            for (let i = 1; i < Math.min(tVals.length, 5); i++) { const d = parseFloat(tVals[i]) - parseFloat(tVals[i-1]); if (!isNaN(d)) diffs.push(d); }
+            const avg = diffs.length ? diffs.reduce((a,b)=>a+b,0)/diffs.length : 1;
+            timeGranularity = avg >= 0.9 && avg <= 1.1 ? `yearly, ${tr.min}–${tr.max} (step = 1 year)`
+                : avg >= 0.24 && avg <= 0.27 ? `quarterly, ${tr.min}–${tr.max}`
+                : avg >= 0.07 && avg <= 0.09 ? `monthly, ${tr.min}–${tr.max}`
+                : `interval ≈ ${avg.toFixed(2)} units, ${tr.min}–${tr.max}`;
+        }
+    }
 
-    // ── 3. Representative sample: pick diverse entities, not just first rows ──
-    const sampleEntities = entities.slice(0, 6);
-    const sampleRows = sampleEntities.flatMap(e => {
-        const rows = ds.data.filter(r => r[entityKey] === e).slice(0, 3);
-        return rows;
-    }).slice(0, 20).map(r => {
-        // Show only relevant columns, not the full row
+    // ── Cross-variable dependencies ──
+    const dependencies = allVKeys.length > 1
+        ? `Multi-variable dataset — list impacts for EACH affected variable separately:\n${allVKeys.map(k=>`  • "${k}"`).join('\n')}`
+        : `Single value column — all impacts target "${valueKey}"`;
+
+    // ── Sample rows ──
+    const sampleRows = entities.slice(0, 5).flatMap(e =>
+        ds.data.filter(r => r[entityKey] === e).slice(0, 2)
+    ).slice(0, 14).map(r => {
         const out = {};
-        [entityKey, timeKey, valueKey].forEach(k => { if (r[k] !== undefined) out[k] = r[k]; });
-        if (schema.keys.valueKeys?.length > 1) schema.keys.valueKeys.slice(1,3).forEach(k => { if (r[k] !== undefined) out[k] = r[k]; });
+        [...new Set([entityKey, timeKey, ...allVKeys])].filter(Boolean).forEach(k => { if (r[k] !== undefined) out[k] = r[k]; });
         return JSON.stringify(out);
     }).join('\n');
 
-    // ── 4. Entity list — full list if small, capped with note if large ──
     const entityList = entities.length <= 50
         ? entities.join(', ')
         : entities.slice(0, 50).join(', ') + ` … and ${entities.length - 50} more`;
 
-    // ── 5. Assemble the prompt ──
-    return `You are an expert analyst specialising in ${domain} data modelling and scenario simulation.
+    const yearRange = timeKey ? `[${tr.min}, ${tr.max}]` : 'N/A (no time column)';
+    const yearInstr = timeKey
+        ? `yearFrom/yearTo: integers within ${yearRange}`
+        : `yearFrom/yearTo: use ${tr.min} for both (dataset has no time column)`;
 
-A user has loaded a dataset into a what-if simulation tool and described a scenario. Your task is to estimate the quantitative impact of this scenario on each affected entity in the dataset, expressed as a ${deltaMeaning}.
+    return `You are an expert analyst specialising in ${domain} scenario simulation.
 
-═══ DATASET CONTEXT ═══
+A user has loaded a structured dataset and described a what-if scenario. Map the scenario quantitatively onto the dataset schema and return a deterministic parameter object.
+
+═══ DATASET SCHEMA ═══
 Domain: ${domain}
-Entity dimension: "${entityKey}" — represents the subjects being tracked
-Time dimension: "${timeKey}" — range ${tr.min}–${tr.max}
-Value dimension: ${valueInterpretation}
-  · Min observed: ${valMin}
-  · Max observed: ${valMax}
-  · Mean observed: ${valMean}
-All columns: ${ds.columns.join(', ')}
-Total rows: ${schema.rowCount.toLocaleString()}
+Entity column: "${entityKey}"
+Time: ${timeGranularity}
 
-Entities in dataset (${entities.length} total):
+Variables (columns that can receive impact):
+${varMeta}
+
+Cross-variable dependencies:
+${dependencies}
+
+Entities (${entities.length} total — names must be copied VERBATIM):
 ${entityList}
 
-Sample data rows:
+Sample rows:
 ${sampleRows}
 
 ═══ SCENARIO ═══
 "${description}"
 
-═══ INSTRUCTIONS ═══
-Analyse this scenario thoroughly. For each entity that would be meaningfully affected:
-1. Identify DIRECT effects — entities explicitly named or most immediately impacted
-2. Identify INDIRECT effects — supply chain, competition, substitution, regulatory spillover
-3. Estimate TIMING — when does the effect start, peak, and taper? Use yearFrom/yearTo within ${tr.min}–${tr.max}
-4. Estimate MAGNITUDE — deltaPct as annual % change from the baseline trend. Be realistic: most real-world policy shocks are in the 0.5%–5% range; use larger values only for major disruptions
-5. Assign DIRECTION — positive = above-baseline growth, negative = below-baseline or decline
-6. Consider CONFIDENCE — only include entities where you have reasonable analytical basis; omit entities with negligible or speculative impact
+═══ ANALYSIS RULES ═══
+1. Map each impact to the SPECIFIC variable column it affects
+2. Timing: ${yearInstr}
+3. Magnitude: deltaPct = annual % change from baseline. Realistic range 0.5%–5%/yr for policy shocks; >10% only for crises/collapses
+4. Confidence: "high" = direct/named effect, "medium" = indirect, "low" = speculative
+5. Omit entities with negligible or analytically indefensible impact
+6. Bounds: do not propose deltaPct values that would push variables outside their allowed range over the scenario window
 
-═══ OUTPUT SCHEMA ═══
-Return ONLY a valid JSON array — no explanation, no markdown, no code fences:
-[
-  {
-    "entity":   "<string — copy EXACTLY from the entity list above, character for character>",
-    "yearFrom": <integer — start year, must be within ${tr.min}–${tr.max}>,
-    "yearTo":   <integer — end year, must be within ${tr.min}–${tr.max} and >= yearFrom>,
-    "deltaPct": <number — annual % change from baseline, e.g. -2.5 or +1.8. Range: -50 to +50>,
-    "rationale":"<string, max 15 words — why this entity is affected>"
-  },
-  ...
-]
+═══ OUTPUT ═══
+Return ONLY a valid JSON object — no markdown, no code fences:
+{
+  "scenario_name": "<concise name ≤ 60 chars>",
+  "overall_rationale": "<2–3 sentence mechanism summary>",
+  "impacts": [
+    {
+      "entity":    "<EXACT copy from entity list>",
+      "variable":  "<column name from variables list>",
+      "yearFrom":  <${timeKey ? `integer in ${yearRange}` : tr.min}>,
+      "yearTo":    <${timeKey ? `integer in ${yearRange}, >= yearFrom` : tr.max}>,
+      "deltaPct":  <number, range [-50, 50]>,
+      "confidence":"<high|medium|low>",
+      "rationale": "<max 20 words>"
+    }
+  ]
+}`;
+}
 
-CRITICAL: entity values must be copied verbatim from the entity list — do NOT invent, abbreviate, or rephrase them.`;
+// ── Compute current baseline value per entity from the dataset ──────────────
+function _entityBaselines(ds) {
+    const schema    = ds.schema;
+    const entityKey = schema.keys.category || schema.keys.geo;
+    const valueKey  = schema.keys.value || schema.keys.valueKeys?.[0];
+    const timeKey   = schema.keys.time;
+    if (!entityKey || !valueKey) return new Map();
+
+    const byEntity = new Map();
+    ds.data.forEach(row => {
+        const ent = String(row[entityKey] || '');
+        if (!byEntity.has(ent)) byEntity.set(ent, []);
+        byEntity.get(ent).push(row);
+    });
+
+    const baselines = new Map();
+    byEntity.forEach((rows, ent) => {
+        if (timeKey) rows.sort((a, b) => parseFloat(a[timeKey]) - parseFloat(b[timeKey]));
+        const latest = rows[rows.length - 1];
+        const val    = parseFloat(latest?.[valueKey]);
+        if (!isNaN(val)) baselines.set(ent.toLowerCase(), val);
+    });
+    return baselines;
+}
+
+// ── Validate AI output: variable existence, bounds, conflicts, unit normalization ──
+function _validateAIScenario(parsed, ds) {
+    const report   = { errors: [], warnings: [], fixes: [] };
+    const tr       = _dataTimeRange();
+    const entities = _dataEntities();
+    const schema   = ds.schema;
+    const entitySet= new Map(entities.map(e => [String(e).toLowerCase().trim(), String(e)]));
+
+    const valueKey  = schema.keys.value || schema.keys.valueKeys?.[0] || 'value';
+    const allVKeys  = new Set([valueKey, ...(schema.keys.valueKeys || [])].filter(Boolean));
+
+    // Infer ceiling (hard upper bound) per variable
+    const ceilings = new Map();
+    allVKeys.forEach(k => {
+        const vals = ds.data.map(r => parseFloat(r[k])).filter(v => !isNaN(v));
+        const vMax = vals.length ? Math.max(...vals) : Infinity;
+        const vMin = vals.length ? Math.min(...vals)  : 0;
+        const kl   = k.toLowerCase();
+        if (/pct|percent|share|rate/.test(kl) || (vMax <= 100 && vMin >= 0 && vMax > 1))
+            ceilings.set(k, 100);
+    });
+
+    const valid = [];
+    const seen  = new Map(); // "entity::variable" → index for conflict detection
+
+    for (const imp of (parsed.impacts || [])) {
+        if (!imp || typeof imp !== 'object') continue;
+
+        // 1. Variable existence
+        let varName = imp.variable || valueKey;
+        if (!allVKeys.has(varName)) {
+            const closest = [...allVKeys].find(k => k.toLowerCase().includes(varName.toLowerCase()) || varName.toLowerCase().includes(k.toLowerCase()));
+            if (closest) {
+                report.fixes.push(`Variable "${varName}" → normalized to "${closest}"`);
+                varName = closest;
+            } else {
+                report.fixes.push(`Variable "${varName}" not found → defaulting to "${valueKey}"`);
+                varName = valueKey;
+            }
+        }
+        imp.variable = varName;
+
+        // 2. Entity matching (case-insensitive + partial fallback)
+        const rawEntity = String(imp.entity ?? '').trim();
+        const matched   = entitySet.get(rawEntity.toLowerCase());
+        if (!matched) {
+            let best = null;
+            for (const [k, v] of entitySet) {
+                if (k.includes(rawEntity.toLowerCase()) || rawEntity.toLowerCase().includes(k)) { best = v; break; }
+            }
+            if (!best) { report.warnings.push(`Entity "${rawEntity}" not found in dataset — skipped`); continue; }
+            report.fixes.push(`"${rawEntity}" → matched to "${best}"`);
+            imp.entity = best;
+        } else {
+            imp.entity = matched;
+        }
+
+        // 3. Year bounds
+        const rFrom = parseInt(imp.yearFrom, 10);
+        const rTo   = parseInt(imp.yearTo,   10);
+        const cFrom = isNaN(rFrom) ? tr.min : Math.max(tr.min, Math.min(tr.max, rFrom));
+        const cTo   = isNaN(rTo)   ? tr.max : Math.max(tr.min, Math.min(tr.max, rTo));
+        if (cFrom !== rFrom || cTo !== rTo) report.fixes.push(`${imp.entity}: years clamped to [${tr.min}–${tr.max}]`);
+        imp.yearFrom = cFrom;
+        imp.yearTo   = cTo < cFrom ? cFrom : cTo;
+
+        // 4. Delta bounds + ceiling projection check
+        const rawDelta = parseFloat(imp.deltaPct);
+        if (!isFinite(rawDelta)) { report.warnings.push(`Invalid deltaPct for "${imp.entity}" — skipped`); continue; }
+        const maxDelta = ceilings.has(varName) ? 20 : 50;
+        if (Math.abs(rawDelta) > maxDelta) {
+            report.fixes.push(`${imp.entity}: deltaPct ${rawDelta > 0 ? '+' : ''}${rawDelta}% clamped to ±${maxDelta}%`);
+        }
+        imp.deltaPct = Math.max(-maxDelta, Math.min(maxDelta, rawDelta));
+
+        // Warn if ceiling will be hit
+        if (ceilings.has(varName)) {
+            const baseline = _entityBaselines(ds).get(String(imp.entity).toLowerCase()) ?? NaN;
+            if (!isNaN(baseline)) {
+                const projected = baseline * Math.pow(1 + imp.deltaPct / 100, imp.yearTo - imp.yearFrom + 1);
+                if (projected > ceilings.get(varName))
+                    report.warnings.push(`${imp.entity}: projected ${projected.toFixed(1)} exceeds ceiling ${ceilings.get(varName)} — engine will cap`);
+            }
+        }
+
+        // 5. Conflict detection (same entity + variable + overlapping window)
+        const key = `${imp.entity}::${varName}`;
+        if (seen.has(key)) {
+            report.warnings.push(`Conflict on "${imp.entity}" / "${varName}" — later entry kept`);
+            valid.splice(seen.get(key), 1, null);
+        }
+        seen.set(key, valid.length);
+        valid.push(imp);
+    }
+
+    return {
+        scenario: { name: parsed.scenario_name || 'AI Scenario', rationale: parsed.overall_rationale || '' },
+        impacts:  valid.filter(Boolean),
+        report
+    };
 }
 
 async function analyzeScenarioWithAI(description, idx) {
