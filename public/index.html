@@ -8834,6 +8834,10 @@ function renderImportImpactViz(baseData, adjustedData, schema, scenario) {
     if (gainCol) gainCol.style.display = gainers.length ? '' : 'none';
     if (lossCol) lossCol.style.display = losers.length  ? '' : 'none';
     if (split)   split.style.gridTemplateColumns = (!gainers.length || !losers.length) ? '1fr' : '1fr 1fr';
+    const gainHeader = gainCol?.querySelector('.impact-col-header');
+    const lossHeader = lossCol?.querySelector('.impact-col-header');
+    if (gainHeader) gainHeader.textContent = _libViz ? '▲ Most Worsened' : '▲ Most Benefiting';
+    if (lossHeader) lossHeader.textContent = _libViz ? '▼ Most Improved' : '▼ Most Hit';
 
     const renderBars = (containerId, list, color) => {
         const el = document.getElementById(containerId);
