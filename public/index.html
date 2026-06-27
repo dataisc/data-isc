@@ -8805,7 +8805,8 @@ function renderImportImpactViz(baseData, adjustedData, schema, scenario) {
     const totalAdj   = entries.reduce((s, e) => s + e.adj,  0);
     const totalDelta = totalAdj - totalBase;
     const totalPct   = totalBase !== 0 ? (totalDelta / Math.abs(totalBase) * 100) : 0;
-    const summColor  = totalDelta >= 0 ? '#34d399' : '#f87171';
+    const _libViz    = _lowerIsBetter(schema.keys.value);
+    const summColor  = (_libViz ? totalDelta <= 0 : totalDelta >= 0) ? '#34d399' : '#f87171';
     const arrow      = totalDelta >= 0 ? '▲' : '▼';
     const summEl = document.getElementById('importImpactSummary');
     if (summEl) summEl.innerHTML =
@@ -8850,8 +8851,8 @@ function renderImportImpactViz(baseData, adjustedData, schema, scenario) {
             </div>`;
         }).join('');
     };
-    renderBars('importImpactGainBars', gainers, '#34d399');
-    renderBars('importImpactLossBars', losers,  '#f87171');
+    renderBars('importImpactGainBars', gainers, _libViz ? '#f87171' : '#34d399');
+    renderBars('importImpactLossBars', losers,  _libViz ? '#34d399' : '#f87171');
 }
 
 function toggleImportScenario(idx) {
@@ -10082,6 +10083,12 @@ function _buildChartPillsHTML(schema, active) {
 // D3 RENDERERS
 // ══════════════════════════════════════════════════════════════════════
 
+// Returns true when a lower value is semantically better (e.g. CO2, mortality).
+// Used to invert green/red impact coloring for these metrics.
+function _lowerIsBetter(key) {
+    return /co2|emission|carbon|pollut|poverty|mortalit|death|unemploy|crime|debt|deforest|waste|gini|inequal|fatal|disease/i.test(String(key || ''));
+}
+
 // ── Line / Area chart (temporal) — overlayData optional ──────────────
 
 function _renderLineChart(container, schema, data, overlayData, scenario) {
@@ -10090,6 +10097,7 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
     const timeKey  = schema.keys.time;
     const valueKey = schema.keys.value;
     const groupKey = schema.keys.category || schema.keys.geo;
+    const _lib     = _lowerIsBetter(valueKey);
 
     if (!timeKey || !valueKey) { _renderTable(container, schema, data); return; }
 
@@ -10333,8 +10341,9 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
                 .map(p => ({ t: p.t, vBase: baseByT.get(+p.t), vScen: p.v }));
             if (band.length > 1) {
                 const net = band.reduce((acc, p) => acc + (p.vScen - p.vBase), 0);
+                const bandClr = (_lib ? net <= 0 : net >= 0) ? '#34d399' : '#f87171';
                 linesG.append('path').datum(band)
-                    .attr('fill', net >= 0 ? '#34d399' : '#f87171').attr('opacity', 0.16)
+                    .attr('fill', bandClr).attr('opacity', 0.16)
                     .attr('d', areaGen.y0(p => yScale(p.vBase)).y1(p => yScale(p.vScen)));
             }
             // Dashed scenario line
@@ -10388,7 +10397,7 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
                 .text(`${sign}${scenario.deltaPct.toFixed(1)}%/yr`);
 
             // Key: solid=baseline, dashed=scenario, shaded=impact
-            const impactClr = scenario.deltaPct >= 0 ? '#34d399' : '#f87171';
+            const impactClr = (_lib ? scenario.deltaPct <= 0 : scenario.deltaPct >= 0) ? '#34d399' : '#f87171';
             [
                 { dy: 42, draw: kg => { kg.append('line').attr('x1',0).attr('x2',16).attr('y1',5).attr('y2',5).attr('stroke','var(--c-text-dim)').attr('stroke-width',1.5); }, label: 'baseline' },
                 { dy: 58, draw: kg => { kg.append('line').attr('x1',0).attr('x2',16).attr('y1',5).attr('y2',5).attr('stroke','#fbbf24').attr('stroke-width',1.5).attr('stroke-dasharray','4,3'); }, label: 'scenario' },
