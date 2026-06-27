@@ -10097,6 +10097,21 @@ function _buildChartPillsHTML(schema, active) {
 // D3 RENDERERS
 // ══════════════════════════════════════════════════════════════════════
 
+// Infers a human-readable unit string from the value column name.
+// Returns null when no unit can be determined.
+function _inferUnit(valueKey) {
+    const k = String(valueKey || '').toLowerCase();
+    if (/_tonnes_per_capita|co2_per_capita/.test(k)) return 't / capita';
+    if (/\bpct\b|_pct_|percent|_share\b/.test(k))   return '%';
+    if (/_per_capita/.test(k))                       return '/ capita';
+    if (/\btonnes?\b|_co2\b|co2_/.test(k))          return 't';
+    if (/_years?\b|expectancy/.test(k))              return 'years';
+    if (/_kg\b|kilogram/.test(k))                   return 'kg';
+    if (/_days?\b/.test(k))                         return 'days';
+    if (/_index\b/.test(k))                         return 'index';
+    return null;
+}
+
 // Returns true when a lower value is semantically better (e.g. CO2, mortality).
 // Used to invert green/red impact coloring for these metrics.
 function _lowerIsBetter(key) {
@@ -10274,6 +10289,17 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
         .call(el => el.select('.domain').remove())
         .call(el => el.selectAll('text').attr('fill', 'var(--c-text-dim)').attr('font-size', '12px').attr('dx', '-4px'))
         .call(el => el.selectAll('line').remove());
+
+    // Y-axis unit label
+    const _lcUnit = schema.isMonetary ? null : _inferUnit(valueKey);
+    if (_lcUnit && !schema._indexedUnit) {
+        g.append('text')
+            .attr('transform', 'rotate(-90)')
+            .attr('x', -iH / 2).attr('y', -58)
+            .attr('text-anchor', 'middle')
+            .attr('fill', 'var(--c-text-dim)').attr('font-size', '10px').attr('font-style', 'italic')
+            .text(_lcUnit);
+    }
 
     const lineGen = d3.line().x(p => xScale(p.t)).y(p => yScale(p.v)).curve(d3.curveMonotoneX);
     const linesG  = g.append('g').attr('clip-path', `url(#${clipId})`);
@@ -10661,6 +10687,16 @@ function _renderBarChart(container, schema, data) {
             .tickFormat(v => (schema.isMonetary ? '$' : '') + d3.format('.2s')(v)))
         .call(el => el.select('.domain').attr('stroke', 'var(--c-border)'))
         .call(el => el.selectAll('text').attr('fill', 'var(--c-muted)').attr('font-size', '10px'));
+
+    // Unit label below x-axis
+    const _barUnit = schema.isMonetary ? null : _inferUnit(valueKey);
+    if (_barUnit) {
+        g.append('text')
+            .attr('x', iW).attr('y', iH + 28)
+            .attr('text-anchor', 'end')
+            .attr('fill', 'var(--c-text-dim)').attr('font-size', '10px').attr('font-style', 'italic')
+            .text(_barUnit);
+    }
 
     container.appendChild(svg.node());
 
