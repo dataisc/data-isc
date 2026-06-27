@@ -891,6 +891,7 @@
         <div id="importImpactSection" class="impact-section hidden">
             <div class="impact-panel-header">
                 <span class="impact-title">Scenario Impact — Affected Entities</span>
+                <button id="metricDirectionBtn" onclick="toggleMetricDirection()" style="display:none;font-size:0.75rem;padding:3px 10px;border-radius:12px;border:1px solid var(--c-border);background:var(--c-surface);color:var(--c-text-dim);cursor:pointer;margin-left:auto;transition:color .15s,border-color .15s">⬆ Higher = better</button>
             </div>
             <div id="importImpactViz" class="impact-viz">
                 <div class="impact-summary" id="importImpactSummary"></div>
@@ -7946,6 +7947,8 @@ init();
 // Active import state (set by activateDataset, cleared by activateGDPModel)
 let _activeImportDS    = null;
 let _activeImportChart = 'table';
+// null = auto-detect from column name; true = lower-is-better; false = higher-is-better
+let _metricDirectionLIB = null;
 
 // Table pagination state — persists between page turns
 let _importTable = { data: [], filtered: [], page: 0, pageSize: 20, sortCol: null, sortDir: 1, schema: null };
@@ -8107,6 +8110,7 @@ function mountImportedViz(ds) {
     _activeProjectedData = null;
     _projectionFit       = null;
     _activeMetricKey     = ds.schema.keys.value; // reset to primary metric on dataset switch
+    _metricDirectionLIB  = null; // reset to auto-detect on dataset switch
     // Repair legacy schemas saved before schema.charts was introduced
     if (!Array.isArray(ds.schema.charts)) {
         const c = [];
@@ -8805,8 +8809,10 @@ function renderImportImpactViz(baseData, adjustedData, schema, scenario) {
     const totalAdj   = entries.reduce((s, e) => s + e.adj,  0);
     const totalDelta = totalAdj - totalBase;
     const totalPct   = totalBase !== 0 ? (totalDelta / Math.abs(totalBase) * 100) : 0;
-    const _libViz    = _lowerIsBetter(schema.keys.value);
+    const _libViz    = _effectiveLIB(schema.keys.value);
     const summColor  = (_libViz ? totalDelta <= 0 : totalDelta >= 0) ? '#34d399' : '#f87171';
+    const dirBtn = document.getElementById('metricDirectionBtn');
+    if (dirBtn) { dirBtn.style.display = ''; _updateDirectionBtn(); }
     const arrow      = totalDelta >= 0 ? '▲' : '▼';
     const summEl = document.getElementById('importImpactSummary');
     if (summEl) summEl.innerHTML =
@@ -10097,6 +10103,28 @@ function _lowerIsBetter(key) {
     return /co2|emission|carbon|pollut|poverty|mortalit|death|unemploy|crime|debt|deforest|waste|gini|inequal|fatal|disease/i.test(String(key || ''));
 }
 
+// Effective direction: manual override wins, then keyword heuristic.
+function _effectiveLIB(valueKey) {
+    return _metricDirectionLIB !== null ? _metricDirectionLIB : _lowerIsBetter(valueKey);
+}
+
+// Toggle manual override and re-render.
+function toggleMetricDirection() {
+    const currentLIB = _effectiveLIB(_activeImportDS?.schema?.keys?.value);
+    _metricDirectionLIB = !currentLIB;
+    _updateDirectionBtn();
+    _refreshActiveScenarios();
+}
+
+function _updateDirectionBtn() {
+    const btn = document.getElementById('metricDirectionBtn');
+    if (!btn) return;
+    const lib = _effectiveLIB(_activeImportDS?.schema?.keys?.value);
+    btn.textContent  = lib ? '⬇ Lower = better' : '⬆ Higher = better';
+    btn.style.color  = lib ? '#86efac' : '#fca5a5';
+    btn.style.borderColor = lib ? '#166534' : '#7f1d1d';
+}
+
 // ── Line / Area chart (temporal) — overlayData optional ──────────────
 
 function _renderLineChart(container, schema, data, overlayData, scenario) {
@@ -10105,7 +10133,7 @@ function _renderLineChart(container, schema, data, overlayData, scenario) {
     const timeKey  = schema.keys.time;
     const valueKey = schema.keys.value;
     const groupKey = schema.keys.category || schema.keys.geo;
-    const _lib     = _lowerIsBetter(valueKey);
+    const _lib     = _effectiveLIB(valueKey);
 
     if (!timeKey || !valueKey) { _renderTable(container, schema, data); return; }
 
