@@ -32,6 +32,8 @@ const SAMPLE_FILES = [
     'co2_emissions.csv',
     'life_expectancy.csv',
     'renewable_energy_share.csv',
+    'co2_per_capita_world.csv',
+    'co2_vs_life_exp_2022.csv',
 ];
 const srcDir = path.join(root, 'samples');
 const dstDir = path.join(root, 'public', 'samples');
