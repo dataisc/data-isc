@@ -8828,16 +8828,20 @@ function renderImportImpactViz(baseData, adjustedData, schema, scenario) {
     }
     if (split) split.style.display = '';
 
-    // Gain/loss columns
+    // Gain/loss columns — for lower-is-better metrics swap the data mapping so
+    // the green "gain" column always holds the beneficial direction (reductions for CO2)
+    // and the red "loss" column holds the harmful direction. Colors stay fixed.
+    const gainData = _libViz ? losers  : gainers;
+    const lossData = _libViz ? gainers : losers;
     const gainCol = document.querySelector('#importImpactSection .impact-col-gain');
     const lossCol = document.querySelector('#importImpactSection .impact-col-loss');
-    if (gainCol) gainCol.style.display = gainers.length ? '' : 'none';
-    if (lossCol) lossCol.style.display = losers.length  ? '' : 'none';
-    if (split)   split.style.gridTemplateColumns = (!gainers.length || !losers.length) ? '1fr' : '1fr 1fr';
+    if (gainCol) gainCol.style.display = gainData.length ? '' : 'none';
+    if (lossCol) lossCol.style.display = lossData.length ? '' : 'none';
+    if (split)   split.style.gridTemplateColumns = (!gainData.length || !lossData.length) ? '1fr' : '1fr 1fr';
     const gainHeader = gainCol?.querySelector('.impact-col-header');
     const lossHeader = lossCol?.querySelector('.impact-col-header');
-    if (gainHeader) gainHeader.textContent = _libViz ? '▲ Most Worsened' : '▲ Most Benefiting';
-    if (lossHeader) lossHeader.textContent = _libViz ? '▼ Most Improved' : '▼ Most Hit';
+    if (gainHeader) gainHeader.textContent = _libViz ? '▼ Most Improved' : '▲ Most Benefiting';
+    if (lossHeader) lossHeader.textContent = _libViz ? '▲ Most Worsened'  : '▼ Most Hit';
 
     const renderBars = (containerId, list, color) => {
         const el = document.getElementById(containerId);
@@ -8855,8 +8859,8 @@ function renderImportImpactViz(baseData, adjustedData, schema, scenario) {
             </div>`;
         }).join('');
     };
-    renderBars('importImpactGainBars', gainers, _libViz ? '#f87171' : '#34d399');
-    renderBars('importImpactLossBars', losers,  _libViz ? '#34d399' : '#f87171');
+    renderBars('importImpactGainBars', gainData, '#34d399');
+    renderBars('importImpactLossBars', lossData, '#f87171');
 }
 
 function toggleImportScenario(idx) {
