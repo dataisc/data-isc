@@ -7,9 +7,6 @@
 <link rel="stylesheet" href="subpage.css">
 <script src="theme.js" defer></script>
 <style>
-.info-banner { background: color-mix(in srgb, #86efac 12%, var(--c-surface)); border: 1px solid #2d5a2d; border-radius: 8px; padding: 10px 16px; font-size: 0.83rem; color: #2d6a2d; margin-bottom: 28px; }
-body.light-mode .info-banner { background: #dcfce7; border-color: #86efac; color: #14532d; }
-.sc-card .icon { font-size: 1.5rem; margin-bottom: 8px; }
 .tag { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-right: 4px; margin-top: 8px; }
 .tag.policy { background: var(--c-surface); border: 1px solid var(--c-border); color: #38bdf8; }
 .tag.shock  { background: var(--c-surface); border: 1px solid var(--c-border); color: #f87171; }
@@ -17,6 +14,21 @@ body.light-mode .info-banner { background: #dcfce7; border-color: #86efac; color
 body.light-mode .tag.policy { color: #0284c7; }
 body.light-mode .tag.shock  { color: #dc2626; }
 body.light-mode .tag.green  { color: #059669; }
+
+.ds-block { margin: 36px 0 0; }
+.ds-label { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 700; color: var(--c-text); margin: 0 0 12px; border-left: 3px solid var(--c-border); padding-left: 10px; }
+.ds-label code { font-size: 0.72rem; font-weight: 400; color: var(--c-text-dim); background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 4px; padding: 1px 6px; }
+.headline-pill { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-top: 8px; }
+.headline-pill.up   { background: color-mix(in srgb, #34d399 15%, transparent); color: #34d399; border: 1px solid #166534; }
+.headline-pill.down { background: color-mix(in srgb, #f87171 15%, transparent); color: #f87171; border: 1px solid #7f1d1d; }
+body.light-mode .headline-pill.up   { color: #059669; border-color: #059669; }
+body.light-mode .headline-pill.down { color: #dc2626; border-color: #dc2626; }
+
+.bs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
+.bs-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 8px; padding: 14px 16px; }
+.bs-card .icon { font-size: 1.3rem; margin-bottom: 6px; }
+.bs-card h4 { font-size: 0.88rem; font-weight: 700; color: var(--c-text); margin: 0 0 4px; }
+.bs-card p  { font-size: 0.78rem; color: var(--c-text-dim); margin: 0; line-height: 1.45; }
 </style>
 </head>
 <body>
@@ -38,11 +50,13 @@ body.light-mode .tag.green  { color: #059669; }
 </header>
 <div class="wrap">
   <h1>Scenarios</h1>
-  <p class="sub">Deep dives on selected simulator scenarios — assumptions, mechanics, and interpretation</p>
+  <p class="sub">Built-in what-if scenarios for every demo dataset — assumptions, mechanics, and interpretation</p>
 
-  <div class="info-banner">The scenario deep-dives below relate exclusively to the built-in <strong>GDP Trajectories</strong> demo dataset. When you import your own data and define what-if scenarios, the engine will apply the same year-by-year projection logic to your dataset — scenario explanations specific to your data will be generated based on your inputs.</div>
+  <p>Data ISC ships three ready-to-run scenarios for each demo dataset, calibrated to realistic real-world mechanisms. Load any demo dataset from the home screen and click a scenario card to apply it instantly. The engine projects the baseline forward and then applies the scenario delta year-by-year so you can compare trajectories side-by-side.</p>
 
-  <p>The GDP demo includes scenarios covering structural policy choices, trade dynamics, and environmental transitions — each applying growth rate adjustments to affected countries over a defined window. This section documents selected scenarios in depth.</p>
+  <!-- ── GDP Trajectories ─────────────────────────────────────────────── -->
+  <h2>GDP Trajectories</h2>
+  <p>The GDP demo models 100+ countries to 2100 using conditional convergence and demographic-adjusted growth rates. Its three deep-dive scenarios explore structural policy choices at the macro level.</p>
 
   <div class="scenario-grid">
     <a class="sc-card" href="scenarios/eu-federal-integration.html">
@@ -65,17 +79,179 @@ body.light-mode .tag.green  { color: #059669; }
     </a>
   </div>
 
-  <h2>How scenarios work</h2>
-  <p>All scenarios apply growth rate deltas to affected countries over a defined window. Some represent sustained structural changes; others phase out gradually as the economy adjusts. See <a href="model/methodology.html">Methodology</a> for the mechanics.</p>
+  <!-- ── Demo dataset scenarios ──────────────────────────────────────── -->
+  <h2 style="margin-top:48px">Demo Dataset Scenarios</h2>
+  <p>Each sample dataset ships with three calibrated scenarios that appear automatically when you load that dataset. Deltas are applied on top of the projection and shown as a dashed overlay on the chart, with the impact band colored green or red depending on whether the change is beneficial for that metric.</p>
+
+  <!-- Life Expectancy -->
+  <div class="ds-block">
+    <div class="ds-label">🧬 Life Expectancy <code>life_expectancy.csv</code></div>
+    <div class="scenario-grid">
+      <div class="sc-card">
+        <div class="icon">🔬</div>
+        <h3>Cancer Treatment Breakthrough</h3>
+        <p>Major advances in immunotherapy and targeted therapy cut cancer mortality 40%. Countries where cancer is the leading cause of death benefit most.</p>
+        <span class="headline-pill up">+0.4 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">💧</div>
+        <h3>Universal Healthcare &amp; Sanitation</h3>
+        <p>Expanded access to clean water, vaccines, and primary care. Transformative for lower-income nations; already high-LE countries see modest additional gains.</p>
+        <span class="headline-pill up">+0.35 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">🦠</div>
+        <h3>Pandemic &amp; Antimicrobial Crisis</h3>
+        <p>A severe multi-year pandemic combined with rising antibiotic resistance reverses decades of progress — fragile health systems are hit hardest.</p>
+        <span class="headline-pill down">−0.6 %/yr</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CO₂ Emissions -->
+  <div class="ds-block">
+    <div class="ds-label">🏭 CO₂ Emissions <code>co2_emissions.csv</code></div>
+    <div class="scenario-grid">
+      <div class="sc-card">
+        <div class="icon">⚡</div>
+        <h3>EV &amp; Transport Electrification</h3>
+        <p>Rapid replacement of petrol/diesel fleets with EVs. High per-capita emitters (US, Canada, Australia) see the steepest falls.</p>
+        <span class="headline-pill down">−2 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">💰</div>
+        <h3>Carbon Price Shock ($150/t)</h3>
+        <p>A binding global carbon price of $150/tonne forces rapid decarbonisation. Fast-growing, energy-intensive economies feel the sharpest adjustment.</p>
+        <span class="headline-pill down">−3 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">🏭</div>
+        <h3>Industrial Growth Wave</h3>
+        <p>A manufacturing renaissance in emerging economies drives energy demand beyond clean capacity — emissions rise before infrastructure catches up.</p>
+        <span class="headline-pill up">+2.2 %/yr</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renewable Energy Share -->
+  <div class="ds-block">
+    <div class="ds-label">🌿 Renewable Energy Share <code>renewable_energy_share.csv</code></div>
+    <div class="scenario-grid">
+      <div class="sc-card">
+        <div class="icon">🌿</div>
+        <h3>Green Policy Surge</h3>
+        <p>Major subsidy packages, renewable mandates, and grid investment accelerate the transition. Countries furthest from 100% gain the most headroom.</p>
+        <span class="headline-pill up">+4 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">🚗</div>
+        <h3>Mass EV Adoption</h3>
+        <p>Rapid EV uptake electrifies transport demand and spurs grid-scale clean energy investment. Already fast-transitioning grids accelerate furthest.</p>
+        <span class="headline-pill up">+2.5 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">🛢️</div>
+        <h3>Fossil Fuel Subsidy Resurgence</h3>
+        <p>A sustained collapse in fossil fuel prices combined with new subsidies slows renewable investment as cheap gas undercuts wind and solar economics.</p>
+        <span class="headline-pill down">−2 %/yr</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CO₂ per Capita — World -->
+  <div class="ds-block">
+    <div class="ds-label">🌍 CO₂ per Capita — World <code>co2_per_capita_world.csv</code></div>
+    <div class="scenario-grid">
+      <div class="sc-card">
+        <div class="icon">🌍</div>
+        <h3>Net Zero Accelerator</h3>
+        <p>Binding international carbon targets drive rapid decarbonisation. Qatar, UAE, Australia, and Canada — the highest per-capita emitters — face the steepest falls.</p>
+        <span class="headline-pill down">−3.5 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">⚗️</div>
+        <h3>Green Hydrogen Scaling</h3>
+        <p>Cheap green hydrogen displaces coal and gas in heavy industry and shipping. Industrial economies (South Korea, Germany, Poland) benefit most.</p>
+        <span class="headline-pill down">−1.8 %/yr</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">🛢️</div>
+        <h3>Fossil Fuel Rebound</h3>
+        <p>Geopolitical energy security concerns prompt governments to expand fossil fuel production, reversing efficiency gains from the prior decade.</p>
+        <span class="headline-pill up">+2 %/yr</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CO₂ vs Life Expectancy -->
+  <div class="ds-block">
+    <div class="ds-label">⬦ CO₂ vs Life Expectancy <code>co2_vs_life_exp_2022.csv</code></div>
+    <div class="scenario-grid">
+      <div class="sc-card">
+        <div class="icon">🌿</div>
+        <h3>Aggressive Climate Policy</h3>
+        <p>If all countries enacted binding 2030 climate targets, per-capita CO₂ would fall sharply — especially for Gulf states and Australia. Scatter dots shift left.</p>
+        <span class="headline-pill down">−30% CO₂</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">🛢️</div>
+        <h3>Fossil Dependency Surge</h3>
+        <p>Energy demand growth without clean alternatives pushes per-capita emissions higher across both developed and emerging economies. High-emitters drift further right.</p>
+        <span class="headline-pill up">+25% CO₂</span>
+      </div>
+      <div class="sc-card">
+        <div class="icon">🧊</div>
+        <h3>Nordic Green Model Globally</h3>
+        <p>Top emitters adopt Scandinavian-style carbon taxes, clean energy mandates, and efficiency standards. High-emission countries converge toward 5–8 t per capita.</p>
+        <span class="headline-pill down">−20% CO₂</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Black Swan presets ──────────────────────────────────────────── -->
+  <h2 style="margin-top:48px">Black Swan Library — Any Dataset</h2>
+  <p>When you upload your own data, the Black Swan presets are available as starting points. Each applies a dispersed delta across entities, calibrated to the relative size, momentum, or volatility of each entity in your dataset. They are deliberately broad — use them as a first pass and refine with per-entity overrides or AI analysis.</p>
+
+  <div class="bs-grid">
+    <div class="bs-card">
+      <div class="icon">🤖</div>
+      <h4>2030 Automation Wave</h4>
+      <p>Rapid AI and industrial automation accelerate productivity. Fast-moving entities compound the gains. <span class="headline-pill up">+2.5 %/yr</span></p>
+    </div>
+    <div class="bs-card">
+      <div class="icon">👶</div>
+      <h4>Sub-Replacement Fertility Crisis</h4>
+      <p>Birth rates collapse below replacement. Larger, mature entities feel the shrinking workforce hardest. <span class="headline-pill down">−1.8 %/yr</span></p>
+    </div>
+    <div class="bs-card">
+      <div class="icon">🌐</div>
+      <h4>Decoupling Shock</h4>
+      <p>Global trade fragments into rival blocs. The biggest, most trade-exposed entities lose the most. <span class="headline-pill down">−2.2 %/yr</span></p>
+    </div>
+    <div class="bs-card">
+      <div class="icon">🦠</div>
+      <h4>Pandemic Wave</h4>
+      <p>A severe global pandemic disrupts activity — the most volatile, exposed entities swing the hardest. <span class="headline-pill down">−3.5 %/yr</span></p>
+    </div>
+    <div class="bs-card">
+      <div class="icon">⚡</div>
+      <h4>Energy Price Shock</h4>
+      <p>A prolonged spike in energy prices hits fast-growing, energy-hungry entities hardest. <span class="headline-pill down">−2.5 %/yr</span></p>
+    </div>
+  </div>
+
+  <!-- ── Explainers ──────────────────────────────────────────────────── -->
+  <h2 style="margin-top:48px">How scenarios work</h2>
+  <p>All scenarios apply a percentage growth rate delta to the projected value of each affected entity, year by year, over the defined window. Some represent sustained structural changes; others phase out gradually. The chart overlays the scenario trajectory as a dashed line on top of the baseline, with a shaded impact band — green for beneficial changes, red for detrimental ones (direction is automatically detected from the metric type). See <a href="model/methodology.html">Methodology</a> for the full mechanics.</p>
 
   <h2>Running multiple scenarios</h2>
-  <p>The simulator supports stacking multiple scenarios simultaneously. Deltas are additive — there is no interaction term. This means stacking a +1pp trade liberalisation with a −0.5pp carbon tax produces a net +0.5pp effect for countries affected by both. Non-linear interactions are not modelled.</p>
+  <p>The simulator supports stacking multiple scenarios simultaneously. Deltas are additive — there is no interaction term. This means stacking a +1 pp trade liberalisation with a −0.5 pp carbon tax produces a net +0.5 pp effect for entities affected by both. Non-linear interactions are not modelled.</p>
 
-  <h2>Comparing two branches (GitDiff)</h2>
-  <p>The <strong>Trajectories</strong> chart includes a <strong>⑂ Branch</strong> mode for comparing two futures head-to-head. Pick a focus country and a branch year, then assign each branch its own stack of scenarios — for example <em>Branch A: high automation</em> versus <em>Branch B: severe demographic strain</em>. Both timelines are computed independently and drawn on the same graph, splitting from the branch year onward. A shaded band fills the gap between them, and delta cards report the divergence by the final year and the year the gap is widest. It is a fast way to see not just what each scenario does, but how two rival assumptions pull apart over time.</p>
+  <h2>Comparing two branches</h2>
+  <p>The <strong>Trajectories</strong> chart includes a <strong>⑂ Branch</strong> mode for comparing two futures head-to-head. Pick a branch year, then assign each branch its own stack of scenarios — for example <em>Branch A: Green Hydrogen Scaling</em> versus <em>Branch B: Fossil Fuel Rebound</em>. Both timelines are computed independently and drawn on the same graph, splitting from the branch year onward. A shaded band fills the gap between them, and delta cards report the divergence at the final year and where the gap is widest.</p>
 
   <h2>Proposing new scenarios</h2>
-  <p>Scenario definitions live in <code>scenarios_policy.json</code> in the repository. If you want to propose a new scenario, open a pull request with the scenario definition and a short explanation of the effect parameters. See the <a href="https://github.com/dataisc/data-isc" target="_blank">GitHub repository</a> for the schema.</p>
+  <p>Dataset-specific scenario definitions live in the <code>DATASET_PRESETS</code> object in <code>public/index.html</code>; GDP scenarios are in <code>models/gdp-trajectories/data/scenarios_policy.json</code>. To propose a new scenario, open a pull request with the definition and a short explanation of the effect parameters. See the <a href="https://github.com/dataisc/data-isc" target="_blank">GitHub repository</a> for the schema.</p>
 </div>
 <footer class="site-footer">
   <div class="site-footer-inner">
