@@ -8533,7 +8533,7 @@ function _renderImportWhatifSection(ds) {
 
     // ── Built-in presets: always 3 across ──
     if (builtinList.length) {
-        html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">` +
+        html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:${userScenarios.length ? 20 : 0}px">` +
             builtinList.map(p => {
                 const active     = _activeBuiltinPresetIds.has(p.id);
                 const pos        = p.deltaPct >= 0;
@@ -8549,10 +8549,7 @@ function _renderImportWhatifSection(ds) {
                     <span class="sc-scope ${scopeClass}" style="margin-top:10px;display:inline-block">${sign}${abs}%/yr</span>
                 </div>`;
             }).join('') +
-            `</div>` +
-            `<div style="text-align:right;margin-bottom:${userScenarios.length ? 14 : 0}px">
-                <button onclick="openPresetLibrary()" class="btn-blue-pill" style="border-radius:6px;padding:2px 10px;font-size:0.78rem;cursor:pointer;font-weight:600">🦢 Browse Black Swan presets</button>
-            </div>`;
+            `</div>`;
     }
 
     // ── User-added scenarios ──
